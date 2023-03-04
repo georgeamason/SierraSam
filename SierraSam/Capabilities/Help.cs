@@ -4,14 +4,14 @@ namespace SierraSam.Capabilities;
 
 public sealed class Help : ICapability
 {
-    public Help(ILogger logger)
+    public Help(ILogger<Help> logger)
     {
-        m_Logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public void Run(string[] args)
     {
-        m_Logger.LogInformation($"{nameof(Help)} running.");
+        _logger.LogInformation($"{nameof(Help)} running");
         
         if (!args.Any())
         {
@@ -28,5 +28,5 @@ public sealed class Help : ICapability
         }
     }
 
-    private readonly ILogger m_Logger;
+    private readonly ILogger _logger;
 }

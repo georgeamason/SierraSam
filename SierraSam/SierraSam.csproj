@@ -17,12 +17,14 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\RedGate.Client\RedGate.Client.Activation.Shim\RedGate.Client.Activation.Shim.csproj" />
+      <ProjectReference Include="..\SierraSam.Core\SierraSam.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+      <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>

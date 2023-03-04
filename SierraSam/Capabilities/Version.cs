@@ -4,17 +4,17 @@ namespace SierraSam.Capabilities;
 
 public sealed class Version : ICapability
 {
-    public Version(ILogger logger)
+    public Version(ILogger<Version> logger)
     {
-        m_Logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     
     public void Run(string[] args)
     {
-        m_Logger.LogInformation($"{nameof(Version)} running.");
+        _logger.LogInformation($"{nameof(Version)} running");
 
         Console.WriteLine($"Version: {GetType().Assembly.GetName().Version!}");
     }
 
-    private readonly ILogger m_Logger;
+    private readonly ILogger _logger;
 }

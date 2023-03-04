@@ -5,22 +5,26 @@ using Version = SierraSam.Capabilities.Version;
 
 namespace SierraSam;
 
-public sealed class App : ICapability
+public sealed class App
 {
-    public App(ILogger logger, ICapabilityFactory capabilityFactory)
+    public App
+        (ILogger<App> logger,
+         ICapabilityResolver capabilityResolver)
     {
-        m_Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
 
-        m_CapabilityFactory = capabilityFactory ?? throw new ArgumentNullException(nameof(capabilityFactory));
+        _capabilityResolver = capabilityResolver
+            ?? throw new ArgumentNullException(nameof(capabilityResolver));
     }
 
-    public void Run(string[] args)
+    public void Start(string[] args)
     {
-        m_Logger.LogInformation("App running.");
+        _logger.LogInformation($"{nameof(App)} running");
 
         if (!args.Any())
         {
-            m_CapabilityFactory.Resolve(typeof(Help)).Run(args);
+            _capabilityResolver.Resolve(typeof(Help)).Run(args);
 
             return;
         };
@@ -28,17 +32,21 @@ public sealed class App : ICapability
         switch (args[0])
         {
             case "-v" or "--version" or "version":
-                m_CapabilityFactory.Resolve(typeof(Version)).Run(args);
+                _capabilityResolver.Resolve(typeof(Version)).Run(Array.Empty<string>());
                 break;
             case "--auth" or "auth":
+                _capabilityResolver.Resolve(typeof(Auth)).Run(args[1..]);
+                break;
+            case "--migrate" or "migrate":
+                _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
             case "--help" or "help":
-                m_CapabilityFactory.Resolve(typeof(Help)).Run(args[1..]);
+                _capabilityResolver.Resolve(typeof(Help)).Run(args[1..]);
                 break;
         }
     }
 
-    private readonly ILogger m_Logger;
+    private readonly ILogger _logger;
 
-    private readonly ICapabilityFactory m_CapabilityFactory;
+    private readonly ICapabilityResolver _capabilityResolver;
 }

@@ -1,6 +1,6 @@
 ﻿namespace SierraSam.Capabilities;
 
-public interface ICapabilityFactory
+public interface ICapabilityResolver
 {
     ICapability Resolve(Type type);
 }

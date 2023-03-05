@@ -43,6 +43,9 @@ public sealed class App
             case "--clean" or "clean":
                 _capabilityResolver.Resolve(typeof(Clean)).Run(args[1..]);
                 break;
+            case "--baseline" or "baseline":
+                _capabilityResolver.Resolve(typeof(Baseline)).Run(args[1..]);
+                break;
             case "--help" or "help":
                 _capabilityResolver.Resolve(typeof(Help)).Run(args[1..]);
                 break;

@@ -55,6 +55,7 @@ public static class Program
                 services.AddSingleton<ICapability, Migrate>();
                 services.AddSingleton<ICapability, Auth>();
                 services.AddSingleton<ICapability, Clean>();
+                services.AddSingleton<ICapability, Baseline>();
             })
             .Build();
 

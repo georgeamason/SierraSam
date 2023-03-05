@@ -40,6 +40,9 @@ public sealed class App
             case "--migrate" or "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
+            case "--clean" or "clean":
+                _capabilityResolver.Resolve(typeof(Clean)).Run(args[1..]);
+                break;
             case "--help" or "help":
                 _capabilityResolver.Resolve(typeof(Help)).Run(args[1..]);
                 break;

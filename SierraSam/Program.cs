@@ -1,4 +1,6 @@
 ﻿
+using System.Data;
+using System.Data.Odbc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,10 +33,18 @@ public static class Program
                     options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss]";
                     options.UseUtcTimestamp = true;
                 });
+
+                builder.SetMinimumLevel(LogLevel.Information);
             })
             .ConfigureServices((_, services) =>
             {
                 services.AddSingleton<App>();
+
+                services.AddSingleton<OdbcConnection>
+                    (s => new OdbcConnectionFactory
+                        (s.GetRequiredService<ILogger<OdbcConnectionFactory>>(),
+                         s.GetRequiredService<Configuration>())
+                            .Create());
 
                 services.AddSingleton<Configuration>
                     (s => new ConfigurationFactory

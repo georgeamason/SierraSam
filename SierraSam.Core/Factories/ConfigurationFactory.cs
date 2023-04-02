@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Data.Odbc;
+using System.Runtime.Versioning;
+using System.Security.Principal;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core.Extensions;
 using SierraSam.Core.Providers;
@@ -44,6 +47,35 @@ public sealed class ConfigurationFactory
 
             Configuration = JsonSerializer.Deserialize<Configuration>
                 (jsonConfig, jsonSerializerOptions)!;
+        }
+
+        // TODO: Set the database default schema to the defaultSchema prop.
+        // I've set to dbo in the Configuration getter for now
+
+        // Set the InstalledBy param
+        if (Configuration.User is null)
+        {
+            var connStrBuilder = new OdbcConnectionStringBuilder(Configuration.Url);
+            foreach (string key in connStrBuilder.Keys)
+            {
+                switch (key.ToLower())
+                {
+                    case "trusted_connection":
+#pragma warning disable CA1416
+                        Configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
+#pragma warning restore CA1416
+                        break;
+                    case "user id":
+                    case "user":
+                    case "uid":
+                        Configuration.InstalledBy = connStrBuilder.GetValue(key);
+                        break;
+                }
+            }
+        }
+        else
+        {
+            Configuration.InstalledBy = Configuration.User;
         }
 
         // here we can optionally override any of the configuration picked up from the configFile
@@ -100,6 +132,21 @@ public sealed class ConfigurationFactory
                     // https://flywaydb.org/documentation/configuration/parameters/table
                     _logger.LogInformation($"Configuration override {kvp.Key} to {kvp.Value}");
                     Configuration.SchemaTable = kvp.Value;
+                    break;
+                case "--locations":
+                    // TODO:
+                    break;
+                case "--migrationSuffixes":
+                    // TODO:
+                    break;
+                case "--migrationSeparator":
+                    // TODO:
+                    break;
+                case "--migrationPrefix":
+                    // TODO:
+                    break;
+                case "--installedBy":
+                    // TODO:
                     break;
                 default:
                     _logger.LogInformation($"{arg} was not recognised.");

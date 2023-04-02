@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace SierraSam.Core.Extensions;
 
@@ -23,5 +25,12 @@ public static class StringExtensions
             exception = ex;
             return false;
         }
+    }
+    
+    public static string Checksum(this string contents)
+    {
+        var hash = MD5.HashData(Encoding.UTF8.GetBytes(contents));
+
+        return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
     }
 }

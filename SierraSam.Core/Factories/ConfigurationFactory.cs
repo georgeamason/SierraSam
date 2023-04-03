@@ -1,25 +1,25 @@
 ﻿using System.Data.Odbc;
-using System.Runtime.Versioning;
+using System.IO.Abstractions;
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core.Extensions;
-using SierraSam.Core.Providers;
 
 namespace SierraSam.Core.Factories;
 
 public sealed class ConfigurationFactory
 {
     public ConfigurationFactory
-        (ILogger<ConfigurationFactory>logger,
-         IFileSystemProvider fileSystemProvider,
+        (ILogger<ConfigurationFactory> logger,
+         IFileSystem fileSystem,
          IEnumerable<string> defaultConfigPaths)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
-        _fileSystemProvider = fileSystemProvider
-            ?? throw new ArgumentNullException(nameof(fileSystemProvider));
+        _fileSystem = fileSystem
+            ?? throw new ArgumentNullException(nameof(fileSystem));
 
         _defaultConfigPaths = defaultConfigPaths
             ?? throw new ArgumentNullException(nameof(defaultConfigPaths));
@@ -34,16 +34,19 @@ public sealed class ConfigurationFactory
         {
             // This whole config stuff will be used by other capabilities
             // and will therefore have to be injected using DI
-            if (!_fileSystemProvider.Exists(configPath)) continue;
+            if (!_fileSystem.File.Exists(configPath)) continue;
 
-            var jsonConfig = _fileSystemProvider.ReadAllText(configPath);
+            var jsonConfig = _fileSystem.File.ReadAllText(configPath);
 
             if (string.IsNullOrEmpty(jsonConfig)) continue;
 
             if (!jsonConfig.IsJson(out var exception)) throw exception!;
 
-            var jsonSerializerOptions = new JsonSerializerOptions 
-                { PropertyNameCaseInsensitive = true, AllowTrailingCommas = true };
+            var jsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true
+            };
 
             Configuration = JsonSerializer.Deserialize<Configuration>
                 (jsonConfig, jsonSerializerOptions)!;
@@ -53,24 +56,29 @@ public sealed class ConfigurationFactory
         // I've set to dbo in the Configuration getter for now
 
         // Set the InstalledBy param
-        if (Configuration.User is null)
+        if (string.IsNullOrEmpty(Configuration.User))
         {
-            var connStrBuilder = new OdbcConnectionStringBuilder(Configuration.Url);
-            foreach (string key in connStrBuilder.Keys)
+            try
             {
-                switch (key.ToLower())
+                var connStrBuilder = new OdbcConnectionStringBuilder(Configuration.Url);
+                foreach (string key in connStrBuilder.Keys)
                 {
-                    case "trusted_connection":
-#pragma warning disable CA1416
-                        Configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
-#pragma warning restore CA1416
-                        break;
-                    case "user id":
-                    case "user":
-                    case "uid":
-                        Configuration.InstalledBy = connStrBuilder.GetValue(key);
-                        break;
+                    switch (key.ToLower())
+                    {
+                        case "trusted_connection":
+                            Configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
+                            break;
+                        case "user id":
+                        case "user":
+                        case "uid":
+                            Configuration.InstalledBy = connStrBuilder.GetValue(key);
+                            break;
+                    }
                 }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception.Message);
             }
         }
         else
@@ -162,7 +170,7 @@ public sealed class ConfigurationFactory
 
     private readonly ILogger<ConfigurationFactory> _logger;
 
-    private readonly IFileSystemProvider _fileSystemProvider;
+    private readonly IFileSystem _fileSystem;
 
     private readonly IEnumerable<string> _defaultConfigPaths;
 }

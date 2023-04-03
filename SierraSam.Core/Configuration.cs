@@ -3,13 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace SierraSam.Core;
 
-public record Configuration
+public class Configuration : IEquatable<Configuration>
 {
     [JsonPropertyName("url")]
     public string Url { get; set; } = string.Empty;
 
     [JsonPropertyName("user")]
-    public string? User { get; set; }
+    public string User { get; set; } = string.Empty;
 
     [JsonPropertyName("connectionTimeout")]
     public int ConnectionTimeout { get; set; } = 15;
@@ -28,10 +28,16 @@ public record Configuration
 
     [JsonPropertyName("locations")]
     [Description("List of locations to scan for migrations")]
-    public IEnumerable<string> Locations { get; set; } = GetLocations();
+    public IEnumerable<string> Locations { get; set; } = new []
+    {
+        $"filesystem:{Path.Combine("db", "migration")}"
+    };
 
     [JsonPropertyName("migrationSuffixes")]
-    public IEnumerable<string> MigrationSuffixes { get; set; } = new[] { ".sql" };
+    public IEnumerable<string> MigrationSuffixes { get; set; } = new[]
+    {
+        ".sql"
+    };
 
     [JsonPropertyName("migrationSeparator")]
     public string MigrationSeparator { get; set; } = "__";
@@ -42,11 +48,57 @@ public record Configuration
     [JsonPropertyName("installedBy")]
     public string InstalledBy { get; set; } = string.Empty;
 
-    private static IEnumerable<string> GetLocations()
+    public bool Equals(Configuration? other)
     {
-        return new []
-        {
-            $"filesystem:{Path.Combine("db", "migration")}"
-        };
+        if (ReferenceEquals(null, other))
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        return Url == other.Url 
+            && User == other.User
+            && ConnectionTimeout == other.ConnectionTimeout
+            && ConnectionRetries == other.ConnectionRetries
+            && DefaultSchema == other.DefaultSchema
+            && InitialiseSql == other.InitialiseSql
+            && SchemaTable == other.SchemaTable
+            && Locations.SequenceEqual(other.Locations)
+            && MigrationSuffixes.SequenceEqual(other.MigrationSuffixes)
+            && MigrationSeparator == other.MigrationSeparator
+            && MigrationPrefix == other.MigrationPrefix
+            && InstalledBy == other.InstalledBy;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj))
+            return false;
+
+        if (ReferenceEquals(this, obj))
+            return true;
+
+        if (obj.GetType() != typeof(Configuration))
+            return false;
+
+        return Equals((Configuration)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        var hashCode = new HashCode();
+        hashCode.Add(Url);
+        hashCode.Add(User);
+        hashCode.Add(ConnectionTimeout);
+        hashCode.Add(ConnectionRetries);
+        hashCode.Add(DefaultSchema);
+        hashCode.Add(InitialiseSql);
+        hashCode.Add(SchemaTable);
+        hashCode.Add(Locations);
+        hashCode.Add(MigrationSuffixes);
+        hashCode.Add(MigrationSeparator);
+        hashCode.Add(MigrationPrefix);
+        hashCode.Add(InstalledBy);
+        return hashCode.ToHashCode();
     }
 }

@@ -1,9 +1,9 @@
 ﻿using System.Collections;
+using System.IO.Abstractions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SierraSam.Core.Factories;
-using SierraSam.Core.Providers;
 
 namespace SierraSam.Core.Tests.Unit.Factories;
 
@@ -44,13 +44,13 @@ internal sealed class ConfigurationFactoryTests
     public Configuration Config_file_is_read_correctly(string config)
     {
         var logger = Substitute.For<ILogger<ConfigurationFactory>>();
-        var fileSystemProvider = Substitute.For<IFileSystemProvider>();
+        var fileSystem = Substitute.For<IFileSystem>();
 
-        fileSystemProvider.Exists(string.Empty).ReturnsForAnyArgs(true);
-        fileSystemProvider.ReadAllText(string.Empty).ReturnsForAnyArgs(config);
+        fileSystem.File.Exists(string.Empty).ReturnsForAnyArgs(true);
+        fileSystem.File.ReadAllText(string.Empty).ReturnsForAnyArgs(config);
 
         var factory = new ConfigurationFactory
-            (logger, fileSystemProvider, new[] { string.Empty });
+            (logger, fileSystem, new[] { string.Empty });
 
         return factory.Create(Array.Empty<string>());
     }
@@ -59,18 +59,20 @@ internal sealed class ConfigurationFactoryTests
     public void Config_file_throws_for_bad_config()
     {
         var logger = Substitute.For<ILogger<ConfigurationFactory>>();
-        var fileSystemProvider = Substitute.For<IFileSystemProvider>();
+        var fileSystem = Substitute.For<IFileSystem>();
 
-        fileSystemProvider
+        fileSystem
+            .File
             .Exists(string.Empty)
             .ReturnsForAnyArgs(true);
 
-        fileSystemProvider
+        fileSystem
+            .File
             .ReadAllText(string.Empty)
             .ReturnsForAnyArgs("{ \"this\": \"is\" } not json");
 
         var factory = new ConfigurationFactory
-            (logger, fileSystemProvider, new[] { string.Empty });
+            (logger, fileSystem, new[] { string.Empty });
 
         Assert.That
             (() => factory.Create(Array.Empty<string>()),
@@ -81,14 +83,15 @@ internal sealed class ConfigurationFactoryTests
     public void Config_file_not_found_returns_default()
     {
         var logger = Substitute.For<ILogger<ConfigurationFactory>>();
-        var fileSystemProvider = Substitute.For<IFileSystemProvider>();
+        var fileSystem = Substitute.For<IFileSystem>();
 
-        fileSystemProvider
+        fileSystem
+            .File
             .Exists(string.Empty)
             .ReturnsForAnyArgs(false);
 
         var factory = new ConfigurationFactory
-            (logger, fileSystemProvider, new[] { string.Empty });
+            (logger, fileSystem, new[] { string.Empty });
 
         Assert.That
         (() => factory.Create(Array.Empty<string>()), Is.EqualTo(new Configuration()));
@@ -97,32 +100,32 @@ internal sealed class ConfigurationFactoryTests
     private static IEnumerable Get_config_overrides()
     {
         yield return new TestCaseData
-                (new[] { "verb", "-url=fakeConnectionString" }.AsEnumerable())
+                (new[] { "verb", "--url=fakeConnectionString" }.AsEnumerable())
             .Returns(new Configuration { Url = "fakeConnectionString" })
             .SetName("url is set correctly");
 
         yield return new TestCaseData
-                (new[] { "verb", "-connectionTimeout=3" }.AsEnumerable())
+                (new[] { "verb", "--connectionTimeout=3" }.AsEnumerable())
             .Returns(new Configuration { ConnectionTimeout = 3 })
             .SetName("connectionTimeout is set correctly");
 
         yield return new TestCaseData
-                (new[] { "verb", "-connectionRetries=4" }.AsEnumerable())
+                (new[] { "verb", "--connectionRetries=4" }.AsEnumerable())
             .Returns(new Configuration { ConnectionRetries = 4 })
             .SetName("connectionRetries is set correctly");
 
         yield return new TestCaseData
-                (new[] { "verb", "-defaultSchema=xyz" }.AsEnumerable())
+                (new[] { "verb", "--defaultSchema=xyz" }.AsEnumerable())
             .Returns(new Configuration { DefaultSchema = "xyz" })
             .SetName("defaultSchema is set correctly");
 
         yield return new TestCaseData
-                (new[] { "verb", "-initSql=ssf" }.AsEnumerable())
+                (new[] { "verb", "--initSql=ssf" }.AsEnumerable())
             .Returns(new Configuration { InitialiseSql = "ssf" })
             .SetName("initSql is set correctly");
 
         yield return new TestCaseData
-                (new[] { "verb", "-table=a-table" }.AsEnumerable())
+                (new[] { "verb", "--table=a-table" }.AsEnumerable())
             .Returns(new Configuration { SchemaTable = "a-table" })
             .SetName("table is set correctly");
     }
@@ -131,10 +134,10 @@ internal sealed class ConfigurationFactoryTests
     public Configuration Config_overrides_are_read_correctly(string[] args)
     {
         var logger = Substitute.For<ILogger<ConfigurationFactory>>();
-        var fileSystemProvider = Substitute.For<IFileSystemProvider>();
+        var fileSystem = Substitute.For<IFileSystem>();
 
         var factory = new ConfigurationFactory
-            (logger, fileSystemProvider, Array.Empty<string>());
+            (logger, fileSystem, Array.Empty<string>());
 
         return factory.Create(args);
     }

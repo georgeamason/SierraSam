@@ -1,6 +1,6 @@
 ﻿
-using System.Data;
 using System.Data.Odbc;
+using System.IO.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,7 +9,6 @@ using RedGate.Client.Activation.Shim;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Factories;
-using SierraSam.Core.Providers;
 using SierraSam.Licensing;
 using Version = SierraSam.Capabilities.Version;
 
@@ -49,11 +48,11 @@ public static class Program
                 services.AddSingleton<Configuration>
                     (s => new ConfigurationFactory
                         (s.GetRequiredService<ILogger<ConfigurationFactory>>(),
-                         s.GetRequiredService<IFileSystemProvider>(),
+                         s.GetRequiredService<IFileSystem>(),
                          ConfigPaths())
                             .Create(args));
 
-                services.AddSingleton<IFileSystemProvider, FileSystemProvider>();
+                services.AddSingleton<IFileSystem, FileSystem>();
 
                 services.AddSingleton<ILicenseClient>
                 (s => LicenseClientFactory.Create(

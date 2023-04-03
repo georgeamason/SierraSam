@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
+using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -11,7 +12,10 @@ namespace SierraSam.Capabilities;
 public sealed class Migrate : ICapability
 {
     public Migrate
-        (ILogger<Migrate> logger, OdbcConnection odbcConnection, Configuration configuration)
+        (ILogger<Migrate> logger,
+         OdbcConnection odbcConnection,
+         Configuration configuration,
+         IFileSystem fileSystem)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -21,6 +25,8 @@ public sealed class Migrate : ICapability
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
+
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public void Run(string[] args)
@@ -56,7 +62,7 @@ public sealed class Migrate : ICapability
                         (path, "*", SearchOption.AllDirectories)
                         .Where(migration =>
                         {
-                            var migrationInfo = new FileInfo(migration);
+                            var migrationInfo = _fileSystem.FileInfo.New(migration);
 
                             // V1__My_description.sql
                             // V1.1__My_description.sql
@@ -75,7 +81,7 @@ public sealed class Migrate : ICapability
             // TODO: There maybe something here about baselines? Need to check what we fetch..
             var pendingMigrations = allMigrations.Where(path =>
             {
-                var migrationInfo = new FileInfo(path);
+                var migrationInfo = _fileSystem.FileInfo.New(path);
             
                 var version = migrationInfo.Name
                     .Split(_configuration.MigrationSeparator, 2)
@@ -97,7 +103,7 @@ public sealed class Migrate : ICapability
                 using var transaction = _odbcConnection.BeginTransaction();
                 try
                 {
-                    var migrationFileInfo = new FileInfo(migrationPath);
+                    var migrationFileInfo = _fileSystem.FileInfo.New(migrationPath);
                     
                     // TODO: Create MigrationFile.cs that has version, fileName props etc
                     var fileName = migrationFileInfo.Name.Split(_configuration.MigrationSeparator, 2);
@@ -196,7 +202,7 @@ public sealed class Migrate : ICapability
     private void InsertIntoMigrationsHistoryTable
         (OdbcTransaction transaction,
          int installRank,
-         FileInfo fileInfo,
+         IFileInfo fileInfo,
          string checksum,
          double executionTime)
     {
@@ -238,4 +244,6 @@ public sealed class Migrate : ICapability
     private readonly OdbcConnection _odbcConnection;
 
     private readonly Configuration _configuration;
+
+    private readonly IFileSystem _fileSystem;
 }

@@ -1,14 +1,14 @@
-﻿using SierraSam.Core.Providers;
+﻿using System.IO.Abstractions;
 
 namespace SierraSam.Core.Tests.Integration.Providers;
 
 internal sealed class FileSystemProviderTests
 {
-    private readonly IFileSystemProvider _fileSystemProvider;
+    private readonly IFileSystem _fileSystem;
     
     public FileSystemProviderTests()
     {
-        _fileSystemProvider = new FileSystemProvider();
+        _fileSystem = new FileSystem();
     }
 
     [Test]
@@ -16,7 +16,7 @@ internal sealed class FileSystemProviderTests
     {
         var path = Path.Combine(Environment.CurrentDirectory, "exampleFile.json");
 
-        Assert.That(_fileSystemProvider.Exists(path), Is.True);
+        Assert.That(_fileSystem.File.Exists(path), Is.True);
     }
 
     [Test]
@@ -24,6 +24,6 @@ internal sealed class FileSystemProviderTests
     {
         var path = Path.Combine(Environment.CurrentDirectory, "exampleFile.json");
 
-        Assert.That(_fileSystemProvider.ReadAllText(path), Is.EqualTo("{ \"key\":\"value\" }"));
+        Assert.That(_fileSystem.File.ReadAllText(path), Is.EqualTo("{ \"key\":\"value\" }"));
     }
 }

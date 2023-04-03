@@ -25,6 +25,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
       <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
+      <PackageReference Include="System.IO.Abstractions" Version="19.2.4" />
     </ItemGroup>
 
     <ItemGroup>

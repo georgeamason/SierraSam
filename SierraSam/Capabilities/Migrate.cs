@@ -58,17 +58,18 @@ public sealed class Migrate : ICapability
                 {
                     var path = d.Split(':', 2).Last();
 
-                    return Directory.GetFiles
+                    return _fileSystem.Directory.GetFiles
                         (path, "*", SearchOption.AllDirectories)
-                        .Where(migration =>
+                        .Where(migrationPath =>
                         {
-                            var migrationInfo = _fileSystem.FileInfo.New(migration);
+                            var migration = new Migration
+                                (_fileSystem.FileInfo.New(migrationPath));
 
                             // V1__My_description.sql
                             // V1.1__My_description.sql
                             // V1.1.1.1.1.__My_description.sql
                             return Regex.IsMatch
-                                ($"{migrationInfo.Name}{migrationInfo.Extension}",
+                                ($"{migration.Filename}",
                                  $"{_configuration.MigrationPrefix}\\d+(\\.?\\d{{0,}})+" +
                                  $"{_configuration.MigrationSeparator}\\w+" +
                                  $"({string.Join('|', _configuration.MigrationSuffixes)})");
@@ -81,18 +82,15 @@ public sealed class Migrate : ICapability
             // TODO: There maybe something here about baselines? Need to check what we fetch..
             var pendingMigrations = allMigrations.Where(path =>
             {
-                var migrationInfo = _fileSystem.FileInfo.New(path);
-            
-                var version = migrationInfo.Name
-                    .Split(_configuration.MigrationSeparator, 2)
-                    .First()[1..];
+                var migration = new Migration
+                    (_fileSystem.FileInfo.New(path));
 
                 // TODO: Create a version comparison class - integers have been assumed
                 // ReSharper disable once AccessToDisposedClosure
                 int.TryParse(appliedMigrations?.Rows[^1].Field<string>("version"),
                              out var maxAppliedVersion);
 
-                return int.Parse(version) > maxAppliedVersion;
+                return int.Parse(migration.Version) > maxAppliedVersion;
             });
 
             //Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": ");
@@ -103,12 +101,11 @@ public sealed class Migrate : ICapability
                 using var transaction = _odbcConnection.BeginTransaction();
                 try
                 {
-                    var migrationFileInfo = _fileSystem.FileInfo.New(migrationPath);
-                    
-                    // TODO: Create MigrationFile.cs that has version, fileName props etc
-                    var fileName = migrationFileInfo.Name.Split(_configuration.MigrationSeparator, 2);
+                    var migration = new Migration
+                        (_fileSystem.FileInfo.New(migrationPath));
+
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                      $"to version {fileName.First()[1..]} - {fileName.Last()}");
+                                      $"to version {migration.Version} - {migration.Description}");
 
                     var migrationSql = File.ReadAllText(migrationPath);
                     var executionTime = ExecuteMigration(transaction, migrationSql);
@@ -120,12 +117,13 @@ public sealed class Migrate : ICapability
                     InsertIntoMigrationsHistoryTable
                         (transaction,
                          installRank,
-                         migrationFileInfo,
+                         migration,
                          migrationSql.Checksum(),
                          executionTime.TotalMilliseconds);
 
                     transaction.Commit();
-                    Console.WriteLine($"Successfully applied 1 migration to schema \"{_configuration.DefaultSchema}\" (execution time {executionTime:g})");
+                    Console.WriteLine(
+                        $"Successfully applied 1 migration to schema \"{_configuration.DefaultSchema}\" (execution time {executionTime:g})");
                 }
                 catch (Exception exception)
                 {
@@ -202,7 +200,7 @@ public sealed class Migrate : ICapability
     private void InsertIntoMigrationsHistoryTable
         (OdbcTransaction transaction,
          int installRank,
-         IFileInfo fileInfo,
+         Migration migration,
          string checksum,
          double executionTime)
     {
@@ -223,10 +221,10 @@ public sealed class Migrate : ICapability
             )
             VALUES
             (   {installRank},
-                {fileInfo.Name.Split(_configuration.MigrationSeparator, 2).First()[1..]},
-                N'{fileInfo.Name.Split(_configuration.MigrationSeparator, 2).Last()}',
+                {migration.Version},
+                N'{migration.Description}',
                 N'SQL',
-                N'{fileInfo.Name}',
+                N'{migration.Filename}',
                 N'{checksum}',
                 N'{_configuration.InstalledBy}',
                 DEFAULT,

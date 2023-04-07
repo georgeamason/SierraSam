@@ -18,12 +18,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="exampleFile.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\SierraSam.Core\SierraSam.Core.csproj" />
     </ItemGroup>
 

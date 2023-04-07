@@ -1,9 +1,7 @@
 ﻿using System.Text.Json;
-using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using SierraSam.Core.Extensions;
 
-namespace SierraSam.Tests.Unit.Extensions;
+namespace SierraSam.Core.Tests.Unit.Extensions;
 
 [TestFixture]
 internal sealed class StringExtensionsTests
@@ -25,5 +23,12 @@ internal sealed class StringExtensionsTests
         json.IsJson(out var ex);
 
         Assert.That(ex, Is.InstanceOf<JsonException>());
+    }
+
+    [TestCase("SELECT * FROM", ExpectedResult = "2cb62737ee53ada8dc1380e23a52496b")]
+    [TestCase("INSERT INTO", ExpectedResult = "c455716319b4f5e68ab4fa7ed26068bc")]
+    public string Checksum_returns_expected_hash(string contents)
+    {
+        return contents.Checksum();
     }
 }

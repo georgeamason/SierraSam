@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace SierraSam.Core;
@@ -40,9 +42,12 @@ public class Configuration : IEquatable<Configuration>
     };
 
     [JsonPropertyName("migrationSeparator")]
+    [RegularExpression("[^A-Za-z0-9]")]
+    [MinLength(2)]
     public string MigrationSeparator { get; set; } = "__";
 
     [JsonPropertyName("migrationPrefix")]
+    [RegularExpression("[A-Za-z]")]
     public string MigrationPrefix { get; set; } = "V";
 
     [JsonPropertyName("installedBy")]
@@ -84,6 +89,7 @@ public class Configuration : IEquatable<Configuration>
         return Equals((Configuration)obj);
     }
 
+    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode()
     {
         var hashCode = new HashCode();

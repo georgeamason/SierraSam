@@ -10,8 +10,6 @@ public sealed class Migration
 {
     private readonly IFileInfo _fileInfo;
 
-    // Prefix must be [A-za-z]
-    // Separator must be 2+ chars, and not [A-Za-z0-9]
     public Migration(IFileInfo fileInfo)
     {
         _fileInfo = fileInfo

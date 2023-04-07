@@ -76,7 +76,7 @@ public sealed class Migrate : ICapability
                         });
                 });
 
-            // TODO: Filter out applied migrations
+            // Filter out applied migrations
             using var appliedMigrations = GetMigrationHistory();
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
@@ -87,15 +87,19 @@ public sealed class Migrate : ICapability
 
                 // TODO: Create a version comparison class - integers have been assumed
                 // ReSharper disable once AccessToDisposedClosure
-                int.TryParse(appliedMigrations?.Rows[^1].Field<string>("version"),
-                             out var maxAppliedVersion);
+                if (!int.TryParse
+                    (appliedMigrations?.Rows[^1].Field<string>("version"),
+                        out var maxAppliedVersion))
+                {
+                    _logger.LogInformation($"Schema \"{_configuration.DefaultSchema}\" is clean");
+                }
 
                 return int.Parse(migration.Version) > maxAppliedVersion;
             });
 
             //Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": ");
 
-            // TODO: Apply new migrations
+            // Apply new migrations
             foreach (var migrationPath in pendingMigrations)
             {
                 using var transaction = _odbcConnection.BeginTransaction();
@@ -107,14 +111,14 @@ public sealed class Migrate : ICapability
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
                                       $"to version {migration.Version} - {migration.Description}");
 
-                    var migrationSql = File.ReadAllText(migrationPath);
+                    var migrationSql = _fileSystem.File.ReadAllText(migrationPath);
                     var executionTime = ExecuteMigration(transaction, migrationSql);
 
-                    // TODO: Write to migration history table
+                    // Write to migration history table
                     var installRank =
                         appliedMigrations?.Rows[^1].Field<int>("installed_rank") + 1 ?? 1;
 
-                    InsertIntoMigrationsHistoryTable
+                    InsertIntoMigrationHistoryTable
                         (transaction,
                          installRank,
                          migration,
@@ -122,8 +126,10 @@ public sealed class Migrate : ICapability
                          executionTime.TotalMilliseconds);
 
                     transaction.Commit();
-                    Console.WriteLine(
-                        $"Successfully applied 1 migration to schema \"{_configuration.DefaultSchema}\" (execution time {executionTime:g})");
+
+                    Console.WriteLine($"Successfully applied 1 migration " +
+                                      $"to schema \"{_configuration.DefaultSchema}\" " +
+                                      $"(execution time {executionTime:g})");
                 }
                 catch (Exception exception)
                 {
@@ -197,7 +203,7 @@ public sealed class Migrate : ICapability
         return stopwatch.Elapsed;
     }
 
-    private void InsertIntoMigrationsHistoryTable
+    private void InsertIntoMigrationHistoryTable
         (OdbcTransaction transaction,
          int installRank,
          Migration migration,

@@ -1,4 +1,5 @@
 ﻿using System.IO.Abstractions.TestingHelpers;
+using FluentAssertions;
 
 namespace SierraSam.Core.Tests.Unit;
 
@@ -9,7 +10,7 @@ internal sealed class MigrationTests
     public void Constructor_null_argument_throws()
     {
         Assert.That(
-            () => new Migration(null),
+            () => new Migration(null!),
             Throws.TypeOf<ArgumentNullException>());
     }
 
@@ -18,6 +19,14 @@ internal sealed class MigrationTests
     [TestCase("./VV22.12.2@@xyz.abc", "VV", "22.12.2", "@@", "xyz")]
     [TestCase("./U1.1__Fix_indexes.sql", "U", "1.1", "__", "Fix_indexes")]
     [TestCase("./V2__Add a new table.sql", "V", "2", "__", "Add a new table")]
+    [TestCase("./R__My_view.sql", "R", "", "__", "My_view")]
+    [TestCase("./V1004__make_v11_sql_monitor_license.sql", "V", "1004", "__", "make_v11_sql_monitor_license")]
+    [TestCase("./V1003__delete-invalid-license.sql", "V", "1003", "__", "delete-invalid-license")]
+    [TestCase("./V1016__remove-sql-prompt-25-price-break.sql", "V", "1016", "__", "remove-sql-prompt-25-price-break")]
+    [TestCase("./MIG1__description is here.sql", "MIG", "1", "__", "description is here")]
+    [TestCase("./V2023.01.12.4343__create_users_table.sql", "V", "2023.01.12.4343", "__", "create_users_table")]
+    [TestCase("./Repp__desc.sql", "Repp", "", "__", "desc")]
+    [TestCase("./Verr2__Desc.sql", "Verr", "2", "__", "Desc")]
     public void Properties_return_expected_result
         (string filePath, string prefix, string version, string separator, string description)
     {
@@ -30,9 +39,9 @@ internal sealed class MigrationTests
 
         var migration = new Migration(mockFileInfo);
 
-        Assert.That(migration.Prefix, Is.EqualTo(prefix));
-        Assert.That(migration.Version, Is.EqualTo(version));
-        Assert.That(migration.Separator, Is.EqualTo(separator));
-        Assert.That(migration.Description, Is.EqualTo(description));
+        migration.Prefix.Should().Be(prefix);
+        migration.Version.Should().Be(version);
+        migration.Separator.Should().Be(separator);
+        migration.Description.Should().Be(description);
     }
 }

@@ -10,6 +10,8 @@ public sealed class Migration
 {
     private readonly IFileInfo _fileInfo;
 
+    // Prefix must be [A-za-z]
+    // Separator must be 2+ chars, and not [A-Za-z0-9]
     public Migration(IFileInfo fileInfo)
     {
         _fileInfo = fileInfo
@@ -17,16 +19,16 @@ public sealed class Migration
     }
 
     public string Prefix => Regex.Match
-        (_fileInfo.Name, "^([A-z]+)(?=\\d)").Value;
+        (_fileInfo.Name, $"^([A-Za-z]+?)\\1*(?=\\d|([^A-Za-z0-9])\\2)").Value;
 
-    public string Version => Regex.Match
-        (_fileInfo.Name, "(\\d+\\.?)+").Value;
+    public string? Version => Regex.Match
+        (_fileInfo.Name, $"(?<={Prefix})(\\d+\\.?)+").Value;
 
     public string Separator => Regex.Match
-        (_fileInfo.Name, "(?<=\\d)[^\\d\\.]{2,}?").Value;
+        (_fileInfo.Name, $"(?<={Prefix}|{Version})([^A-Za-z0-9])\\1+").Value;
 
     public string Description => Regex.Match
-        (_fileInfo.Name, "(?<=(?<=\\d)[^\\d\\.]{2,}?).+(?=\\.\\w)").Value;
+        (_fileInfo.Name, $"(?<={Separator}).+(?=\\.\\w)").Value;
 
     public string Suffix => _fileInfo.Extension;
 

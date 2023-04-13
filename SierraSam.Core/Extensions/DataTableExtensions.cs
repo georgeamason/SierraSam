@@ -15,7 +15,7 @@ public static class DataTableExtensions
         foreach (DataRow row in dataTable.Rows)
         {
             // https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/odbc-schema-collections
-            var tableName = row["TABLE_NAME"].ToString();
+            var tableName = row["TABLE_NAME"] as string;
             if (tableName == configuration.SchemaTable) return true;
         }
 

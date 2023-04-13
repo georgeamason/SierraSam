@@ -30,5 +30,5 @@ public sealed class Migration
 
     public string Suffix => _fileInfo.Extension;
 
-    public string Filename => $"{_fileInfo.Name}{_fileInfo.Extension}";
+    public string Filename => $"{_fileInfo.Name}";
 }

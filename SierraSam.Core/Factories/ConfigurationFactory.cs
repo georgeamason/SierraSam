@@ -2,7 +2,6 @@
 using System.IO.Abstractions;
 using System.Security.Principal;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core.Extensions;
 
@@ -60,8 +59,10 @@ public sealed class ConfigurationFactory
         {
             try
             {
-                var connStrBuilder = new OdbcConnectionStringBuilder(Configuration.Url);
-                foreach (string key in connStrBuilder.Keys)
+                var connStrBuilder = new OdbcConnectionStringBuilder
+                    (Configuration.Url);
+
+                foreach (string key in connStrBuilder.Keys!)
                 {
                     switch (key.ToLower())
                     {
@@ -79,6 +80,7 @@ public sealed class ConfigurationFactory
             catch (Exception exception)
             {
                 _logger.LogError(exception.Message);
+                throw;
             }
         }
         else

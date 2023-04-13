@@ -133,6 +133,7 @@ public sealed class Migrate : ICapability
                 }
                 catch (Exception exception)
                 {
+                    _logger.LogError(exception, exception.Message);
                     transaction.Rollback();
                     throw;
                 }

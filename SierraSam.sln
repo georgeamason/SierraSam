@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Unit",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Integration", "SierraSam.Core.Tests.Integration\SierraSam.Core.Tests.Integration.csproj", "{3CD502E6-90CA-41D4-B3DF-18556D784938}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Database", "SierraSam.Database\SierraSam.Database.csproj", "{BE3C88F6-830E-456B-9065-8C0C1DECA33A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +62,10 @@ Global
 		{3CD502E6-90CA-41D4-B3DF-18556D784938}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CD502E6-90CA-41D4-B3DF-18556D784938}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CD502E6-90CA-41D4-B3DF-18556D784938}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE3C88F6-830E-456B-9065-8C0C1DECA33A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE3C88F6-830E-456B-9065-8C0C1DECA33A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE3C88F6-830E-456B-9065-8C0C1DECA33A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE3C88F6-830E-456B-9065-8C0C1DECA33A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D60AB73B-053D-48D2-9D4F-CAA82AECA1FA} = {D65EB015-AEE8-476F-B484-D994E06AC366}

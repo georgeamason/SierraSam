@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
 using SierraSam.Core.Extensions;
 
@@ -6,33 +7,15 @@ namespace SierraSam.Tests.Integration;
 
 internal static class DbQueryHandler
 {
-    public static DataTable? ExecuteSql
-        (string connectionString, string sql)
+    public static DataTable ExecuteSql(string connectionString, string sql)
     {
         using var odbcConnection = new OdbcConnection(connectionString);
-        using var command = new OdbcCommand(sql, odbcConnection);
+        using var odbcCommand = new OdbcCommand(sql, odbcConnection);
+        using var dataAdapter = new OdbcDataAdapter(odbcCommand);
 
-        odbcConnection.Open();
+        var dataSet = new DataSet();
+        dataAdapter.Fill(dataSet);
 
-        using var dataReader = command.ExecuteReader();
-
-        return dataReader.GetData();
-    }
-
-    public static bool HasRow
-        (string connectionString,
-         string table)
-    {
-        using var odbcConnection = new OdbcConnection(connectionString);
-        using var command = new OdbcCommand();
-
-        command.Connection = odbcConnection;
-        command.CommandText = $"SELECT COUNT(*) FROM {table}";
-        command.CommandType = CommandType.Text;
-
-        odbcConnection.Open();
-        var rows = command.ExecuteScalar();
-
-        return rows is not DBNull;
+        return dataSet.Tables[0];
     }
 }

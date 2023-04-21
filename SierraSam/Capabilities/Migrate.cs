@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Immutable;
+using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO.Abstractions;
@@ -6,6 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
+using SierraSam.Database;
 
 namespace SierraSam.Capabilities;
 
@@ -13,20 +15,21 @@ public sealed class Migrate : ICapability
 {
     public Migrate
         (ILogger<Migrate> logger,
-         OdbcConnection odbcConnection,
-         Configuration configuration,
-         IFileSystem fileSystem)
+        IDatabase database,
+        Configuration configuration,
+        IFileSystem fileSystem)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
-        _odbcConnection = odbcConnection
-            ?? throw new ArgumentNullException(nameof(odbcConnection));
+        _database = database
+            ?? throw new ArgumentNullException(nameof(database));
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
-        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _fileSystem = fileSystem
+                      ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public void Run(string[] args)
@@ -35,19 +38,24 @@ public sealed class Migrate : ICapability
 
         try
         {
-            _odbcConnection.Open();
-            _logger.LogInformation($"Driver: {_odbcConnection.Driver}");
-            _logger.LogInformation($"Database: {_odbcConnection.Database}");
+            _database.Connection.Open();
+            _logger.LogInformation($"Driver: {_database.Connection.Driver}");
+            _logger.LogInformation($"Database: {_database.Connection.Database}");
 
-            Console.WriteLine($"Database: {_odbcConnection.Driver}:" +
-                              $"{_odbcConnection.Database}:" +
-                              $"{_odbcConnection.ServerVersion}");
-
-            var dbTables = _odbcConnection.GetSchema("Tables");
+            Console.WriteLine($"Database: {_database.Connection.Driver}:" +
+                              $"{_database.Connection.Database}:" +
+                              $"{_database.Connection.ServerVersion}");
 
             // Create schema table if not found
-            if (!dbTables.HasMigrationHistory(_configuration)) 
-                CreateMigrationHistoryTable();
+            if (!_database.HasMigrationTable)
+            {
+                Console.WriteLine
+                    ("Creating Schema History table: " +
+                    $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
+
+                _database.CreateSchemaHistory
+                    (_configuration.DefaultSchema, _configuration.SchemaTable);
+            }
 
             // TODO: Search file system for migrations
             // Will need to abstract this as well as calling s3 buckets etc
@@ -62,7 +70,7 @@ public sealed class Migrate : ICapability
                         (path, "*", SearchOption.AllDirectories)
                         .Where(migrationPath =>
                         {
-                            var migration = new Migration
+                            var migration = new MigrationFile
                                 (_fileSystem.FileInfo.New(migrationPath));
 
                             // V1__My_description.sql
@@ -77,19 +85,21 @@ public sealed class Migrate : ICapability
                 });
 
             // Filter out applied migrations
-            using var appliedMigrations = GetMigrationHistory();
+            var appliedMigrations = _database
+                .GetSchemaHistory(_configuration.DefaultSchema, _configuration.SchemaTable)
+                .ToArray();
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
             var pendingMigrations = allMigrations.Where(path =>
             {
-                var migration = new Migration
+                var migration = new MigrationFile
                     (_fileSystem.FileInfo.New(path));
 
                 // TODO: Create a version comparison class - integers have been assumed
                 // ReSharper disable once AccessToDisposedClosure
                 if (!int.TryParse
-                    (appliedMigrations?.Rows[^1].Field<string>("version"),
-                        out var maxAppliedVersion))
+                        (appliedMigrations.Max(m => m.Version),
+                         out var maxAppliedVersion))
                 {
                     _logger.LogInformation($"Schema \"{_configuration.DefaultSchema}\" is clean");
                 }
@@ -100,12 +110,13 @@ public sealed class Migrate : ICapability
             //Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": ");
 
             // Apply new migrations
+            var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 0;
             foreach (var migrationPath in pendingMigrations)
             {
-                using var transaction = _odbcConnection.BeginTransaction();
+                using var transaction = _database.Connection.BeginTransaction();
                 try
                 {
-                    var migration = new Migration
+                    var migration = new MigrationFile
                         (_fileSystem.FileInfo.New(migrationPath));
 
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
@@ -114,16 +125,20 @@ public sealed class Migrate : ICapability
                     var migrationSql = _fileSystem.File.ReadAllText(migrationPath);
                     var executionTime = ExecuteMigration(transaction, migrationSql);
 
-                    // Write to migration history table
-                    var installRank =
-                        appliedMigrations?.Rows[^1].Field<int>("installed_rank") + 1 ?? 1;
-
-                    InsertIntoMigrationHistoryTable
-                        (transaction,
-                         installRank,
-                         migration,
+                    var pendingMigration = new Migration
+                        (++installRank,
+                         migration.Version,
+                         migration.Description,
+                         "SQL",
+                         migration.Filename,
                          migrationSql.Checksum(),
-                         executionTime.TotalMilliseconds);
+                         _configuration.InstalledBy,
+                         default,
+                         executionTime.TotalMilliseconds,
+                         true);
+
+                    // Write to migration history table
+                    _database.InsertIntoSchemaHistory(transaction, pendingMigration);
 
                     transaction.Commit();
 
@@ -137,6 +152,8 @@ public sealed class Migrate : ICapability
                     transaction.Rollback();
                     throw;
                 }
+
+                installRank++;
             }
         }
         catch (Exception exception)
@@ -147,50 +164,13 @@ public sealed class Migrate : ICapability
             };
 
             _logger.LogError(msg, exception);
+            throw;
         }
-    }
-
-    private void CreateMigrationHistoryTable()
-    {
-        Console.WriteLine($"Creating Schema History table:" +
-                          $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
-
-        using var command = _odbcConnection.CreateCommand();
-        command.CommandType = CommandType.Text;
-        command.CommandText =
-            @$"CREATE TABLE [{_configuration.DefaultSchema}].[{_configuration.SchemaTable}]
-               (
-                   [installed_rank] [INT] PRIMARY KEY NOT NULL,
-                   [version] [NVARCHAR](50) NULL,
-                   [description] [NVARCHAR](200) NULL,
-                   [type] [NVARCHAR](20) NOT NULL,
-                   [script] [NVARCHAR](1000) NOT NULL,
-                   [checksum] [NVARCHAR] (32) NULL,
-                   [installed_by] [NVARCHAR](100) NOT NULL,
-                   [installed_on] [DATETIME] NOT NULL DEFAULT (GETDATE()),
-                   [execution_time] [FLOAT] NOT NULL,
-                   [success] [BIT] NOT NULL
-                )";
-
-        command.ExecuteNonQuery();
-    }
-
-    private DataTable? GetMigrationHistory()
-    {
-        using var cmd = _odbcConnection.CreateCommand();
-        cmd.CommandType = CommandType.Text;
-        cmd.CommandText = 
-            @$"SELECT installed_rank, version
-               FROM [{_configuration.DefaultSchema}].[{_configuration.SchemaTable}]";
-
-        using var dataReader = cmd.ExecuteReader();
-
-        return dataReader.GetData();
     }
 
     private TimeSpan ExecuteMigration(OdbcTransaction transaction, string migrationSql)
     {
-        using var cmd = _odbcConnection.CreateCommand();
+        using var cmd = _database.Connection.CreateCommand();
         cmd.CommandText = migrationSql;
         cmd.CommandType = CommandType.Text;
         cmd.Transaction = transaction;
@@ -207,11 +187,11 @@ public sealed class Migrate : ICapability
     private void InsertIntoMigrationHistoryTable
         (OdbcTransaction transaction,
          int installRank,
-         Migration migration,
+         MigrationFile migrationFile,
          string checksum,
          double executionTime)
     {
-        using var cmd = _odbcConnection.CreateCommand();
+        using var cmd = _database.Connection.CreateCommand();
         cmd.CommandText =
             @$"INSERT INTO [{_configuration.DefaultSchema}].[{_configuration.SchemaTable}]
             (
@@ -228,10 +208,10 @@ public sealed class Migrate : ICapability
             )
             VALUES
             (   {installRank},
-                {migration.Version},
-                N'{migration.Description}',
+                {migrationFile.Version},
+                N'{migrationFile.Description}',
                 N'SQL',
-                N'{migration.Filename}',
+                N'{migrationFile.Filename}',
                 N'{checksum}',
                 N'{_configuration.InstalledBy}',
                 DEFAULT,
@@ -246,8 +226,7 @@ public sealed class Migrate : ICapability
 
     private readonly ILogger _logger;
 
-    private readonly OdbcConnection _odbcConnection;
-
+    private readonly IDatabase _database;
     private readonly Configuration _configuration;
 
     private readonly IFileSystem _fileSystem;

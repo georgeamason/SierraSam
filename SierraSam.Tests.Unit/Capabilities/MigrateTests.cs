@@ -6,6 +6,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SierraSam.Capabilities;
 using SierraSam.Core;
+using SierraSam.Database;
 
 namespace SierraSam.Tests.Unit.Capabilities;
 
@@ -14,12 +15,14 @@ internal sealed class MigrateTests
 {
     private static IEnumerable Constructors_with_null_arguments()
     {
+        var configuration = new Configuration();
+
         // ReSharper disable ObjectCreationAsStatement
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (null!,
-                 new OdbcConnection(), 
-                 new Configuration(),
+                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 configuration,
                  Substitute.For<IFileSystem>())))
             .SetName("Null logger");
 
@@ -27,14 +30,14 @@ internal sealed class MigrateTests
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
                  null!, 
-                 new Configuration(),
+                 configuration,
                  Substitute.For<IFileSystem>())))
             .SetName("Null ODBC connection");
 
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 new OdbcConnection(), 
+                 DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  null!,
                  Substitute.For<IFileSystem>())))
             .SetName("Null configuration");
@@ -42,7 +45,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 new OdbcConnection(), 
+                 DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  new Configuration(),
                  null!)))
             .SetName("Null configuration");

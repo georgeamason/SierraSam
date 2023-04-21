@@ -20,7 +20,7 @@ public class Configuration : IEquatable<Configuration>
     public int ConnectionRetries { get; set; } = 1;
 
     [JsonPropertyName("defaultSchema")]
-    public string DefaultSchema { get; set; } = "dbo";
+    public string DefaultSchema { get; set; } = string.Empty;
 
     [JsonPropertyName("initialiseSql")]
     public string InitialiseSql { get; set; } = string.Empty;
@@ -36,10 +36,7 @@ public class Configuration : IEquatable<Configuration>
     };
 
     [JsonPropertyName("migrationSuffixes")]
-    public IEnumerable<string> MigrationSuffixes { get; set; } = new[]
-    {
-        ".sql"
-    };
+    public IEnumerable<string> MigrationSuffixes { get; set; } = new[] { ".sql" };
 
     [JsonPropertyName("migrationSeparator")]
     [RegularExpression("[^A-Za-z0-9]")]
@@ -50,9 +47,13 @@ public class Configuration : IEquatable<Configuration>
     [RegularExpression("[A-Za-z]")]
     public string MigrationPrefix { get; set; } = "V";
 
-    [JsonPropertyName("installedBy")]
+    [JsonPropertyName("installedBy")] 
     public string InstalledBy { get; set; } = string.Empty;
 
+    [JsonPropertyName("schemas")] 
+    public IEnumerable<string> Schemas { get; set; } = Enumerable.Empty<string>();
+
+    #region IEquatable
     public bool Equals(Configuration? other)
     {
         if (ReferenceEquals(null, other))
@@ -72,7 +73,8 @@ public class Configuration : IEquatable<Configuration>
             && MigrationSuffixes.SequenceEqual(other.MigrationSuffixes)
             && MigrationSeparator == other.MigrationSeparator
             && MigrationPrefix == other.MigrationPrefix
-            && InstalledBy == other.InstalledBy;
+            && InstalledBy == other.InstalledBy
+            && Schemas.SequenceEqual(other.Schemas);
     }
 
     public override bool Equals(object? obj)
@@ -105,6 +107,8 @@ public class Configuration : IEquatable<Configuration>
         hashCode.Add(MigrationSeparator);
         hashCode.Add(MigrationPrefix);
         hashCode.Add(InstalledBy);
+        hashCode.Add(Schemas);
         return hashCode.ToHashCode();
     }
+    #endregion
 }

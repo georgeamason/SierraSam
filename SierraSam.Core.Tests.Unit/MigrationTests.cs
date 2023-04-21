@@ -10,7 +10,7 @@ internal sealed class MigrationTests
     public void Constructor_null_argument_throws()
     {
         Assert.That(
-            () => new Migration(null!),
+            () => new MigrationFile(null!),
             Throws.TypeOf<ArgumentNullException>());
     }
 
@@ -37,7 +37,7 @@ internal sealed class MigrationTests
 
         var mockFileInfo = new MockFileInfo(mockFileSystem, filePath);
 
-        var migration = new Migration(mockFileInfo);
+        var migration = new MigrationFile(mockFileInfo);
 
         migration.Prefix.Should().Be(prefix);
         migration.Version.Should().Be(version);

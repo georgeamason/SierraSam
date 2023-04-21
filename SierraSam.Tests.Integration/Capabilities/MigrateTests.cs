@@ -1,14 +1,14 @@
-﻿using System.Data;
+﻿using System.Collections;
+using System.Data;
 using System.Data.Odbc;
 using System.IO.Abstractions.TestingHelpers;
 using System.Text;
-using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
-using SierraSam.Core.Factories;
+using SierraSam.Core.Extensions;
+using SierraSam.Database;
 
 
 namespace SierraSam.Tests.Integration.Capabilities;
@@ -16,60 +16,42 @@ namespace SierraSam.Tests.Integration.Capabilities;
 [TestFixture]
 internal sealed class MigrateTests
 {
-    private readonly IContainer _container;
-
     private readonly ILogger<Migrate> _logger;
 
     private const string Password = "yourStrong(!)Password";
 
-    private const int PortBinding = 1433;
-
-    private const string DatabaseName = "TestDB";
-
     public MigrateTests()
     {
-        _container = new ContainerBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPortBinding(1433, PortBinding)
-            .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("MSSQL_SA_PASSWORD", Password)
-            .WithWaitStrategy
-                (Wait
-                    .ForUnixContainer()
-                    .UntilCommandIsCompleted
-                        ("/opt/mssql-tools/bin/sqlcmd",
-                         "-S", $"localhost,{PortBinding}",
-                         "-U", "sa",
-                         "-P", Password,
-                         "-Q", $"CREATE DATABASE {DatabaseName}"))
-            .Build();
-
         _logger = Substitute.For<ILogger<Migrate>>();
     }
 
-    [OneTimeSetUp]
-    public async Task SetUp()
+    private static IEnumerable Database_containers()
     {
-        await _container.StartAsync();
+        yield return new TestCaseData
+            (DbContainerFactory.CreateMsSqlContainer(Password),
+             $"Driver={{ODBC Driver 17 for SQL Server}};Server=127.0.0.1,1433;UID=sa;PWD={Password};",
+             "dbo");
+
+        yield return new TestCaseData
+            (DbContainerFactory.CreatePostgresContainer(Password),
+             $"Driver={{PostgreSQL UNICODE}};Server=127.0.0.1;Port=5432;Uid=sa;Pwd={Password};",
+             "public");
     }
 
-    [Test]
-    public void Migrate_updates_database_correctly()
+    [TestCaseSource(nameof(Database_containers))]
+    public async Task Migrate_updates_database_correctly
+        (IContainer container, string connectionString, string defaultSchema)
     {
-        var connectionString = $"Driver={{ODBC Driver 17 for SQL Server}};" +
-                               $"Server=localhost,{PortBinding};" +
-                               $"Database={DatabaseName};" +
-                               $"UID=sa;" +
-                               $"PWD={Password};";
-        
+        await container.StartAsync();
+
         var odbcConnection = new OdbcConnection(connectionString);
 
         var mockFileSystem = new MockFileSystem();
 
         var contents = Encoding.UTF8.GetBytes
             ("CREATE TABLE Test(" +
-             "ID int PRIMARY KEY NOT NULL," +
-             "Description nvarchar(255) NOT NULL)");
+             "\"ID\" int PRIMARY KEY NOT NULL," +
+             "\"Description\" varchar(255) NOT NULL)");
 
         mockFileSystem.AddDirectory("db/migration");
 
@@ -77,11 +59,12 @@ internal sealed class MigrateTests
             ("db/migration/V1__Test.sql",
              new MockFileData(contents));
 
-        var configuration = new Configuration();
+        var configuration = new Configuration 
+            { DefaultSchema = defaultSchema };
 
         var migrate = new Migrate
             (_logger,
-             odbcConnection,
+             DatabaseFactory.Create(odbcConnection, configuration), 
              configuration,
              mockFileSystem);
 
@@ -91,48 +74,42 @@ internal sealed class MigrateTests
 
         using var schemaHistory = DbQueryHandler.ExecuteSql
             (connectionString,
-             "SELECT * FROM dbo.flyway_schema_history");
+             $"SELECT * FROM {configuration.DefaultSchema}.{configuration.SchemaTable}");
 
-        schemaHistory.Should().NotBeNull();
+        schemaHistory.Rows.Count.Should().Be(1);
 
-        schemaHistory!.Rows.Count.Should().Be(1);
-
-        schemaHistory.Rows[0].Field<string>("version")
+        schemaHistory.Rows[0].GetString("version")
             .Should().Be("1");
 
-        schemaHistory.Rows[0].Field<string>("description")
+        schemaHistory.Rows[0].GetString("description")
             .Should().Be("Test");
-
-        schemaHistory.Rows[0].Field<string>("type")
+        
+        schemaHistory.Rows[0].GetString("type")
             .Should().Be("SQL");
 
-        schemaHistory.Rows[0].Field<string>("script")
+        schemaHistory.Rows[0].GetString("script")
             .Should().Be("V1__Test.sql");
 
-        schemaHistory.Rows[0].Field<string>("checksum")
-            .Should().Be("3ce34a47e53303ff1abdea9e9162bac3");
+        schemaHistory.Rows[0].GetString("checksum")
+            .Should().Be("72e60a278ed8d3655565a63940a34c2c");
 
-        schemaHistory.Rows[0].Field<string>("installed_by")
+        schemaHistory.Rows[0].GetString("installed_by")
             .Should().Be(string.Empty);
 
-        schemaHistory.Rows[0].Field<DateTime>("installed_on")
+        schemaHistory.Rows[0].GetDateTime("installed_on")
             .Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
 
-        schemaHistory.Rows[0].Field<bool>("success")
-            .Should().Be(true);
+        schemaHistory.Rows[0].GetBoolean("success")
+            .Should().BeTrue();
 
         using var migration = DbQueryHandler.ExecuteSql
             (connectionString,
-             "SELECT * FROM INFORMATION_SCHEMA.TABLES " +
-             "WHERE TABLE_TYPE = 'BASE TABLE' " +
-             "AND TABLE_NAME = 'Test'");
+             "SELECT * FROM \"information_schema\".\"tables\" " +
+             "WHERE \"table_type\" = 'BASE TABLE' " +
+             "AND LOWER(\"table_name\") = 'test'");
 
-        migration.Should().NotBeNull();
-    }
+        migration.Rows.Count.Should().Be(1);
 
-    [OneTimeTearDown]
-    public async Task TearDown()
-    {
-        await _container.StopAsync();
+        await container.StopAsync();
     }
 }

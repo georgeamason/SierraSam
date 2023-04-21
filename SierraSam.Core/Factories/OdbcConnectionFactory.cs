@@ -18,6 +18,17 @@ public sealed class OdbcConnectionFactory
 
     public OdbcConnection Create()
     {
+        try
+        {
+            var connectionStringBuilder =
+                new OdbcConnectionStringBuilder(_configuration.Url);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception.Message, "Url not formatted correctly");
+            throw;
+        }
+
         var connection = new OdbcConnection(_configuration.Url)
         {
             ConnectionTimeout = _configuration.ConnectionTimeout

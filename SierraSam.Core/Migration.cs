@@ -1,34 +1,39 @@
-﻿
-using System.Diagnostics.CodeAnalysis;
-using System.IO.Abstractions;
-using System.Text.RegularExpressions;
+﻿namespace SierraSam.Core;
 
-namespace SierraSam.Core;
-
-[SuppressMessage("GeneratedRegex", "SYSLIB1045:Convert to \'GeneratedRegexAttribute\'.")]
 public sealed class Migration
 {
-    private readonly IFileInfo _fileInfo;
+    public int InstalledRank { get; }
+    public string Version { get; }
+    public string Description { get; }
+    public string Type { get; }
+    public string Script { get; }
+    public string Checksum { get; }
+    public string InstalledBy { get; }
+    public DateTime InstalledOn { get; }
+    public double ExecutionTime { get; }
+    public bool Success { get; }
 
-    public Migration(IFileInfo fileInfo)
+    public Migration
+        (int installedRank,
+         string version,
+         string description,
+         string type,
+         string script,
+         string checksum,
+         string installedBy,
+         DateTime installedOn,
+         double executionTime,
+         bool success)
     {
-        _fileInfo = fileInfo
-            ?? throw new ArgumentNullException(nameof(fileInfo));
+        InstalledRank = installedRank;
+        Version = version ?? throw new ArgumentNullException(nameof(version));
+        Description = description ?? throw new ArgumentNullException(nameof(description));
+        Type = type ?? throw new ArgumentNullException(nameof(type));
+        Script = script ?? throw new ArgumentNullException(nameof(script));
+        Checksum = checksum ?? throw new ArgumentNullException(nameof(checksum));
+        InstalledBy = installedBy ?? throw new ArgumentNullException(nameof(installedBy));
+        InstalledOn = installedOn;
+        ExecutionTime = executionTime;
+        Success = success;
     }
-
-    public string Prefix => Regex.Match
-        (_fileInfo.Name, $"^([A-Za-z]+?)\\1*(?=\\d|([^A-Za-z0-9])\\2)").Value;
-
-    public string? Version => Regex.Match
-        (_fileInfo.Name, $"(?<={Prefix})(\\d+\\.?)+").Value;
-
-    public string Separator => Regex.Match
-        (_fileInfo.Name, $"(?<={Prefix}|{Version})([^A-Za-z0-9])\\1+").Value;
-
-    public string Description => Regex.Match
-        (_fileInfo.Name, $"(?<={Separator}).+(?=\\.\\w)").Value;
-
-    public string Suffix => _fileInfo.Extension;
-
-    public string Filename => $"{_fileInfo.Name}";
 }

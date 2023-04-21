@@ -51,43 +51,6 @@ public sealed class ConfigurationFactory
                 (jsonConfig, jsonSerializerOptions)!;
         }
 
-        // TODO: Set the database default schema to the defaultSchema prop.
-        // I've set to dbo in the Configuration getter for now
-
-        // Set the InstalledBy param
-        if (string.IsNullOrEmpty(Configuration.User))
-        {
-            try
-            {
-                var connStrBuilder = new OdbcConnectionStringBuilder
-                    (Configuration.Url);
-
-                foreach (string key in connStrBuilder.Keys!)
-                {
-                    switch (key.ToLower())
-                    {
-                        case "trusted_connection":
-                            Configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
-                            break;
-                        case "user id":
-                        case "user":
-                        case "uid":
-                            Configuration.InstalledBy = connStrBuilder.GetValue(key);
-                            break;
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(exception.Message);
-                throw;
-            }
-        }
-        else
-        {
-            Configuration.InstalledBy = Configuration.User;
-        }
-
         // here we can optionally override any of the configuration picked up from the configFile
         foreach (var arg in args)
         {
@@ -162,6 +125,58 @@ public sealed class ConfigurationFactory
                     _logger.LogInformation($"{arg} was not recognised.");
                     break;
             }
+        }
+
+        // TODO: Set the database default schema to the defaultSchema prop.
+        // I've set to dbo in the Configuration getter for now
+        if (string.IsNullOrEmpty(Configuration.DefaultSchema))
+        {
+            // TODO: Check configuration.Schemas here too and set to first if poss
+            if (Configuration.Schemas.Any())
+            {
+                Configuration.DefaultSchema = Configuration.Schemas.First();
+            }
+            else
+            {
+                throw new Exception
+                    ("Unable to determine schema for the schema history table. " +
+                     "Set a default schema for the connection or specify one " +
+                     "using the 'defaultSchema' property");
+            }
+        }
+
+        // Set the InstalledBy param
+        if (string.IsNullOrEmpty(Configuration.User))
+        {
+            try
+            {
+                var connStrBuilder = new OdbcConnectionStringBuilder
+                    (Configuration.Url);
+
+                foreach (string key in connStrBuilder.Keys!)
+                {
+                    switch (key.ToLower())
+                    {
+                        case "trusted_connection":
+                            Configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
+                            break;
+                        case "user id":
+                        case "user":
+                        case "uid":
+                            Configuration.InstalledBy = connStrBuilder.GetValue(key);
+                            break;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception.Message);
+                throw;
+            }
+        }
+        else
+        {
+            Configuration.InstalledBy = Configuration.User;
         }
 
         // If no default configuration exists, new a default up

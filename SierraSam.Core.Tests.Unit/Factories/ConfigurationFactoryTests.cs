@@ -11,8 +11,9 @@ internal sealed class ConfigurationFactoryTests
 {
     private static IEnumerable Get_config()
     {
-        yield return new TestCaseData("{ \"url\": \"connectionString\" }")
-            .Returns(new Configuration { Url = "connectionString" })
+        yield return new TestCaseData
+                ("{ \"url\": \"Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;\" }")
+            .Returns(new Configuration { Url = "Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;" })
             .SetName("Url is set correctly");
     
         yield return new TestCaseData("{ \"connectionTimeout\": 5 }")

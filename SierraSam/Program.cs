@@ -9,6 +9,7 @@ using RedGate.Client.Activation.Shim;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Factories;
+using SierraSam.Database;
 using SierraSam.Licensing;
 using Version = SierraSam.Capabilities.Version;
 
@@ -33,7 +34,7 @@ public static class Program
                     options.UseUtcTimestamp = true;
                 });
 
-                builder.SetMinimumLevel(LogLevel.Information);
+                //builder.SetMinimumLevel(LogLevel.Information);
             })
             .ConfigureServices((_, services) =>
             {
@@ -51,6 +52,11 @@ public static class Program
                          s.GetRequiredService<IFileSystem>(),
                          ConfigPaths())
                             .Create(args));
+
+                services.AddSingleton<IDatabase>
+                    (s => DatabaseFactory.Create
+                        (s.GetRequiredService<OdbcConnection>(),
+                         s.GetRequiredService<Configuration>()));
 
                 services.AddSingleton<IFileSystem, FileSystem>();
 

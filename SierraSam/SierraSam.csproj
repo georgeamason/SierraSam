@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\RedGate.Client\RedGate.Client.Activation.Shim\RedGate.Client.Activation.Shim.csproj" />
       <ProjectReference Include="..\SierraSam.Core\SierraSam.Core.csproj" />
+      <ProjectReference Include="..\SierraSam.Database\SierraSam.Database.csproj" />
     </ItemGroup>
 
     <ItemGroup>

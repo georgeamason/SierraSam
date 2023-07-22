@@ -12,9 +12,13 @@ public interface IDatabase
 
     bool HasMigrationTable { get; }
 
+    bool HasTable(string tableName);
+
     void CreateSchemaHistory(string schema, string table);
 
     IEnumerable<Migration> GetSchemaHistory(string schema, string table);
 
-    void InsertIntoSchemaHistory(OdbcTransaction transaction, Migration migration);
+    void InsertSchemaHistory(OdbcTransaction transaction, Migration migration);
+
+    TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql);
 }

@@ -2,17 +2,6 @@
 
 public sealed class Migration
 {
-    public int InstalledRank { get; }
-    public string Version { get; }
-    public string Description { get; }
-    public string Type { get; }
-    public string Script { get; }
-    public string Checksum { get; }
-    public string InstalledBy { get; }
-    public DateTime InstalledOn { get; }
-    public double ExecutionTime { get; }
-    public bool Success { get; }
-
     public Migration
         (int installedRank,
          string version,
@@ -36,4 +25,24 @@ public sealed class Migration
         ExecutionTime = executionTime;
         Success = success;
     }
+
+    public int InstalledRank { get; }
+
+    public string Version { get; }
+
+    public string Description { get; }
+
+    public string Type { get; }
+
+    public string Script { get; }
+
+    public string Checksum { get; }
+
+    public string InstalledBy { get; }
+
+    public DateTime InstalledOn { get; }
+
+    public double ExecutionTime { get; }
+
+    public bool Success { get; }
 }

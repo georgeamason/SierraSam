@@ -11,5 +11,11 @@
       <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
       <PackageReference Include="System.IO.Abstractions" Version="19.2.4" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+        <InternalsVisibleTo Include="SierraSam.Core.Tests.Unit" />
+        <InternalsVisibleTo Include="SierraSam.Core.Tests.Integration" />
+    </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 ﻿
 using Microsoft.Extensions.Logging;
 using SierraSam.Capabilities;
-using Version = SierraSam.Capabilities.Version;
 
 namespace SierraSam;
 
@@ -47,7 +46,7 @@ public sealed class App
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
             case "-v" or "--version" or "version":
-                _capabilityResolver.Resolve(typeof(Version)).Run(Array.Empty<string>());
+                _capabilityResolver.Resolve(typeof(Capabilities.Version)).Run(Array.Empty<string>());
                 break;
         }
     }

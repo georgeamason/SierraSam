@@ -4,7 +4,7 @@ using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
-public class PostgresDatabase : Database
+public class PostgresDatabase : DefaultDatabase
 {
     private readonly Configuration _configuration;
 
@@ -37,7 +37,7 @@ public class PostgresDatabase : Database
         command.ExecuteNonQuery();
     }
 
-    public override void InsertIntoSchemaHistory(OdbcTransaction transaction, Migration migration)
+    public override void InsertSchemaHistory(OdbcTransaction transaction, Migration migration)
     {
         using var cmd = Connection.CreateCommand();
         cmd.CommandText =

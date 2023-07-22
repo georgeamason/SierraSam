@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.Logging;
-using RedGate.Client.Activation.Shim;
+﻿using Microsoft.Extensions.Logging;
 
 namespace SierraSam.Capabilities;
 

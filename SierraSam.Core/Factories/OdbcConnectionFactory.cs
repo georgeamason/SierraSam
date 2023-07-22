@@ -3,57 +3,46 @@ using Microsoft.Extensions.Logging;
 
 namespace SierraSam.Core.Factories;
 
-public sealed class OdbcConnectionFactory
+public static class OdbcConnectionFactory
 {
-    public OdbcConnectionFactory
-        (ILogger<OdbcConnectionFactory> logger,
-         Configuration configuration)
+    public static OdbcConnection Create
+        (ILogger logger, Configuration configuration)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
+        if (logger == null) throw new ArgumentNullException(nameof(logger));
+        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
-        _configuration = configuration 
-            ?? throw new ArgumentNullException(nameof(configuration));
-    }
-
-    public OdbcConnection Create()
-    {
         try
         {
-            var connectionStringBuilder =
-                new OdbcConnectionStringBuilder(_configuration.Url);
+            // ReSharper disable once ObjectCreationAsStatement
+            new OdbcConnectionStringBuilder(configuration.Url);
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception.Message, "Url not formatted correctly");
+            logger.LogError(exception.Message, "Url not formatted correctly");
             throw;
         }
 
-        var connection = new OdbcConnection(_configuration.Url)
+        var connection = new OdbcConnection(configuration.Url)
         {
-            ConnectionTimeout = _configuration.ConnectionTimeout
+            ConnectionTimeout = configuration.ConnectionTimeout
         };
 
         connection.InfoMessage += (_, eventArgs) =>
         {
             foreach (OdbcError exception in eventArgs.Errors)
             {
-                _logger.LogTrace(exception.Message);
+                logger.LogTrace(exception.Message);
             }
         };
 
         connection.StateChange += (_, args) =>
         {
-            _logger.LogTrace
+            logger.LogTrace
                 ($"Connection state changed from {args.OriginalState} to {args.CurrentState}");
         };
 
-        connection.Disposed += (_, _) => _logger.LogTrace($"Disposed of connection");
+        connection.Disposed += (_, _) => logger.LogTrace($"Disposed of connection");
 
         return connection;
     }
-
-    private readonly ILogger<OdbcConnectionFactory> _logger;
-
-    private readonly Configuration _configuration;
 }

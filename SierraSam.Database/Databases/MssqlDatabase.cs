@@ -3,7 +3,7 @@ using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
-public class MssqlDatabase : Database
+public class MssqlDatabase : DefaultDatabase
 {
     private readonly Configuration _configuration;
 

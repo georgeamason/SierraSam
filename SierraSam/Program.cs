@@ -5,12 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using RedGate.Client.Activation.Shim;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Factories;
 using SierraSam.Database;
-using SierraSam.Licensing;
 using Version = SierraSam.Capabilities.Version;
 
 namespace SierraSam;
@@ -41,10 +39,9 @@ public static class Program
                 services.AddSingleton<App>();
 
                 services.AddSingleton<OdbcConnection>
-                    (s => new OdbcConnectionFactory
-                        (s.GetRequiredService<ILogger<OdbcConnectionFactory>>(),
-                         s.GetRequiredService<Configuration>())
-                            .Create());
+                    (s => OdbcConnectionFactory.Create
+                        (s.GetRequiredService<ILogger<App>>(),
+                         s.GetRequiredService<Configuration>()));
 
                 services.AddSingleton<Configuration>
                     (s => new ConfigurationFactory
@@ -59,10 +56,6 @@ public static class Program
                          s.GetRequiredService<Configuration>()));
 
                 services.AddSingleton<IFileSystem, FileSystem>();
-
-                services.AddSingleton<ILicenseClient>
-                (s => LicenseClientFactory.Create(
-                    s.GetRequiredService<ILogger<App>>()));
 
                 services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                 services.AddSingleton<ICapability, Version>();

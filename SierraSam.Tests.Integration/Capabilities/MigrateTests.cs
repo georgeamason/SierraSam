@@ -1,13 +1,14 @@
 ﻿using System.Collections;
-using System.Data;
 using System.Data.Odbc;
 using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
+using SierraSam.Core.Factories;
 using SierraSam.Database;
 
 
@@ -30,12 +31,14 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (DbContainerFactory.CreateMsSqlContainer(Password),
              $"Driver={{ODBC Driver 17 for SQL Server}};Server=127.0.0.1,1433;UID=sa;PWD={Password};",
-             "dbo");
+             "dbo")
+            .SetName("SQL Server");
 
         yield return new TestCaseData
             (DbContainerFactory.CreatePostgresContainer(Password),
              $"Driver={{PostgreSQL UNICODE}};Server=127.0.0.1;Port=5432;Uid=sa;Pwd={Password};",
-             "public");
+             "public")
+            .SetName("PostgreSQL");
     }
 
     [TestCaseSource(nameof(Database_containers))]
@@ -44,7 +47,7 @@ internal sealed class MigrateTests
     {
         await container.StartAsync();
 
-        var odbcConnection = new OdbcConnection(connectionString);
+        await using var odbcConnection = new OdbcConnection(connectionString);
 
         var mockFileSystem = new MockFileSystem();
 
@@ -59,12 +62,16 @@ internal sealed class MigrateTests
             ("db/migration/V1__Test.sql",
              new MockFileData(contents));
 
-        var configuration = new Configuration 
-            { DefaultSchema = defaultSchema };
+        var configuration = new Configuration
+            (url: connectionString,
+             defaultSchema: defaultSchema);
+
+        var database = DatabaseFactory.Create
+            (odbcConnection, configuration);
 
         var migrate = new Migrate
             (_logger,
-             DatabaseFactory.Create(odbcConnection, configuration), 
+             database,
              configuration,
              mockFileSystem);
 
@@ -72,43 +79,22 @@ internal sealed class MigrateTests
 
         migrate.Run(args);
 
-        using var schemaHistory = DbQueryHandler.ExecuteSql
-            (connectionString,
-             $"SELECT * FROM {configuration.DefaultSchema}.{configuration.SchemaTable}");
+        var migrations = database
+            .GetSchemaHistory(configuration.DefaultSchema, configuration.SchemaTable)
+            .ToArray();
 
-        schemaHistory.Rows.Count.Should().Be(1);
+        migrations.Should().HaveCount(1);
 
-        schemaHistory.Rows[0].GetString("version")
-            .Should().Be("1");
+        migrations[0].Version.Should().Be("1");
+        migrations[0].Description.Should().Be("Test");
+        migrations[0].Type.Should().Be("SQL");
+        migrations[0].Script.Should().Be("V1__Test.sql");
+        migrations[0].Checksum.Should().Be("72e60a278ed8d3655565a63940a34c2c");
+        migrations[0].InstalledBy.Should().Be(string.Empty);
+        migrations[0].InstalledOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+        migrations[0].Success.Should().BeTrue();
 
-        schemaHistory.Rows[0].GetString("description")
-            .Should().Be("Test");
-        
-        schemaHistory.Rows[0].GetString("type")
-            .Should().Be("SQL");
-
-        schemaHistory.Rows[0].GetString("script")
-            .Should().Be("V1__Test.sql");
-
-        schemaHistory.Rows[0].GetString("checksum")
-            .Should().Be("72e60a278ed8d3655565a63940a34c2c");
-
-        schemaHistory.Rows[0].GetString("installed_by")
-            .Should().Be(string.Empty);
-
-        schemaHistory.Rows[0].GetDateTime("installed_on")
-            .Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
-
-        schemaHistory.Rows[0].GetBoolean("success")
-            .Should().BeTrue();
-
-        using var migration = DbQueryHandler.ExecuteSql
-            (connectionString,
-             "SELECT * FROM \"information_schema\".\"tables\" " +
-             "WHERE \"table_type\" = 'BASE TABLE' " +
-             "AND LOWER(\"table_name\") = 'test'");
-
-        migration.Rows.Count.Should().Be(1);
+        database.HasTable(configuration.SchemaTable).Should().BeTrue();
 
         await container.StopAsync();
     }

@@ -4,7 +4,7 @@ using FluentAssertions;
 namespace SierraSam.Core.Tests.Unit;
 
 [TestFixture]
-internal sealed class MigrationTests
+internal sealed class MigrationFileTests
 {
     [Test]
     public void Constructor_null_argument_throws()

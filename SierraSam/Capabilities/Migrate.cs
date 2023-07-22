@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Data;
+﻿using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO.Abstractions;
@@ -13,11 +12,10 @@ namespace SierraSam.Capabilities;
 
 public sealed class Migrate : ICapability
 {
-    public Migrate
-        (ILogger<Migrate> logger,
-        IDatabase database,
-        Configuration configuration,
-        IFileSystem fileSystem)
+    public Migrate(ILogger<Migrate> logger,
+                   IDatabase database,
+                   Configuration configuration,
+                   IFileSystem fileSystem)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -29,7 +27,7 @@ public sealed class Migrate : ICapability
             ?? throw new ArgumentNullException(nameof(configuration));
 
         _fileSystem = fileSystem
-                      ?? throw new ArgumentNullException(nameof(fileSystem));
+            ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public void Run(string[] args)
@@ -39,6 +37,7 @@ public sealed class Migrate : ICapability
         try
         {
             _database.Connection.Open();
+
             _logger.LogInformation($"Driver: {_database.Connection.Driver}");
             _logger.LogInformation($"Database: {_database.Connection.Database}");
 
@@ -104,7 +103,7 @@ public sealed class Migrate : ICapability
                     _logger.LogInformation($"Schema \"{_configuration.DefaultSchema}\" is clean");
                 }
 
-                return int.Parse(migration.Version) > maxAppliedVersion;
+                return int.Parse(migration.Version!) > maxAppliedVersion;
             });
 
             //Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": ");
@@ -123,11 +122,11 @@ public sealed class Migrate : ICapability
                                       $"to version {migration.Version} - {migration.Description}");
 
                     var migrationSql = _fileSystem.File.ReadAllText(migrationPath);
-                    var executionTime = ExecuteMigration(transaction, migrationSql);
+                    var executionTime = _database.ExecuteMigration(transaction, migrationSql);
 
                     var pendingMigration = new Migration
                         (++installRank,
-                         migration.Version,
+                         migration.Version!,
                          migration.Description,
                          "SQL",
                          migration.Filename,
@@ -138,7 +137,7 @@ public sealed class Migrate : ICapability
                          true);
 
                     // Write to migration history table
-                    _database.InsertIntoSchemaHistory(transaction, pendingMigration);
+                    _database.InsertSchemaHistory(transaction, pendingMigration);
 
                     transaction.Commit();
 
@@ -168,65 +167,10 @@ public sealed class Migrate : ICapability
         }
     }
 
-    private TimeSpan ExecuteMigration(OdbcTransaction transaction, string migrationSql)
-    {
-        using var cmd = _database.Connection.CreateCommand();
-        cmd.CommandText = migrationSql;
-        cmd.CommandType = CommandType.Text;
-        cmd.Transaction = transaction;
-
-        var stopwatch = new Stopwatch();
-
-        stopwatch.Start();
-        cmd.ExecuteNonQuery();
-        stopwatch.Stop();
-
-        return stopwatch.Elapsed;
-    }
-
-    private void InsertIntoMigrationHistoryTable
-        (OdbcTransaction transaction,
-         int installRank,
-         MigrationFile migrationFile,
-         string checksum,
-         double executionTime)
-    {
-        using var cmd = _database.Connection.CreateCommand();
-        cmd.CommandText =
-            @$"INSERT INTO [{_configuration.DefaultSchema}].[{_configuration.SchemaTable}]
-            (
-                installed_rank,
-                version,
-                description,
-                type,
-                script,
-                checksum,
-                installed_by,
-                installed_on,
-                execution_time,
-                success
-            )
-            VALUES
-            (   {installRank},
-                {migrationFile.Version},
-                N'{migrationFile.Description}',
-                N'SQL',
-                N'{migrationFile.Filename}',
-                N'{checksum}',
-                N'{_configuration.InstalledBy}',
-                DEFAULT,
-                {executionTime},
-                N'1'
-            )";
-        cmd.CommandType = CommandType.Text;
-        cmd.Transaction = transaction;
-
-        cmd.ExecuteNonQuery();
-    }
-
     private readonly ILogger _logger;
 
     private readonly IDatabase _database;
+
     private readonly Configuration _configuration;
 
     private readonly IFileSystem _fileSystem;

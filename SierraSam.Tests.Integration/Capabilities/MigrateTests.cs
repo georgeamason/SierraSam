@@ -9,6 +9,7 @@ using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
 using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 
 
@@ -69,11 +70,18 @@ internal sealed class MigrateTests
         var database = DatabaseFactory.Create
             (odbcConnection, configuration);
 
+        var migrationSeeker = Substitute.For<IMigrationSeeker>();
+
+        migrationSeeker
+            .Find()
+            .Returns(new[] { "db/migration/V1__Test.sql" });
+
         var migrate = new Migrate
             (_logger,
              database,
              configuration,
-             mockFileSystem);
+             mockFileSystem,
+             migrationSeeker);
 
         var args = Array.Empty<string>();
 

@@ -9,6 +9,7 @@ public static class OdbcConnectionFactory
         (ILogger logger, Configuration configuration)
     {
         if (logger == null) throw new ArgumentNullException(nameof(logger));
+
         if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
         try

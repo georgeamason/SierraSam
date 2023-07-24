@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
+using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 
 namespace SierraSam.Capabilities;
@@ -15,7 +16,8 @@ public sealed class Migrate : ICapability
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
                    Configuration configuration,
-                   IFileSystem fileSystem)
+                   IFileSystem fileSystem,
+                   IMigrationSeeker migrationSeeker)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -28,6 +30,9 @@ public sealed class Migrate : ICapability
 
         _fileSystem = fileSystem
             ?? throw new ArgumentNullException(nameof(fileSystem));
+
+        _migrationSeeker = migrationSeeker
+            ?? throw new ArgumentNullException(nameof(migrationSeeker));
     }
 
     public void Run(string[] args)
@@ -56,32 +61,8 @@ public sealed class Migrate : ICapability
                     (_configuration.DefaultSchema, _configuration.SchemaTable);
             }
 
-            // TODO: Search file system for migrations
-            // Will need to abstract this as well as calling s3 buckets etc
-            // Directory needs to be injected
-            var allMigrations = _configuration.Locations
-                .Where(d => d.StartsWith("filesystem:"))
-                .SelectMany(d =>
-                {
-                    var path = d.Split(':', 2).Last();
-
-                    return _fileSystem.Directory.GetFiles
-                        (path, "*", SearchOption.AllDirectories)
-                        .Where(migrationPath =>
-                        {
-                            var migration = new MigrationFile
-                                (_fileSystem.FileInfo.New(migrationPath));
-
-                            // V1__My_description.sql
-                            // V1.1__My_description.sql
-                            // V1.1.1.1.1.__My_description.sql
-                            return Regex.IsMatch
-                                ($"{migration.Filename}",
-                                 $"{_configuration.MigrationPrefix}\\d+(\\.?\\d{{0,}})+" +
-                                 $"{_configuration.MigrationSeparator}\\w+" +
-                                 $"({string.Join('|', _configuration.MigrationSuffixes)})");
-                        });
-                });
+            // Search file system for migrations
+            var allMigrations = _migrationSeeker.Find();
 
             // Filter out applied migrations
             var appliedMigrations = _database
@@ -96,9 +77,7 @@ public sealed class Migrate : ICapability
 
                 // TODO: Create a version comparison class - integers have been assumed
                 // ReSharper disable once AccessToDisposedClosure
-                if (!int.TryParse
-                        (appliedMigrations.Max(m => m.Version),
-                         out var maxAppliedVersion))
+                if (!int.TryParse(appliedMigrations.Max(m => m.Version), out var maxAppliedVersion))
                 {
                     _logger.LogInformation($"Schema \"{_configuration.DefaultSchema}\" is clean");
                 }
@@ -106,38 +85,39 @@ public sealed class Migrate : ICapability
                 return int.Parse(migration.Version!) > maxAppliedVersion;
             });
 
-            //Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": ");
+            // Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": {appliedMigrations.Max(m => m.Version)}");
 
             // Apply new migrations
             var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 0;
-            foreach (var migrationPath in pendingMigrations)
+            foreach (var pendingMigration in pendingMigrations)
             {
                 using var transaction = _database.Connection.BeginTransaction();
                 try
                 {
-                    var migration = new MigrationFile
-                        (_fileSystem.FileInfo.New(migrationPath));
+                    var migrationFile = new MigrationFile
+                        (_fileSystem.FileInfo.New(pendingMigration));
 
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                      $"to version {migration.Version} - {migration.Description}");
+                                      $"to version {migrationFile.Version} - {migrationFile.Description}");
 
-                    var migrationSql = _fileSystem.File.ReadAllText(migrationPath);
+                    var migrationSql = _fileSystem.File.ReadAllText(pendingMigration);
+
                     var executionTime = _database.ExecuteMigration(transaction, migrationSql);
 
-                    var pendingMigration = new Migration
-                        (++installRank,
-                         migration.Version!,
-                         migration.Description,
-                         "SQL",
-                         migration.Filename,
-                         migrationSql.Checksum(),
-                         _configuration.InstalledBy,
-                         default,
-                         executionTime.TotalMilliseconds,
-                         true);
-
                     // Write to migration history table
-                    _database.InsertSchemaHistory(transaction, pendingMigration);
+                    var migration = new Migration(
+                        ++installRank,
+                        migrationFile.Version!,
+                        migrationFile.Description,
+                        "SQL",
+                        migrationFile.Filename,
+                        migrationSql.Checksum(),
+                        _configuration.InstalledBy,
+                        default,
+                        executionTime.TotalMilliseconds,
+                        true);
+
+                    _database.InsertSchemaHistory(transaction, migration);
 
                     transaction.Commit();
 
@@ -147,7 +127,7 @@ public sealed class Migrate : ICapability
                 }
                 catch (Exception exception)
                 {
-                    _logger.LogError(exception, exception.Message);
+                    _logger.LogError(exception, "Unable to apply migration");
                     transaction.Rollback();
                     throw;
                 }
@@ -174,4 +154,6 @@ public sealed class Migrate : ICapability
     private readonly Configuration _configuration;
 
     private readonly IFileSystem _fileSystem;
+
+    private readonly IMigrationSeeker _migrationSeeker;
 }

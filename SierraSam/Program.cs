@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 using Version = SierraSam.Capabilities.Version;
 
@@ -56,6 +57,11 @@ public static class Program
                          s.GetRequiredService<Configuration>()));
 
                 services.AddSingleton<IFileSystem, FileSystem>();
+
+                services.AddSingleton<IMigrationSeeker>
+                    (s => MigrationSeekerFactory.Create
+                        (s.GetRequiredService<Configuration>(),
+                         s.GetRequiredService<IFileSystem>()));
 
                 services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                 services.AddSingleton<ICapability, Version>();

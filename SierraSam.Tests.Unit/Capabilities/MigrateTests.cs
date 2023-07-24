@@ -6,6 +6,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SierraSam.Capabilities;
 using SierraSam.Core;
+using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 
 namespace SierraSam.Tests.Unit.Capabilities;
@@ -23,7 +24,8 @@ internal sealed class MigrateTests
                 (null!,
                  DatabaseFactory.Create(new OdbcConnection(), configuration),
                  configuration,
-                 Substitute.For<IFileSystem>())))
+                 Substitute.For<IFileSystem>(),
+                 Substitute.For<IMigrationSeeker>())))
             .SetName("Null logger");
 
         yield return new TestCaseData
@@ -31,7 +33,8 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  null!, 
                  configuration,
-                 Substitute.For<IFileSystem>())))
+                 Substitute.For<IFileSystem>(),
+                 Substitute.For<IMigrationSeeker>())))
             .SetName("Null ODBC connection");
 
         yield return new TestCaseData
@@ -39,7 +42,8 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  null!,
-                 Substitute.For<IFileSystem>())))
+                 Substitute.For<IFileSystem>(),
+                 Substitute.For<IMigrationSeeker>())))
             .SetName("Null configuration");
 
         yield return new TestCaseData
@@ -47,8 +51,18 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  new Configuration(),
-                 null!)))
-            .SetName("Null configuration");
+                 null!,
+                 Substitute.For<IMigrationSeeker>())))
+            .SetName("Null file system");
+
+        yield return new TestCaseData
+            (new TestDelegate(() => new Migrate
+            (Substitute.For<ILogger<Migrate>>(),
+                DatabaseFactory.Create(new OdbcConnection(), configuration),
+                new Configuration(),
+                Substitute.For<IFileSystem>(),
+                null!)))
+            .SetName("Null migration seeker");
         // ReSharper restore ObjectCreationAsStatement
     }
 

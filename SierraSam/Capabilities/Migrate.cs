@@ -1,8 +1,4 @@
-﻿using System.Data;
-using System.Data.Odbc;
-using System.Diagnostics;
-using System.IO.Abstractions;
-using System.Text.RegularExpressions;
+﻿using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
@@ -37,7 +33,7 @@ public sealed class Migrate : ICapability
 
     public void Run(string[] args)
     {
-        _logger.LogInformation($"{nameof(Migrate)} running");
+        _logger.LogTrace($"{nameof(Migrate)} running");
 
         try
         {

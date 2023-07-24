@@ -11,7 +11,7 @@ public sealed class Auth : ICapability
 
     public void Run(string[] args)
     {
-        _logger.LogInformation($"{nameof(Auth)} is running");
+        _logger.LogTrace($"{nameof(Auth)} is running");
     }
 
     private readonly ILogger<Auth> _logger;

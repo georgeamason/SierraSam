@@ -1,21 +1,13 @@
 ﻿using System.Data.Odbc;
-using Microsoft.Extensions.Logging;
 
 namespace SierraSam.Core.ConfigurationBuilders;
 
 internal sealed class DefaultSchemaConfigurationBuilder : IConfigurationBuilder
 {
-    private readonly ILogger _logger;
-
     private readonly IConfigurationBuilder _configurationBuilder;
 
-    public DefaultSchemaConfigurationBuilder
-        (ILogger logger,
-        IConfigurationBuilder configurationBuilder)
+    public DefaultSchemaConfigurationBuilder(IConfigurationBuilder configurationBuilder)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
         _configurationBuilder = configurationBuilder
             ?? throw new ArgumentNullException(nameof(configurationBuilder));
     }

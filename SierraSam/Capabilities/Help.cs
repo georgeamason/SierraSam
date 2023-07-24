@@ -11,7 +11,7 @@ public sealed class Help : ICapability
 
     public void Run(string[] args)
     {
-        _logger.LogInformation($"{nameof(Help)} running");
+        _logger.LogTrace($"{nameof(Help)} running");
         
         if (!args.Any())
         {

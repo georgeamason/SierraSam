@@ -12,7 +12,7 @@ internal sealed class Clean : ICapability
 
     public void Run(string[] args)
     {
-        _logger.LogInformation($"{nameof(Clean)} is running");
+        _logger.LogTrace($"{nameof(Clean)} is running");
     }
 
     private readonly ILogger<Clean> _logger;

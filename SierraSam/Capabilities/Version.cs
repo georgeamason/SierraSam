@@ -11,7 +11,7 @@ public sealed class Version : ICapability
     
     public void Run(string[] args)
     {
-        _logger.LogInformation($"{nameof(Version)} running");
+        _logger.LogTrace($"{nameof(Version)} running");
 
         Console.WriteLine($"Version: {GetType().Assembly.GetName().Version!}");
     }

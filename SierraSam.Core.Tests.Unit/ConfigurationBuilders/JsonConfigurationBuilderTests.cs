@@ -2,10 +2,8 @@
 using System.IO.Abstractions;
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SierraSam.Core.ConfigurationBuilders;
-using SierraSam.Core.Factories;
 
 namespace SierraSam.Core.Tests.Unit.ConfigurationBuilders;
 
@@ -47,14 +45,13 @@ internal sealed class JsonConfigurationBuilderTests
     [TestCaseSource(nameof(Example_Configs))]
     public Configuration Config_file_is_read_correctly(string config)
     {
-        var logger = Substitute.For<ILogger<ConfigurationFactory>>();
         var fileSystem = Substitute.For<IFileSystem>();
 
         fileSystem.File.Exists(string.Empty).ReturnsForAnyArgs(true);
         fileSystem.File.ReadAllText(string.Empty).ReturnsForAnyArgs(config);
 
         var jsonBuilder = new JsonConfigurationBuilder
-            (logger, fileSystem, new []{ string.Empty });
+            (fileSystem, new []{ string.Empty });
 
         return jsonBuilder.Build();
     }
@@ -62,7 +59,6 @@ internal sealed class JsonConfigurationBuilderTests
     [Test]
     public void Config_file_throws_for_bad_config()
     {
-        var logger = Substitute.For<ILogger<ConfigurationFactory>>();
         var fileSystem = Substitute.For<IFileSystem>();
 
         fileSystem
@@ -76,7 +72,7 @@ internal sealed class JsonConfigurationBuilderTests
             .ReturnsForAnyArgs("{ \"this\": \"is\" } not json");
 
         var jsonBuilder = new JsonConfigurationBuilder
-            (logger, fileSystem, new []{ string.Empty });
+            (fileSystem, new []{ string.Empty });
 
         var func = () => jsonBuilder.Build();
 
@@ -86,7 +82,6 @@ internal sealed class JsonConfigurationBuilderTests
     [Test]
     public void Config_file_not_found_returns_default()
     {
-        var logger = Substitute.For<ILogger<ConfigurationFactory>>();
         var fileSystem = Substitute.For<IFileSystem>();
 
         fileSystem
@@ -95,7 +90,7 @@ internal sealed class JsonConfigurationBuilderTests
             .ReturnsForAnyArgs(false);
 
         var jsonBuilder = new JsonConfigurationBuilder
-            (logger, fileSystem, new[] { string.Empty });
+            (fileSystem, new[] { string.Empty });
 
         jsonBuilder.Build().Should().BeEquivalentTo(new Configuration());
     }

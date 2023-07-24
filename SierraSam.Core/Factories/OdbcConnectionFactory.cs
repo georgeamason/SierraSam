@@ -5,12 +5,10 @@ namespace SierraSam.Core.Factories;
 
 public static class OdbcConnectionFactory
 {
-    public static OdbcConnection Create
-        (ILogger logger, Configuration configuration)
+    public static OdbcConnection Create(ILogger logger, Configuration configuration)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
 
         try
         {
@@ -39,10 +37,12 @@ public static class OdbcConnectionFactory
         connection.StateChange += (_, args) =>
         {
             logger.LogTrace
-                ($"Connection state changed from {args.OriginalState} to {args.CurrentState}");
+                ("Connection state changed from {originalState} to {currentState}",
+                 args.OriginalState,
+                 args.CurrentState);
         };
 
-        connection.Disposed += (_, _) => logger.LogTrace($"Disposed of connection");
+        connection.Disposed += (_, _) => logger.LogTrace("Disposed of connection");
 
         return connection;
     }

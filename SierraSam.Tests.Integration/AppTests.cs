@@ -4,18 +4,18 @@ using Version = SierraSam.Capabilities.Version;
 
 namespace SierraSam.Tests.Integration;
 
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 internal sealed class AppTests
 {
-    private ILogger<App> m_Logger;
+    private readonly ILogger<App> _logger;
 
-    private ICapabilityResolver _mCapabilityResolver;
+    private readonly ICapabilityResolver _capabilityResolver;
 
-    [SetUp]
-    public void SetUp()
+    public AppTests()
     {
-        m_Logger = Substitute.For<ILogger<App>>();
+        _logger = Substitute.For<ILogger<App>>();
 
-        _mCapabilityResolver = Substitute.For<ICapabilityResolver>();
+        _capabilityResolver = Substitute.For<ICapabilityResolver>();
     }
 
     private static IEnumerable Get_args()
@@ -33,12 +33,12 @@ internal sealed class AppTests
     [TestCaseSource(nameof(Get_args))]
     public void Args_call_correct_path(string[] args, Type type)
     {
-        var app = new App(m_Logger, _mCapabilityResolver);
+        var app = new App(_logger, _capabilityResolver);
 
         app.Start(args);
 
-        _mCapabilityResolver.Received(1).Resolve(type);
+        _capabilityResolver.Received(1).Resolve(type);
 
-        m_Logger.Received(1).LogInformation($"App running");
+        _logger.Received(1).LogTrace($"App running");
     }
 }

@@ -17,7 +17,7 @@ public sealed class CapabilityResolver : ICapabilityResolver
 
     public ICapability Resolve(Type T)
     {
-        _logger.LogInformation($"Resolving capability {T}");
+        _logger.LogTrace("Resolving capability '{type}'", T.Name);
 
         var capability = _capabilities.FirstOrDefault(c => c.GetType() == T);
 

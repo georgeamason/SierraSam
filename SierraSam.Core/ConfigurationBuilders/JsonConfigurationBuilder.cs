@@ -1,26 +1,18 @@
 ﻿using System.IO.Abstractions;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using SierraSam.Core.Extensions;
 
 namespace SierraSam.Core.ConfigurationBuilders;
 
 internal sealed class JsonConfigurationBuilder : IConfigurationBuilder
 {
-    private readonly ILogger _logger;
-
     private readonly IFileSystem _fileSystem;
 
     private readonly IEnumerable<string> _defaultConfigPaths;
 
-    public JsonConfigurationBuilder
-        (ILogger logger,
-         IFileSystem fileSystem,
-         IEnumerable<string> defaultConfigPaths)
+    public JsonConfigurationBuilder(IFileSystem fileSystem,
+                                    IEnumerable<string> defaultConfigPaths)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
         _fileSystem = fileSystem
             ?? throw new ArgumentNullException(nameof(fileSystem));
 

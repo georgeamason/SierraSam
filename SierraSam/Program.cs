@@ -18,66 +18,79 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        using var host = Host
-            .CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration(builder =>
-            {
-                // Switch mappings can go here if required
-                builder.AddCommandLine(args);
-            })
-            .ConfigureLogging((_, builder) =>
-            {
-                builder.AddSimpleConsole(options =>
-                {
-                    options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss]";
-                    options.UseUtcTimestamp = true;
-                });
-
-                //builder.SetMinimumLevel(LogLevel.Information);
-            })
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton<App>();
-
-                services.AddSingleton<OdbcConnection>
-                    (s => OdbcConnectionFactory.Create
-                        (s.GetRequiredService<ILogger<App>>(),
-                         s.GetRequiredService<Configuration>()));
-
-                services.AddSingleton<Configuration>
-                    (s => new ConfigurationFactory
-                        (s.GetRequiredService<ILogger<ConfigurationFactory>>(),
-                         s.GetRequiredService<IFileSystem>(),
-                         ConfigPaths())
-                            .Create(args));
-
-                services.AddSingleton<IDatabase>
-                    (s => DatabaseFactory.Create
-                        (s.GetRequiredService<OdbcConnection>(),
-                         s.GetRequiredService<Configuration>()));
-
-                services.AddSingleton<IFileSystem, FileSystem>();
-
-                services.AddSingleton<IMigrationSeeker>
-                    (s => MigrationSeekerFactory.Create
-                        (s.GetRequiredService<Configuration>(),
-                         s.GetRequiredService<IFileSystem>()));
-
-                services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
-                services.AddSingleton<ICapability, Version>();
-                services.AddSingleton<ICapability, Help>();
-                services.AddSingleton<ICapability, Migrate>();
-                services.AddSingleton<ICapability, Auth>();
-                services.AddSingleton<ICapability, Clean>();
-                services.AddSingleton<ICapability, Baseline>();
-            })
-            .Build();
-
-        var app = host.Services.GetRequiredService<App>();
-
         try
         {
+            using var host = Host
+                .CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(builder =>
+                {
+                    // Switch mappings can go here if required
+                    builder.AddCommandLine(args);
+                })
+                .ConfigureLogging((ctx, builder) =>
+                {
+                    builder.ClearProviders();
+
+                    builder.AddSimpleConsole(options =>
+                    {
+                        options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] => ";
+                        options.UseUtcTimestamp = true;
+                        options.SingleLine      = true;
+                    });
+
+                    if (ctx.HostingEnvironment.IsDevelopment())
+                    {
+                        builder.SetMinimumLevel(LogLevel.Trace);
+                    }
+
+                    builder.AddDebug();
+                })
+                .ConfigureServices((_, services) =>
+                {
+                    services.AddSingleton<App>();
+
+                    services.AddSingleton<OdbcConnection>
+                    (s => OdbcConnectionFactory.Create
+                    (s.GetRequiredService<ILogger<App>>(),
+                        s.GetRequiredService<Configuration>()));
+
+                    services.AddSingleton<Configuration>
+                    (s => ConfigurationFactory.Create
+                    (s.GetRequiredService<ILoggerFactory>(),
+                        s.GetRequiredService<IFileSystem>(),
+                        ConfigPaths(),
+                        args));
+
+                    services.AddSingleton<IDatabase>
+                    (s => DatabaseFactory.Create
+                    (s.GetRequiredService<OdbcConnection>(),
+                        s.GetRequiredService<Configuration>()));
+
+                    services.AddSingleton<IFileSystem, FileSystem>();
+
+                    services.AddSingleton<IMigrationSeeker>
+                    (s => MigrationSeekerFactory.Create
+                    (s.GetRequiredService<Configuration>(),
+                        s.GetRequiredService<IFileSystem>()));
+
+                    services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
+                    services.AddSingleton<ICapability, Version>();
+                    services.AddSingleton<ICapability, Help>();
+                    services.AddSingleton<ICapability, Migrate>();
+                    services.AddSingleton<ICapability, Auth>();
+                    services.AddSingleton<ICapability, Clean>();
+                    services.AddSingleton<ICapability, Baseline>();
+                })
+                .Build();
+
+            var logger = host.Services.GetRequiredService<ILogger<App>>();
+            var app = host.Services.GetRequiredService<App>();
+
+            logger.LogDebug("Starting app...");
+
             app.Start(args);
+
+            logger.LogDebug("Terminating app...");
         }
         catch (Exception ex)
         {

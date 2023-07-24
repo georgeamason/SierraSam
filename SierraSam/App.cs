@@ -19,7 +19,7 @@ public sealed class App
 
     public void Start(string[] args)
     {
-        _logger.LogInformation($"{nameof(App)} running");
+        _logger.LogTrace($"{nameof(App)} running");
 
         if (!args.Any())
         {

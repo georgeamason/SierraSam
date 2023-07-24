@@ -1,26 +1,20 @@
 ﻿using System.Data.Odbc;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Principal;
-using Microsoft.Extensions.Logging;
 using SierraSam.Core.Extensions;
 
 namespace SierraSam.Core.ConfigurationBuilders;
 
 internal sealed class InstalledByConfigurationBuilder : IConfigurationBuilder
 {
-    private readonly ILogger _logger;
-
     private readonly IConfigurationBuilder _configurationBuilder;
 
-    public InstalledByConfigurationBuilder
-        (ILogger logger, IConfigurationBuilder configurationBuilder)
+    public InstalledByConfigurationBuilder(IConfigurationBuilder configurationBuilder)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
         _configurationBuilder = configurationBuilder
             ?? throw new ArgumentNullException(nameof(configurationBuilder));
     }
+
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
     public Configuration Build()
     {
@@ -51,8 +45,7 @@ internal sealed class InstalledByConfigurationBuilder : IConfigurationBuilder
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception.Message);
-            throw;
+            throw new Exception("The url is not a valid connection string", exception);
         }
 
         return configuration;

@@ -43,16 +43,16 @@ internal sealed class ArgsConfigurationBuilderTests
     [TestCaseSource(nameof(Get_config_overrides))]
     public Configuration Config_overrides_are_read_correctly(string[] args)
     {
-        var logger = Substitute.For<ILogger>();
-
         var configurationBuilder = Substitute.For<IConfigurationBuilder>();
 
         configurationBuilder
             .Build()
             .Returns(new Configuration());
 
+        var loggerFactory = Substitute.For<ILoggerFactory>();
+
         var argsConfigurationBuilder = new ArgsConfigurationBuilder
-            (logger, args, configurationBuilder);
+            (loggerFactory, args, configurationBuilder);
 
         return argsConfigurationBuilder.Build();
     }

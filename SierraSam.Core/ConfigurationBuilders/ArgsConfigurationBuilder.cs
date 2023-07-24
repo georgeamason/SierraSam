@@ -4,22 +4,23 @@ namespace SierraSam.Core.ConfigurationBuilders;
 
 internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
 {
-    private readonly ILogger _logger;
+    private readonly ILogger<ArgsConfigurationBuilder> _logger;
 
     private readonly IEnumerable<string> _args;
 
     private readonly IConfigurationBuilder _configurationReader;
 
-    public ArgsConfigurationBuilder
-        (ILogger logger,
-         string[] args,
-         IConfigurationBuilder configurationReader)
+
+    public ArgsConfigurationBuilder(ILoggerFactory loggerFactory,
+                                    string[] args,
+                                    IConfigurationBuilder configurationReader)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(loggerFactory, nameof(loggerFactory));
+
+        _logger = loggerFactory.CreateLogger<ArgsConfigurationBuilder>();
 
         _args = args
-            ?? throw new ArgumentNullException(nameof(args));
+                ?? throw new ArgumentNullException(nameof(args));
 
         _configurationReader = configurationReader
             ?? throw new ArgumentNullException(nameof(configurationReader));
@@ -40,7 +41,7 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
             var kvp = new KeyValuePair<string, string>
                 (argSplit[0], argSplit[1]);
 
-            _logger.LogInformation($"Configuration override {kvp.Key} to {kvp.Value}...");
+            _logger.LogInformation("Configuration override {key} to {value}...", kvp.Key, kvp.Value);
             switch (kvp.Key)
             {
                 case "--url":
@@ -50,7 +51,7 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
                 case "--connectionTimeout":
                     if (!int.TryParse(kvp.Value, out var connectionTimeout))
                     {
-                        _logger.LogInformation($"connectionTimeout: {kvp.Value} is not an integer");
+                        _logger.LogInformation("connectionTimeout: {value} is not an integer", kvp.Value);
                         break;
                     }
 
@@ -95,8 +96,8 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
                     configuration.SetInstalledBy(kvp.Value);
                     break;
                 default:
-                    _logger.LogWarning($"{arg} was not recognised.");
-                    break;
+                    Console.WriteLine($"Argument '{kvp.Key}' was not recognised.");
+                    throw new Exception($"Invalid argument '{kvp.Key}'");
             }
         }
 

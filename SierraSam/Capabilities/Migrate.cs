@@ -39,8 +39,8 @@ public sealed class Migrate : ICapability
         {
             _database.Connection.Open();
 
-            _logger.LogInformation($"Driver: {_database.Connection.Driver}");
-            _logger.LogInformation($"Database: {_database.Connection.Database}");
+            _logger.LogInformation("Driver: {Driver}", _database.Connection.Driver);
+            _logger.LogInformation("Database: {Database}", _database.Connection.Database);
 
             Console.WriteLine($"Database: {_database.Connection.Driver}:" +
                               $"{_database.Connection.Database}:" +
@@ -66,22 +66,26 @@ public sealed class Migrate : ICapability
                 .ToArray();
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
+            // Filter all migrations by applied migrations. Filtering key is version.
             var pendingMigrations = allMigrations.Where(path =>
             {
-                var migration = new MigrationFile
+                var m = new MigrationFile
                     (_fileSystem.FileInfo.New(path));
 
-                // TODO: Create a version comparison class - integers have been assumed
-                // ReSharper disable once AccessToDisposedClosure
-                if (!int.TryParse(appliedMigrations.Max(m => m.Version), out var maxAppliedVersion))
+                Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
+                                  $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
+
+                if (!appliedMigrations.Any())
                 {
-                    _logger.LogInformation($"Schema \"{_configuration.DefaultSchema}\" is clean");
+                    _logger.LogInformation
+                        ("Schema \"{DefaultSchema}\" is clean", _configuration.DefaultSchema);
+
+                    return true;
                 }
 
-                return int.Parse(migration.Version!) > maxAppliedVersion;
+                return VersionComparator.Compare(m.Version!, appliedMigrations.Max(x => x.Version)!);
             });
 
-            // Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\": {appliedMigrations.Max(m => m.Version)}");
 
             // Apply new migrations
             var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 0;
@@ -119,7 +123,7 @@ public sealed class Migrate : ICapability
 
                     Console.WriteLine($"Successfully applied 1 migration " +
                                       $"to schema \"{_configuration.DefaultSchema}\" " +
-                                      $"(execution time {executionTime:g})");
+                                      $"(execution time {executionTime:mm\\:ss\\.fff}s)");
                 }
                 catch (Exception exception)
                 {

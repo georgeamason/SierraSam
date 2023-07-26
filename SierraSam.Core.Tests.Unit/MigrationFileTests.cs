@@ -17,6 +17,8 @@ internal sealed class MigrationFileTests
     [TestCase("./RRR2.2.2223__Add_new_table.sql", "RRR", "2.2.2223", "__", "Add_new_table")]
     [TestCase("./V2__Desc.sql", "V", "2", "__", "Desc")]
     [TestCase("./VV22.12.2@@xyz.abc", "VV", "22.12.2", "@@", "xyz")]
+    [TestCase("./VV1_2_3@@xyz.abc", "VV", "1_2_3", "@@", "xyz")]
+    [TestCase("./VV1_2_3@@@xyz.abc", "VV", "1_2_3", "@@@", "xyz")]
     [TestCase("./U1.1__Fix_indexes.sql", "U", "1.1", "__", "Fix_indexes")]
     [TestCase("./V2__Add a new table.sql", "V", "2", "__", "Add a new table")]
     [TestCase("./R__My_view.sql", "R", "", "__", "My_view")]

@@ -20,7 +20,7 @@ public sealed class MigrationFile
         (_fileInfo.Name, $"^([A-Za-z]+?)\\1*(?=\\d|([^A-Za-z0-9])\\2)").Value;
 
     public string? Version => Regex.Match
-        (_fileInfo.Name, $"(?<={Prefix})(\\d+\\.?)+").Value;
+        (_fileInfo.Name, $"(?<={Prefix})((\\d+)(\\.?|_?))+(?=([^A-Za-z0-9])\\4)").Value;
 
     public string Separator => Regex.Match
         (_fileInfo.Name, $"(?<={Prefix}|{Version})([^A-Za-z0-9])\\1+").Value;

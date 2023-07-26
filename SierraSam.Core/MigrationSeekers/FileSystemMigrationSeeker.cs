@@ -24,10 +24,10 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
             .Where(d => d.StartsWith("filesystem:"))
             .SelectMany(d =>
             {
-                var path = d.Split(':', 2).Last();
+                var pathToSearch = d.Split(':', 2).Last();
 
-                return _fileSystem.Directory.GetFiles
-                        (path, "*", SearchOption.AllDirectories)
+                return _fileSystem.Directory
+                    .GetFiles(pathToSearch, "*", SearchOption.AllDirectories)
                     .Where(migrationPath =>
                     {
                         var migration = new MigrationFile
@@ -37,10 +37,10 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                         // V1.1__My_description.sql
                         // V1.1.1.1.1.__My_description.sql
                         return Regex.IsMatch
-                        ($"{migration.Filename}",
-                            $"{_configuration.MigrationPrefix}\\d+(\\.?\\d{{0,}})+" +
-                            $"{_configuration.MigrationSeparator}\\w+" +
-                            $"({string.Join('|', _configuration.MigrationSuffixes)})");
+                            ($"{migration.Filename}",
+                             $"{_configuration.MigrationPrefix}\\d+(\\.?\\d{{0,}})+" +
+                             $"{_configuration.MigrationSeparator}\\w+" +
+                             $"({string.Join('|', _configuration.MigrationSuffixes)})");
                     });
             });
     }

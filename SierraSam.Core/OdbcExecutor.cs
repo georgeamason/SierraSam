@@ -16,14 +16,27 @@ public sealed class OdbcExecutor
     public IEnumerable<T> ExecuteReader<T>(string sql, Func<OdbcDataReader, T> rowMapper)
     {
         using var command = new OdbcCommand(sql, _connection);
-        using var adapter = new OdbcDataAdapter(command);
 
-        var dataReader = command.ExecuteReader();
+        using var dataReader = command.ExecuteReader();
 
         if (!dataReader.HasRows)
             yield break;
 
         while (dataReader.Read())
             yield return rowMapper(dataReader);
+    }
+
+    public void ExecuteNonQuery(string sql)
+    {
+        using var command = new OdbcCommand(sql, _connection);
+
+        command.ExecuteNonQuery();
+    }
+
+    public void ExecuteNonQuery(OdbcTransaction transaction, string sql)
+    {
+        using var command = new OdbcCommand(sql, _connection, transaction);
+
+        command.ExecuteNonQuery();
     }
 }

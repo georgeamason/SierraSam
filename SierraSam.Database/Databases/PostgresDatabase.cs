@@ -8,20 +8,22 @@ public class PostgresDatabase : DefaultDatabase
 {
     private readonly Configuration _configuration;
 
-    public PostgresDatabase(OdbcConnection odbcConnection, Configuration configuration)
-        : base(odbcConnection, configuration)
+    private readonly OdbcExecutor _odbcExecutor;
+
+    public PostgresDatabase(OdbcConnection connection, Configuration configuration)
+        : base(connection, configuration)
     {
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
+
+        _odbcExecutor = new OdbcExecutor(connection);
     }
 
     public override string Name => "PostgreSQL";
 
     public override void CreateSchemaHistory(string schema, string table)
     {
-        using var command = Connection.CreateCommand();
-        command.CommandType = CommandType.Text;
-        command.CommandText =
+        var sql =
             $"CREATE TABLE {schema}.{table}(" +
             $"\"installed_rank\" INT PRIMARY KEY NOT NULL," +
             $"\"version\" VARCHAR(50) NULL," +
@@ -34,13 +36,12 @@ public class PostgresDatabase : DefaultDatabase
             $"\"execution_time\" REAL NOT NULL," +
             $"\"success\" BOOLEAN NOT NULL)";
 
-        command.ExecuteNonQuery();
+        _odbcExecutor.ExecuteNonQuery(sql);
     }
 
     public override void InsertSchemaHistory(OdbcTransaction transaction, Migration migration)
     {
-        using var cmd = Connection.CreateCommand();
-        cmd.CommandText =
+        var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
                 "\"installed_rank\"," +
                 "\"version\"," +
@@ -63,9 +64,7 @@ public class PostgresDatabase : DefaultDatabase
                 "DEFAULT," +
                 $"{migration.ExecutionTime}," +
                 $"{migration.Success})";
-        cmd.CommandType = CommandType.Text;
-        cmd.Transaction = transaction;
 
-        cmd.ExecuteNonQuery();
+        _odbcExecutor.ExecuteNonQuery(transaction, sql);
     }
 }

@@ -15,7 +15,7 @@ public abstract class DefaultDatabase : IDatabase
     protected DefaultDatabase(OdbcConnection connection, Configuration configuration)
     {
         Connection = connection
-                     ?? throw new ArgumentNullException(nameof(connection));
+            ?? throw new ArgumentNullException(nameof(connection));
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
@@ -37,8 +37,7 @@ public abstract class DefaultDatabase : IDatabase
             // https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/odbc-schema-collections
             var dbTableName = row["TABLE_NAME"] as string;
 
-            if (dbTableName == tableName)
-                return true;
+            if (dbTableName == tableName) return true;
         }
 
         return false;
@@ -46,10 +45,8 @@ public abstract class DefaultDatabase : IDatabase
 
     public virtual void CreateSchemaHistory(string schema, string table)
     {
-        using var command = Connection.CreateCommand();
-        command.CommandType = CommandType.Text;
-        command.CommandText =
-            $"CREATE TABLE {schema}.{table}(" +
+        var sql =
+            $"CREATE TABLE {schema}.{table} (" +
              "\"installed_rank\" INT PRIMARY KEY NOT NULL," +
              "\"version\" NVARCHAR(50) NULL," +
              "\"description\" NVARCHAR(200) NULL," +
@@ -61,7 +58,7 @@ public abstract class DefaultDatabase : IDatabase
              "\"execution_time\" FLOAT NOT NULL," +
              "\"success\" BIT NOT NULL)";
 
-        command.ExecuteNonQuery();
+        _odbcExecutor.ExecuteNonQuery(sql);
     }
 
     public virtual IEnumerable<Migration> GetSchemaHistory(string schema, string table)
@@ -97,8 +94,7 @@ public abstract class DefaultDatabase : IDatabase
 
     public virtual void InsertSchemaHistory(OdbcTransaction transaction, Migration migration)
     {
-        using var cmd = Connection.CreateCommand();
-        cmd.CommandText =
+        var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
                 "\"installed_rank\"," +
                 "\"version\"," +
@@ -121,23 +117,16 @@ public abstract class DefaultDatabase : IDatabase
                  "DEFAULT," +
                 $"{migration.ExecutionTime}," +
                 $"{(migration.Success ? 1 : 0)})";
-        cmd.CommandType = CommandType.Text;
-        cmd.Transaction = transaction;
 
-        cmd.ExecuteNonQuery();
+        _odbcExecutor.ExecuteNonQuery(transaction, sql);
     }
 
     public virtual TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql)
     {
-        using var cmd = Connection.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.CommandType = CommandType.Text;
-        cmd.Transaction = transaction;
-
         var stopwatch = new Stopwatch();
 
         stopwatch.Start();
-        cmd.ExecuteNonQuery();
+        _odbcExecutor.ExecuteNonQuery(transaction, sql);
         stopwatch.Stop();
 
         return stopwatch.Elapsed;

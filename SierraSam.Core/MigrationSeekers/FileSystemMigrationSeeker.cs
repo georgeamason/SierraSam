@@ -1,5 +1,6 @@
 ﻿using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core.MigrationSeekers;
 
@@ -18,30 +19,60 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
             ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public IEnumerable<string> Find()
+    public IReadOnlyCollection<string> Find()
     {
         return _configuration.Locations
-            .Where(d => d.StartsWith("filesystem:"))
-            .SelectMany(d =>
+            .Where(location => location.StartsWith("filesystem:"))
+            .Select(location => location[(location.IndexOf(':') + 1)..])
+            .SelectMany(locationPath =>
             {
-                var pathToSearch = d.Split(':', 2).Last();
+                try
+                {
+                    return _fileSystem.Directory
+                        .GetFiles(locationPath, "*", SearchOption.AllDirectories)
+                        .Where(filePath =>
+                        {
+                            var fileInfo = _fileSystem.FileInfo.New(filePath);
 
-                return _fileSystem.Directory
-                    .GetFiles(pathToSearch, "*", SearchOption.AllDirectories)
-                    .Where(migrationPath =>
-                    {
-                        var migration = new MigrationFile
-                            (_fileSystem.FileInfo.New(migrationPath));
+                            // Migration suffixes need to have a leading backslash to escape the period
+                            var pattern = @$"{_configuration.MigrationPrefix}(((\d+\.?)+)|((\d+_?)+))?" +
+                                          @$"{_configuration.MigrationSeparator}(\w|\s)+" +
+                                          $"({string.Join('|',
+                                              _configuration.MigrationSuffixes
+                                                  .Select(suffix => @$"\{suffix}")
+                                                  .ToArray())})";
 
-                        // V1__My_description.sql
-                        // V1.1__My_description.sql
-                        // V1.1.1.1.1.__My_description.sql
-                        return Regex.IsMatch
-                            ($"{migration.Filename}",
-                             $"{_configuration.MigrationPrefix}\\d+(\\.?\\d{{0,}})+" +
-                             $"{_configuration.MigrationSeparator}\\w+" +
-                             $"({string.Join('|', _configuration.MigrationSuffixes)})");
-                    });
-            });
+                            return Regex.IsMatch
+                                (fileInfo.Name,
+                                 pattern,
+                                 RegexOptions.None,
+                                 new TimeSpan(0, 0, 2));
+                        });
+                }
+                catch (UnauthorizedAccessException exception)
+                {
+                    throw new MigrationSeekerException
+                    ($"The application does not have permission to access location '{locationPath}'",
+                        exception);
+                }
+                catch (DirectoryNotFoundException exception)
+                {
+                    throw new MigrationSeekerException
+                        ($"The directory '{locationPath}' does not exist", exception);
+                }
+                catch (PathTooLongException exception)
+                {
+                    throw new MigrationSeekerException
+                        ($"The location path '{locationPath}' is too long", exception);
+                }
+                catch (RegexMatchTimeoutException exception)
+                {
+                    throw new MigrationSeekerException
+                        ("No match was found within the regular expression timeout", exception);
+                }
+            })
+            .ToArray();
     }
+
+
 }

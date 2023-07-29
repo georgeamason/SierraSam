@@ -1,6 +1,20 @@
-﻿namespace SierraSam.Core.MigrationSeekers;
+﻿using System.Text.RegularExpressions;
+using SierraSam.Core.Exceptions;
+
+namespace SierraSam.Core.MigrationSeekers;
 
 public interface IMigrationSeeker
 {
-    IEnumerable<string> Find();
+    /// <summary>
+    /// Finds all migrations in the configured locations.
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="MigrationSeekerException">
+    /// Can be thrown based on the following exceptions:
+    /// <see cref="UnauthorizedAccessException"/>
+    /// <see cref="DirectoryNotFoundException"/>
+    /// <see cref="PathTooLongException"/>
+    /// <see cref="RegexMatchTimeoutException"/>
+    /// </exception>
+    IReadOnlyCollection<string> Find();
 }

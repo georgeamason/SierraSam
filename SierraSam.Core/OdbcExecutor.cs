@@ -1,5 +1,5 @@
-﻿using System.Data;
-using System.Data.Odbc;
+﻿using System.Data.Odbc;
+using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core;
 
@@ -13,30 +13,60 @@ public sealed class OdbcExecutor
             ?? throw new ArgumentNullException(nameof(connection));
     }
 
-    public IEnumerable<T> ExecuteReader<T>(string sql, Func<OdbcDataReader, T> rowMapper)
+    public IReadOnlyCollection<T> ExecuteReader<T>(string sql, Func<OdbcDataReader, T> rowMapper)
     {
-        using var command = new OdbcCommand(sql, _connection);
+        try
+        {
+            using var command = new OdbcCommand(sql, _connection);
+            using var dataReader = command.ExecuteReader();
 
-        using var dataReader = command.ExecuteReader();
+            if (!dataReader.HasRows) return Array.Empty<T>();
 
-        if (!dataReader.HasRows)
-            yield break;
+            var rows = new List<T>();
+            while (dataReader.Read())
+            {
+                rows.Add(rowMapper(dataReader));
+            }
 
-        while (dataReader.Read())
-            yield return rowMapper(dataReader);
+            return rows;
+        }
+        catch (OdbcException exception)
+        {
+            throw new OdbcExecutorException(
+                $"Failed to execute SQL statement: '{sql}'",
+                exception);
+        }
     }
 
     public void ExecuteNonQuery(string sql)
     {
-        using var command = new OdbcCommand(sql, _connection);
+        try
+        {
+            using var command = new OdbcCommand(sql, _connection);
 
-        command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
+        }
+        catch (OdbcException exception)
+        {
+            throw new OdbcExecutorException(
+                $"Failed to execute SQL statement: '{sql}'",
+                exception);
+        }
     }
 
     public void ExecuteNonQuery(OdbcTransaction transaction, string sql)
     {
-        using var command = new OdbcCommand(sql, _connection, transaction);
+        try
+        {
+            using var command = new OdbcCommand(sql, _connection, transaction);
 
-        command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
+        }
+        catch (OdbcException exception)
+        {
+            throw new OdbcExecutorException(
+                $"Failed to execute SQL statement: '{sql}'",
+                exception);
+        }
     }
 }

@@ -9,6 +9,16 @@ namespace SierraSam.Capabilities;
 
 public sealed class Migrate : ICapability
 {
+    private readonly ILogger _logger;
+
+    private readonly IDatabase _database;
+
+    private readonly Configuration _configuration;
+
+    private readonly IFileSystem _fileSystem;
+
+    private readonly IMigrationSeeker _migrationSeeker;
+
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
                    Configuration configuration,
@@ -61,20 +71,21 @@ public sealed class Migrate : ICapability
             var allMigrations = _migrationSeeker.Find();
 
             // Filter out applied migrations
-            var appliedMigrations = _database
-                .GetSchemaHistory(_configuration.DefaultSchema, _configuration.SchemaTable)
-                .ToArray();
+            var appliedMigrations = _database.GetSchemaHistory
+                (_configuration.DefaultSchema, _configuration.SchemaTable);
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
             // Filter all migrations by applied migrations. Filtering key is version.
             var pendingMigrations = allMigrations.Where(path =>
             {
+                // TODO: Would like to sort this out?
                 var m = new MigrationFile
                     (_fileSystem.FileInfo.New(path));
 
                 Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
                                   $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
 
+                // ReSharper disable once InvertIf
                 if (!appliedMigrations.Any())
                 {
                     _logger.LogInformation
@@ -83,12 +94,13 @@ public sealed class Migrate : ICapability
                     return true;
                 }
 
-                return VersionComparator.Compare(m.Version!, appliedMigrations.Max(x => x.Version)!);
+                // TODO:  m.Version could be null here for repeatable migrations
+                return VersionComparator.Compare(m.Version, appliedMigrations.Max(x => x.Version)!);
             });
 
 
             // Apply new migrations
-            var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 0;
+            var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 1;
             foreach (var pendingMigration in pendingMigrations)
             {
                 using var transaction = _database.Connection.BeginTransaction();
@@ -106,7 +118,7 @@ public sealed class Migrate : ICapability
 
                     // Write to migration history table
                     var migration = new Migration(
-                        ++installRank,
+                        installRank,
                         migrationFile.Version!,
                         migrationFile.Description,
                         "SQL",
@@ -137,23 +149,8 @@ public sealed class Migrate : ICapability
         }
         catch (Exception exception)
         {
-            var msg = exception switch
-            {
-                _ => exception.Message
-            };
-
-            _logger.LogError(msg, exception);
+            _logger.LogError(exception, "A problem occured with the migration");
             throw;
         }
     }
-
-    private readonly ILogger _logger;
-
-    private readonly IDatabase _database;
-
-    private readonly Configuration _configuration;
-
-    private readonly IFileSystem _fileSystem;
-
-    private readonly IMigrationSeeker _migrationSeeker;
 }

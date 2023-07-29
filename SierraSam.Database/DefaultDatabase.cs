@@ -61,7 +61,7 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor.ExecuteNonQuery(sql);
     }
 
-    public virtual IEnumerable<Migration> GetSchemaHistory(string schema, string table)
+    public virtual IReadOnlyCollection<Migration> GetSchemaHistory(string schema, string table)
     {
         var sql = "SELECT \"installed_rank\"," +
                   "\"version\"," +

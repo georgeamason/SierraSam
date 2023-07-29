@@ -16,7 +16,7 @@ public interface IDatabase
 
     void CreateSchemaHistory(string schema, string table);
 
-    IEnumerable<Migration> GetSchemaHistory(string schema, string table);
+    IReadOnlyCollection<Migration> GetSchemaHistory(string schema, string table);
 
     void InsertSchemaHistory(OdbcTransaction transaction, Migration migration);
 

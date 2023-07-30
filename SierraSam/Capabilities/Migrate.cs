@@ -73,11 +73,12 @@ public sealed class Migrate : ICapability
                 (_configuration.DefaultSchema, _configuration.SchemaTable);
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
-            // TODO: Handle repeatable migrations - they don't have a version number
-            var pendingMigrations = discoveredMigrations
+            var pendingVersionedMigrations = discoveredMigrations
                 .Select(path => _fileSystem.FileInfo.New(path))
+                .Where(fileInfo => fileInfo.Name.StartsWith(_configuration.MigrationPrefix) ||
+                                   fileInfo.Name.StartsWith(_configuration.UndoMigrationPrefix))
                 .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
-                .Where(pendingMigration =>
+                .Where(pendingVersionedMigration =>
                 {
                     Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
                                       $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
@@ -92,29 +93,30 @@ public sealed class Migrate : ICapability
                     }
 
                     return VersionComparator.Compare
-                        (pendingMigration.Version, appliedMigrations.Max(x => x.Version)!);
+                        (pendingVersionedMigration.Version!,
+                         appliedMigrations.Max(x => x.Version)!);
                 });
 
             // Apply new migrations
             var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 1;
-            foreach (var pendingMigration in pendingMigrations)
+            foreach (var pendingVersionMigration in pendingVersionedMigrations)
             {
                 using var transaction = _database.Connection.BeginTransaction();
                 try
                 {
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                      $"to version {pendingMigration.Version} - {pendingMigration.Description}");
+                                      $"to version {pendingVersionMigration.Version} - {pendingVersionMigration.Description}");
 
-                    var migrationSql = _fileSystem.File.ReadAllText(pendingMigration.FilePath);
+                    var migrationSql = _fileSystem.File.ReadAllText(pendingVersionMigration.FilePath);
 
                     var executionTime = _database.ExecuteMigration(transaction, migrationSql);
 
                     var migration = new AppliedMigration(
                         installRank,
-                        pendingMigration.Version,
-                        pendingMigration.Description,
+                        pendingVersionMigration.Version,
+                        pendingVersionMigration.Description,
                         "SQL",
-                        pendingMigration.FileName,
+                        pendingVersionMigration.FileName,
                         migrationSql.Checksum(),
                         _configuration.InstalledBy,
                         default,
@@ -138,6 +140,8 @@ public sealed class Migrate : ICapability
 
                 installRank++;
             }
+
+            // TODO: Apply repeatable migrations
         }
         catch (Exception exception)
         {

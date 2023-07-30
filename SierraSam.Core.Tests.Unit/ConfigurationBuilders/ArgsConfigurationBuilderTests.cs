@@ -38,6 +38,16 @@ internal sealed class ArgsConfigurationBuilderTests
                 (new[] { "migrate", "--table=a-table" }.AsEnumerable())
             .Returns(new Configuration(schemaTable: "a-table"))
             .SetName("table is set correctly");
+
+        yield return new TestCaseData
+                (new[] { "migrate", "--repeatableMigrationPrefix=Q" }.AsEnumerable())
+            .Returns(new Configuration(repeatableMigrationPrefix: "Q"))
+            .SetName("repeatable migration prefix is set correctly");
+
+        yield return new TestCaseData
+                (new[] { "migrate", "--undoMigrationPrefix=Z" }.AsEnumerable())
+            .Returns(new Configuration(undoMigrationPrefix: "Z"))
+            .SetName("undo migration prefix is set correctly");
     }
 
     [TestCaseSource(nameof(Get_config_overrides))]

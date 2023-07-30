@@ -9,19 +9,21 @@ public class Configuration : IEquatable<Configuration>
 {
     public Configuration()
     {
-        Url                = string.Empty;
-        User               = string.Empty;
-        ConnectionTimeout  = 15;
-        ConnectionRetries  = 1;
-        DefaultSchema      = string.Empty;
-        InitialiseSql      = string.Empty;
-        SchemaTable        = "flyway_schema_history";
-        Locations          = new [] {$"filesystem:{Path.Combine("db", "migration")}"};
-        MigrationSuffixes  = new [] { ".sql" };
-        MigrationSeparator = "__";
-        MigrationPrefix    = "V";
-        InstalledBy        = string.Empty;
-        Schemas            = Enumerable.Empty<string>();
+        Url                       = string.Empty;
+        User                      = string.Empty;
+        ConnectionTimeout         = 15;
+        ConnectionRetries         = 1;
+        DefaultSchema             = string.Empty;
+        InitialiseSql             = string.Empty;
+        SchemaTable               = "flyway_schema_history";
+        Locations                 = new [] {$"filesystem:{Path.Combine("db", "migration")}"};
+        MigrationSuffixes         = new [] { ".sql" };
+        MigrationSeparator        = "__";
+        MigrationPrefix           = "V";
+        InstalledBy               = string.Empty;
+        Schemas                   = Enumerable.Empty<string>();
+        RepeatableMigrationPrefix = "R";
+        UndoMigrationPrefix       = "U";
     }
 
     public Configuration(string? url = null,
@@ -36,21 +38,25 @@ public class Configuration : IEquatable<Configuration>
                          string? migrationSeparator = null,
                          string? migrationPrefix = null,
                          string? installedBy = null,
-                         IEnumerable<string>? schemas = null)
+                         IEnumerable<string>? schemas = null,
+                         string? repeatableMigrationPrefix = null,
+                         string? undoMigrationPrefix = null)
     {
-        Url                = url ?? string.Empty;
-        User               = user ?? string.Empty;
-        ConnectionTimeout  = connectionTimeout ?? 15;
-        ConnectionRetries  = connectionRetries ?? 1;
-        DefaultSchema      = defaultSchema ?? string.Empty;
-        InitialiseSql      = initialiseSql ?? string.Empty;
-        SchemaTable        = schemaTable ?? "flyway_schema_history";
-        Locations          = locations ?? new[] { $"filesystem:{Path.Combine("db", "migration")}" };
-        MigrationSuffixes  = migrationSuffixes ?? new[] { ".sql" };
-        MigrationSeparator = migrationSeparator ?? "__";
-        MigrationPrefix    = migrationPrefix ?? "V";
-        InstalledBy        = installedBy ?? string.Empty;
-        Schemas            = schemas ?? Enumerable.Empty<string>();
+        Url                       = url ?? string.Empty;
+        User                      = user ?? string.Empty;
+        ConnectionTimeout         = connectionTimeout ?? 15;
+        ConnectionRetries         = connectionRetries ?? 1;
+        DefaultSchema             = defaultSchema ?? string.Empty;
+        InitialiseSql             = initialiseSql ?? string.Empty;
+        SchemaTable               = schemaTable ?? "flyway_schema_history";
+        Locations                 = locations ?? new[] { $"filesystem:{Path.Combine("db", "migration")}" };
+        MigrationSuffixes         = migrationSuffixes ?? new[] { ".sql" };
+        MigrationSeparator        = migrationSeparator ?? "__";
+        MigrationPrefix           = migrationPrefix ?? "V";
+        InstalledBy               = installedBy ?? string.Empty;
+        Schemas                   = schemas ?? Enumerable.Empty<string>();
+        RepeatableMigrationPrefix = repeatableMigrationPrefix ?? "R";
+        UndoMigrationPrefix       = undoMigrationPrefix ?? "U";
     }
 
     [JsonPropertyName("url"), JsonInclude]
@@ -96,29 +102,57 @@ public class Configuration : IEquatable<Configuration>
     [JsonPropertyName("schemas"), JsonInclude]
     public IEnumerable<string> Schemas { get; private set; }
 
+    [JsonPropertyName("repeatableMigrationPrefix"), JsonInclude]
+    [RegularExpression("[A-Za-z]")]
+    public string RepeatableMigrationPrefix { get; private set; }
+
+    [JsonPropertyName("undoMigrationPrefix"), JsonInclude]
+    [RegularExpression("[A-Za-z]")]
+    public string UndoMigrationPrefix { get; private set; }
+
+    #region Setter Methods
     internal void SetUrl(string url) => Url = url;
 
-    internal void SetConnectionTimeout(int connectionTimeout) => ConnectionTimeout = connectionTimeout;
+    internal void SetConnectionTimeout(int connectionTimeout)
+        => ConnectionTimeout = connectionTimeout;
 
-    internal void SetConnectionRetries(int connectionRetries) => ConnectionRetries = connectionRetries;
+    internal void SetConnectionRetries(int connectionRetries)
+        => ConnectionRetries = connectionRetries;
 
-    internal void SetDefaultSchema(string defaultSchema) => DefaultSchema = defaultSchema;
+    internal void SetDefaultSchema(string defaultSchema)
+        => DefaultSchema = defaultSchema;
 
-    internal void SetInitialiseSql(string initialiseSql) => InitialiseSql = initialiseSql;
+    internal void SetInitialiseSql(string initialiseSql)
+        => InitialiseSql = initialiseSql;
 
-    internal void SetSchemaTable(string schemaTable) => SchemaTable = schemaTable;
+    internal void SetSchemaTable(string schemaTable)
+        => SchemaTable = schemaTable;
 
-    internal void SetLocations(IEnumerable<string> locations) => Locations = locations;
+    internal void SetLocations(IEnumerable<string> locations)
+        => Locations = locations;
 
-    internal void SetMigrationSuffixes(IEnumerable<string> migrationSuffixes) => MigrationSuffixes = migrationSuffixes;
+    internal void SetMigrationSuffixes(IEnumerable<string> migrationSuffixes)
+        => MigrationSuffixes = migrationSuffixes;
 
-    internal void SetMigrationSeparator(string migrationSeparator) => MigrationSeparator = migrationSeparator;
+    internal void SetMigrationSeparator(string migrationSeparator)
+        => MigrationSeparator = migrationSeparator;
 
-    internal void SetMigrationPrefix(string migrationPrefix) => MigrationPrefix = migrationPrefix;
+    internal void SetMigrationPrefix(string migrationPrefix)
+        => MigrationPrefix = migrationPrefix;
 
-    internal void SetInstalledBy(string installedBy) => InstalledBy = installedBy;
+    internal void SetInstalledBy(string installedBy)
+        => InstalledBy = installedBy;
 
-    internal void SetSchemas(IEnumerable<string> schemas) => Schemas = schemas;
+    internal void SetSchemas(IEnumerable<string> schemas)
+        => Schemas = schemas;
+
+    internal void SetRepeatableMigrationPrefix(string repeatableMigrationPrefix)
+        => RepeatableMigrationPrefix = repeatableMigrationPrefix;
+
+    internal void SetUndoMigrationPrefix(string undoMigrationPrefix)
+        => UndoMigrationPrefix = undoMigrationPrefix;
+
+    #endregion
 
     #region IEquatable
     public bool Equals(Configuration? other)
@@ -138,7 +172,9 @@ public class Configuration : IEquatable<Configuration>
             && MigrationSeparator == other.MigrationSeparator
             && MigrationPrefix == other.MigrationPrefix
             && InstalledBy == other.InstalledBy
-            && Schemas.SequenceEqual(other.Schemas);
+            && Schemas.SequenceEqual(other.Schemas)
+            && RepeatableMigrationPrefix == other.RepeatableMigrationPrefix
+            && UndoMigrationPrefix == other.UndoMigrationPrefix;
     }
 
     public override bool Equals(object? obj)
@@ -166,6 +202,8 @@ public class Configuration : IEquatable<Configuration>
         hashCode.Add(MigrationPrefix);
         hashCode.Add(InstalledBy);
         hashCode.Add(Schemas);
+        hashCode.Add(RepeatableMigrationPrefix);
+        hashCode.Add(UndoMigrationPrefix);
         return hashCode.ToHashCode();
     }
     #endregion

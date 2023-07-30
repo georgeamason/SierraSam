@@ -95,6 +95,12 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
                 case "--installedBy":
                     configuration.SetInstalledBy(kvp.Value);
                     break;
+                case "--repeatableMigrationPrefix":
+                    configuration.SetRepeatableMigrationPrefix(kvp.Value);
+                    break;
+                case "--undoMigrationPrefix":
+                    configuration.SetUndoMigrationPrefix(kvp.Value);
+                    break;
                 default:
                     Console.WriteLine($"Argument '{kvp.Key}' was not recognised.");
                     throw new Exception($"Invalid argument '{kvp.Key}'");

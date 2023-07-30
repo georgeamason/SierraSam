@@ -1,25 +1,25 @@
 ﻿namespace SierraSam.Core;
 
-public sealed class Migration
+public sealed class AppliedMigration
 {
-    public Migration
+    public AppliedMigration
         (int installedRank,
-         string version,
-         string description,
+         string? version,
+         string? description,
          string type,
          string script,
-         string checksum,
+         string? checksum,
          string installedBy,
          DateTime installedOn,
          double executionTime,
          bool success)
     {
         InstalledRank = installedRank;
-        Version = version ?? throw new ArgumentNullException(nameof(version));
-        Description = description ?? throw new ArgumentNullException(nameof(description));
+        Version = version;
+        Description = description;
         Type = type ?? throw new ArgumentNullException(nameof(type));
         Script = script ?? throw new ArgumentNullException(nameof(script));
-        Checksum = checksum ?? throw new ArgumentNullException(nameof(checksum));
+        Checksum = checksum;
         InstalledBy = installedBy ?? throw new ArgumentNullException(nameof(installedBy));
         InstalledOn = installedOn;
         ExecutionTime = executionTime;
@@ -28,15 +28,15 @@ public sealed class Migration
 
     public int InstalledRank { get; }
 
-    public string Version { get; }
+    public string? Version { get; }
 
-    public string Description { get; }
+    public string? Description { get; }
 
     public string Type { get; }
 
     public string Script { get; }
 
-    public string Checksum { get; }
+    public string? Checksum { get; }
 
     public string InstalledBy { get; }
 

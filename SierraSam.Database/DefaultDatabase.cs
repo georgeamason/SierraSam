@@ -61,7 +61,7 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor.ExecuteNonQuery(sql);
     }
 
-    public virtual IReadOnlyCollection<Migration> GetSchemaHistory(string schema, string table)
+    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string schema, string table)
     {
         var sql = "SELECT \"installed_rank\"," +
                   "\"version\"," +
@@ -76,9 +76,9 @@ public abstract class DefaultDatabase : IDatabase
                   $"FROM \"{schema}\".\"{table}\" " +
                   "ORDER BY \"installed_rank\"";
 
-        return _odbcExecutor.ExecuteReader<Migration>
+        return _odbcExecutor.ExecuteReader<AppliedMigration>
             (sql,
-             reader => new Migration
+             reader => new AppliedMigration
                 (reader.GetInt32("installed_rank"),
                  reader.GetString("version"),
                  reader.GetString("description"),
@@ -92,7 +92,7 @@ public abstract class DefaultDatabase : IDatabase
              );
     }
 
-    public virtual void InsertSchemaHistory(OdbcTransaction transaction, Migration migration)
+    public virtual void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
     {
         var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
@@ -107,16 +107,16 @@ public abstract class DefaultDatabase : IDatabase
                 "\"execution_time\"," +
                 "\"success\")" +
             " VALUES(" +
-                $"{migration.InstalledRank}," +
-                $"N'{migration.Version}'," +
-                $"N'{migration.Description}'," +
-                $"N'{migration.Type}'," +
-                $"N'{migration.Script}'," +
-                $"N'{migration.Checksum}'," +
-                $"N'{migration.InstalledBy}'," +
+                $"{appliedMigration.InstalledRank}," +
+                $"N'{appliedMigration.Version}'," +
+                $"N'{appliedMigration.Description}'," +
+                $"N'{appliedMigration.Type}'," +
+                $"N'{appliedMigration.Script}'," +
+                $"N'{appliedMigration.Checksum}'," +
+                $"N'{appliedMigration.InstalledBy}'," +
                  "DEFAULT," +
-                $"{migration.ExecutionTime}," +
-                $"{(migration.Success ? 1 : 0)})";
+                $"{appliedMigration.ExecutionTime}," +
+                $"{(appliedMigration.Success ? 1 : 0)})";
 
         _odbcExecutor.ExecuteNonQuery(transaction, sql);
     }

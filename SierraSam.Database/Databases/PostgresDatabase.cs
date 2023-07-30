@@ -39,7 +39,7 @@ public class PostgresDatabase : DefaultDatabase
         _odbcExecutor.ExecuteNonQuery(sql);
     }
 
-    public override void InsertSchemaHistory(OdbcTransaction transaction, Migration migration)
+    public override void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
     {
         var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
@@ -54,16 +54,16 @@ public class PostgresDatabase : DefaultDatabase
                 "\"execution_time\"," +
                 "\"success\")" +
             " VALUES(" +
-                $"{migration.InstalledRank}," +
-                $"N'{migration.Version}'," +
-                $"N'{migration.Description}'," +
-                $"N'{migration.Type}'," +
-                $"N'{migration.Script}'," +
-                $"N'{migration.Checksum}'," +
-                $"N'{migration.InstalledBy}'," +
+                $"{appliedMigration.InstalledRank}," +
+                $"N'{appliedMigration.Version}'," +
+                $"N'{appliedMigration.Description}'," +
+                $"N'{appliedMigration.Type}'," +
+                $"N'{appliedMigration.Script}'," +
+                $"N'{appliedMigration.Checksum}'," +
+                $"N'{appliedMigration.InstalledBy}'," +
                 "DEFAULT," +
-                $"{migration.ExecutionTime}," +
-                $"{migration.Success})";
+                $"{appliedMigration.ExecutionTime}," +
+                $"{appliedMigration.Success})";
 
         _odbcExecutor.ExecuteNonQuery(transaction, sql);
     }

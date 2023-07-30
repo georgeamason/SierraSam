@@ -35,7 +35,7 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                             var fileInfo = _fileSystem.FileInfo.New(filePath);
 
                             // Migration suffixes need to have a leading backslash to escape the period
-                            var pattern = @$"{_configuration.MigrationPrefix}(((\d+\.?)+)|((\d+_?)+))?" +
+                            var pattern = @$"{_configuration.MigrationPrefix}((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
                                           @$"{_configuration.MigrationSeparator}(\w|\s)+" +
                                           $"({string.Join('|',
                                               _configuration.MigrationSuffixes

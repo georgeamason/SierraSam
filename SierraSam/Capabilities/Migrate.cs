@@ -67,37 +67,33 @@ public sealed class Migrate : ICapability
                     (_configuration.DefaultSchema, _configuration.SchemaTable);
             }
 
-            // Search file system for migrations
-            var allMigrations = _migrationSeeker.Find();
+            var discoveredMigrations = _migrationSeeker.Find();
 
-            // Filter out applied migrations
             var appliedMigrations = _database.GetSchemaHistory
                 (_configuration.DefaultSchema, _configuration.SchemaTable);
 
             // TODO: There maybe something here about baselines? Need to check what we fetch..
-            // Filter all migrations by applied migrations. Filtering key is version.
-            var pendingMigrations = allMigrations.Where(path =>
-            {
-                // TODO: Would like to sort this out?
-                var m = new MigrationFile
-                    (_fileSystem.FileInfo.New(path));
-
-                Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
-                                  $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
-
-                // ReSharper disable once InvertIf
-                if (!appliedMigrations.Any())
+            // TODO: Handle repeatable migrations - they don't have a version number
+            var pendingMigrations = discoveredMigrations
+                .Select(path => _fileSystem.FileInfo.New(path))
+                .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
+                .Where(pendingMigration =>
                 {
-                    _logger.LogInformation
-                        ("Schema \"{DefaultSchema}\" is clean", _configuration.DefaultSchema);
+                    Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
+                                      $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
 
-                    return true;
-                }
+                    // ReSharper disable once InvertIf
+                    if (!appliedMigrations.Any())
+                    {
+                        _logger.LogInformation
+                            ("Schema \"{DefaultSchema}\" is clean", _configuration.DefaultSchema);
 
-                // TODO:  m.Version could be null here for repeatable migrations
-                return VersionComparator.Compare(m.Version, appliedMigrations.Max(x => x.Version)!);
-            });
+                        return true;
+                    }
 
+                    return VersionComparator.Compare
+                        (pendingMigration.Version, appliedMigrations.Max(x => x.Version)!);
+                });
 
             // Apply new migrations
             var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 1;
@@ -106,23 +102,19 @@ public sealed class Migrate : ICapability
                 using var transaction = _database.Connection.BeginTransaction();
                 try
                 {
-                    var migrationFile = new MigrationFile
-                        (_fileSystem.FileInfo.New(pendingMigration));
-
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                      $"to version {migrationFile.Version} - {migrationFile.Description}");
+                                      $"to version {pendingMigration.Version} - {pendingMigration.Description}");
 
-                    var migrationSql = _fileSystem.File.ReadAllText(pendingMigration);
+                    var migrationSql = _fileSystem.File.ReadAllText(pendingMigration.FilePath);
 
                     var executionTime = _database.ExecuteMigration(transaction, migrationSql);
 
-                    // Write to migration history table
-                    var migration = new Migration(
+                    var migration = new AppliedMigration(
                         installRank,
-                        migrationFile.Version!,
-                        migrationFile.Description,
+                        pendingMigration.Version,
+                        pendingMigration.Description,
                         "SQL",
-                        migrationFile.Filename,
+                        pendingMigration.FileName,
                         migrationSql.Checksum(),
                         _configuration.InstalledBy,
                         default,

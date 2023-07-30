@@ -131,4 +131,15 @@ public abstract class DefaultDatabase : IDatabase
 
         return stopwatch.Elapsed;
     }
+
+    public virtual TimeSpan ExecuteMigration(string sql)
+    {
+        var stopwatch = new Stopwatch();
+
+        stopwatch.Start();
+        _odbcExecutor.ExecuteNonQuery(sql);
+        stopwatch.Stop();
+
+        return stopwatch.Elapsed;
+    }
 }

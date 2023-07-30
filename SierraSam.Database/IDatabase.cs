@@ -21,4 +21,6 @@ public interface IDatabase
     void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration);
 
     TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql);
+
+    TimeSpan ExecuteMigration(string sql);
 }

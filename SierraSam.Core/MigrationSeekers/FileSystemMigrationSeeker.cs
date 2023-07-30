@@ -34,13 +34,19 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                         {
                             var fileInfo = _fileSystem.FileInfo.New(filePath);
 
-                            // Migration suffixes need to have a leading backslash to escape the period
-                            var pattern = @$"{_configuration.MigrationPrefix}((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
+                            var migrationPrefixes = string.Join('|',
+                                _configuration.MigrationPrefix,
+                                _configuration.UndoMigrationPrefix,
+                                _configuration.RepeatableMigrationPrefix);
+
+                            var migrationSuffixes = string.Join('|',
+                                _configuration.MigrationSuffixes
+                                    .Select(suffix => @$"\{suffix}")
+                                    .ToArray());
+
+                            var pattern = @$"{migrationPrefixes}((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
                                           @$"{_configuration.MigrationSeparator}(\w|\s)+" +
-                                          $"({string.Join('|',
-                                              _configuration.MigrationSuffixes
-                                                  .Select(suffix => @$"\{suffix}")
-                                                  .ToArray())})";
+                                          $"({migrationSuffixes})";
 
                             return Regex.IsMatch
                                 (fileInfo.Name,

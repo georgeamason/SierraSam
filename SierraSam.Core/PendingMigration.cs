@@ -16,27 +16,36 @@ public sealed class PendingMigration
 
         return new PendingMigration
             (string.IsNullOrEmpty(version) ? null : version,
-             string.IsNullOrEmpty(description) ? null : description,
+             description,
+             fileInfo.Name.StartsWith(configuration.RepeatableMigrationPrefix)
+                 ? MigrationType.Repeatable
+                 : MigrationType.Versioned,
              fileInfo.FullName,
              fileInfo.Name);
     }
 
     public string? Version { get; }
 
-    public string? Description { get; }
+    public string Description { get; }
+
+    public MigrationType MigrationType { get; }
 
     public string FilePath { get; }
 
     public string FileName { get; }
 
     private PendingMigration(string? version,
-                             string? description,
+                             string description,
+                             MigrationType migrationType,
                              string filePath,
                              string fileName)
     {
         Version = version;
 
-        Description = description;
+        Description = description
+            ?? throw new ArgumentNullException(nameof(description));
+
+        MigrationType = migrationType;
 
         FilePath = filePath
             ?? throw new ArgumentNullException(nameof(filePath));

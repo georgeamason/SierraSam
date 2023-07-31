@@ -27,10 +27,10 @@ public class PostgresDatabase : DefaultDatabase
             $"CREATE TABLE {schema}.{table}(" +
             $"\"installed_rank\" INT PRIMARY KEY NOT NULL," +
             $"\"version\" VARCHAR(50) NULL," +
-            $"\"description\" VARCHAR(200) NULL," +
+            $"\"description\" VARCHAR(200) NOT NULL," +
             $"\"type\" VARCHAR(20) NOT NULL," +
             $"\"script\" VARCHAR(1000) NOT NULL," +
-            $"\"checksum\" VARCHAR(32) NULL," +
+            $"\"checksum\" VARCHAR(32) NOT NULL," +
             $"\"installed_by\" VARCHAR(100) NOT NULL," +
             $"\"installed_on\" TIMESTAMP NOT NULL DEFAULT now()," +
             $"\"execution_time\" REAL NOT NULL," +
@@ -55,7 +55,7 @@ public class PostgresDatabase : DefaultDatabase
                 "\"success\")" +
             " VALUES(" +
                 $"{appliedMigration.InstalledRank}," +
-                $"N'{appliedMigration.Version}'," +
+                (appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : $"NULL,") +
                 $"N'{appliedMigration.Description}'," +
                 $"N'{appliedMigration.Type}'," +
                 $"N'{appliedMigration.Script}'," +

@@ -94,7 +94,9 @@ public static class Program
         }
         catch (Exception ex)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"An error occured: {ex.Message}");
+            Console.ResetColor();
         }
     }
 

@@ -5,10 +5,10 @@ public sealed class AppliedMigration
     public AppliedMigration
         (int installedRank,
          string? version,
-         string? description,
+         string description,
          string type,
          string script,
-         string? checksum,
+         string checksum,
          string installedBy,
          DateTime installedOn,
          double executionTime,
@@ -16,10 +16,10 @@ public sealed class AppliedMigration
     {
         InstalledRank = installedRank;
         Version = version;
-        Description = description;
+        Description = description ?? throw new ArgumentNullException(nameof(description));
         Type = type ?? throw new ArgumentNullException(nameof(type));
         Script = script ?? throw new ArgumentNullException(nameof(script));
-        Checksum = checksum;
+        Checksum = checksum ?? throw new ArgumentNullException(nameof(checksum));
         InstalledBy = installedBy ?? throw new ArgumentNullException(nameof(installedBy));
         InstalledOn = installedOn;
         ExecutionTime = executionTime;
@@ -30,13 +30,13 @@ public sealed class AppliedMigration
 
     public string? Version { get; }
 
-    public string? Description { get; }
+    public string Description { get; }
 
     public string Type { get; }
 
     public string Script { get; }
 
-    public string? Checksum { get; }
+    public string Checksum { get; }
 
     public string InstalledBy { get; }
 

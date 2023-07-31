@@ -71,52 +71,64 @@ public sealed class Migrate : ICapability
         var appliedMigrations = _database.GetSchemaHistory
             (_configuration.DefaultSchema, _configuration.SchemaTable);
 
+        Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
+                          $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
+
         // TODO: There maybe something here about baselines? Need to check what we fetch..
         var pendingMigrations = discoveredMigrations
             .Select(path => _fileSystem.FileInfo.New(path))
-            .Where(fileInfo => fileInfo.Name.StartsWith(_configuration.MigrationPrefix) ||
-                               fileInfo.Name.StartsWith(_configuration.UndoMigrationPrefix))
             .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
-            .Where(versionedMigration =>
+            .Where(pendingMigration =>
             {
-                Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
-                                  $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
 
-                // ReSharper disable once InvertIf
-                if (!appliedMigrations.Any())
-                {
-                    _logger.LogInformation
-                        ("Schema \"{DefaultSchema}\" is clean", _configuration.DefaultSchema);
-
-                    return true;
-                }
+               if (pendingMigration.MigrationType is MigrationType.Repeatable) return true;
 
                 return VersionComparator.Compare
-                    (versionedMigration.Version!,
+                    (pendingMigration.Version!,
                      appliedMigrations.Max(x => x.Version)!);
-            });
+            })
+            .OrderBy(pendingMigration => pendingMigration.Version)
+            .ThenBy(pendingMigration => pendingMigration.Description)
+            .ToArray();
 
-        // Apply versioned migrations
-        var installRank = appliedMigrations.MaxBy(m => m.Version)?.InstalledRank ?? 1;
+        // Apply migrations
+        var installRank = appliedMigrations
+            .Select(m => m.InstalledRank)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        using var transaction = _database.Connection.BeginTransaction();
+        var appliedMigrationCount = 0;
+        var executionTime = TimeSpan.Zero;
         foreach (var pendingMigration in pendingMigrations)
         {
-            using var transaction = _database.Connection.BeginTransaction();
             try
             {
-                Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                  $"to version {pendingMigration.Version} - {pendingMigration.Description}");
-
                 var migrationSql = _fileSystem.File.ReadAllText(pendingMigration.FilePath);
 
-                var executionTime = _database.ExecuteMigration(transaction, migrationSql);
+                if (pendingMigration.MigrationType is MigrationType.Versioned)
+                {
+                    Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
+                                      $"to version {pendingMigration.Version} - {pendingMigration.Description}");
+                }
+
+                var checksum = migrationSql.Checksum();
+                if (pendingMigration.MigrationType is MigrationType.Repeatable)
+                {
+                    if (appliedMigrations.Any(m => m.Checksum == checksum)) continue;
+
+                    Console.WriteLine($"Applying repeatable migration - {pendingMigration.Description}");
+                }
+
+                executionTime += _database.ExecuteMigration(transaction, migrationSql);
 
                 var migration = new AppliedMigration(
-                    installRank,
+                    ++installRank,
                     pendingMigration.Version,
                     pendingMigration.Description,
                     "SQL",
                     pendingMigration.FileName,
-                    migrationSql.Checksum(),
+                    checksum,
                     _configuration.InstalledBy,
                     default,
                     executionTime.TotalMilliseconds,
@@ -124,41 +136,33 @@ public sealed class Migrate : ICapability
 
                 _database.InsertSchemaHistory(transaction, migration);
 
-                transaction.Commit();
-
-                Console.WriteLine($"Successfully applied 1 migration " +
-                                  $"to schema \"{_configuration.DefaultSchema}\" " +
-                                  $"(execution time {executionTime:mm\\:ss\\.fff}s)");
+                appliedMigrationCount++;
             }
             catch (OdbcException exception)
             {
                 transaction.Rollback();
-                throw new Exception($"Unable to apply versioned migration \"{pendingMigration}\"", exception);
-            }
 
-            installRank++;
-        }
-
-        // Apply repeatable migrations
-        var repeatableMigrations = discoveredMigrations
-            .Select(path => _fileSystem.FileInfo.New(path))
-            .Where(fileInfo => fileInfo.Name.StartsWith(_configuration.RepeatableMigrationPrefix))
-            .OrderBy(fileInfo => fileInfo.Name);
-
-        foreach (var repeatableMigration in repeatableMigrations)
-        {
-            try
-            {
-                var migrationSql = _fileSystem.File.ReadAllText(repeatableMigration.FullName);
-
-                _database.ExecuteMigration(migrationSql);
-            }
-            catch (OdbcException exception)
-            {
                 throw new Exception
-                    ($"Unable to apply repeatable migration \"{repeatableMigration.FullName}\"",
+                    ($"Failed to apply migration \"{pendingMigration}\"; rolled back the transaction.",
                      exception);
             }
+        }
+
+        transaction.Commit();
+
+        if (appliedMigrationCount > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Successfully applied {appliedMigrationCount} migration(s) " +
+                              $"to schema \"{_configuration.DefaultSchema}\" " +
+                              $"(execution time {executionTime:mm\\:ss\\.fff}s)");
+            Console.ResetColor();
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Schema \"{_configuration.DefaultSchema}\" is up to date");
+            Console.ResetColor();
         }
     }
 }

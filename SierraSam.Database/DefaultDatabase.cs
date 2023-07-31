@@ -49,10 +49,10 @@ public abstract class DefaultDatabase : IDatabase
             $"CREATE TABLE {schema}.{table} (" +
              "\"installed_rank\" INT PRIMARY KEY NOT NULL," +
              "\"version\" NVARCHAR(50) NULL," +
-             "\"description\" NVARCHAR(200) NULL," +
+             "\"description\" NVARCHAR(200) NOT NULL," +
              "\"type\" NVARCHAR(20) NOT NULL," +
              "\"script\" NVARCHAR(1000) NOT NULL," +
-             "\"checksum\" NVARCHAR(32) NULL," +
+             "\"checksum\" NVARCHAR(32) NOT NULL," +
              "\"installed_by\" NVARCHAR(100) NOT NULL," +
              "\"installed_on\" DATETIME NOT NULL DEFAULT (GETDATE())," +
              "\"execution_time\" FLOAT NOT NULL," +
@@ -80,7 +80,7 @@ public abstract class DefaultDatabase : IDatabase
             (sql,
              reader => new AppliedMigration
                 (reader.GetInt32("installed_rank"),
-                 reader.GetString("version"),
+                 reader["version"] as string,
                  reader.GetString("description"),
                  reader.GetString("type"),
                  reader.GetString("script"),
@@ -108,7 +108,7 @@ public abstract class DefaultDatabase : IDatabase
                 "\"success\")" +
             " VALUES(" +
                 $"{appliedMigration.InstalledRank}," +
-                $"N'{appliedMigration.Version}'," +
+                (appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : $"NULL,") +
                 $"N'{appliedMigration.Description}'," +
                 $"N'{appliedMigration.Type}'," +
                 $"N'{appliedMigration.Script}'," +
@@ -127,17 +127,6 @@ public abstract class DefaultDatabase : IDatabase
 
         stopwatch.Start();
         _odbcExecutor.ExecuteNonQuery(transaction, sql);
-        stopwatch.Stop();
-
-        return stopwatch.Elapsed;
-    }
-
-    public virtual TimeSpan ExecuteMigration(string sql)
-    {
-        var stopwatch = new Stopwatch();
-
-        stopwatch.Start();
-        _odbcExecutor.ExecuteNonQuery(sql);
         stopwatch.Stop();
 
         return stopwatch.Elapsed;

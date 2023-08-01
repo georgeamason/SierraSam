@@ -11,6 +11,7 @@ using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 using Version = SierraSam.Capabilities.Version;
+using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam;
 
@@ -94,9 +95,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"An error occured: {ex.Message}");
-            Console.ResetColor();
+            Console.ErrorLine($"An error occured: {ex.Message}");
         }
     }
 

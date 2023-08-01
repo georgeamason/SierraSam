@@ -5,6 +5,7 @@ using SierraSam.Core;
 using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
+using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam.Capabilities;
 
@@ -150,19 +151,15 @@ public sealed class Migrate : ICapability
 
         transaction.Commit();
 
-        if (appliedMigrationCount > 0)
+        if (appliedMigrationCount == 0)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Successfully applied {appliedMigrationCount} migration(s) " +
-                              $"to schema \"{_configuration.DefaultSchema}\" " +
-                              $"(execution time {executionTime:mm\\:ss\\.fff}s)");
-            Console.ResetColor();
+            Console.SuccessLine($"Schema \"{_configuration.DefaultSchema}\" is up to date");
+
+            return;
         }
-        else
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Schema \"{_configuration.DefaultSchema}\" is up to date");
-            Console.ResetColor();
-        }
+
+        Console.SuccessLine($"Successfully applied {appliedMigrationCount} migration(s) " +
+                            $"to schema \"{_configuration.DefaultSchema}\" " +
+                            $"(execution time {executionTime:mm\\:ss\\.fff}s)");
     }
 }

@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Containers;
 
 namespace SierraSam.Core.Tests.Integration;
 
+// TODO: The containers should use random ports
 internal static class DbContainerFactory
 {
     public static IContainer CreateMsSqlContainer(string password, int portBinding = 1433)

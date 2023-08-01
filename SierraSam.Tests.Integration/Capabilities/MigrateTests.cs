@@ -76,12 +76,16 @@ internal sealed class MigrateTests
             .Find()
             .Returns(new[] { "db/migration/V1__Test.sql" });
 
+        var migrationApplicator = new MigrationApplicator
+            (database, mockFileSystem, configuration);
+
         var migrate = new Migrate
             (_logger,
              database,
              configuration,
              mockFileSystem,
-             migrationSeeker);
+             migrationSeeker,
+             migrationApplicator);
 
         var args = Array.Empty<string>();
 

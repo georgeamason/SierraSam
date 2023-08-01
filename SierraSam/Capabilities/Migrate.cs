@@ -1,4 +1,5 @@
-﻿using System.Data.Odbc;
+﻿using System.Collections.Immutable;
+using System.Data.Odbc;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -21,11 +22,14 @@ public sealed class Migrate : ICapability
 
     private readonly IMigrationSeeker _migrationSeeker;
 
+    private readonly IMigrationApplicator _migrationApplicator;
+
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
                    Configuration configuration,
                    IFileSystem fileSystem,
-                   IMigrationSeeker migrationSeeker)
+                   IMigrationSeeker migrationSeeker,
+                   IMigrationApplicator migrationApplicator)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -41,6 +45,9 @@ public sealed class Migrate : ICapability
 
         _migrationSeeker = migrationSeeker
             ?? throw new ArgumentNullException(nameof(migrationSeeker));
+
+        _migrationApplicator = migrationApplicator
+            ?? throw new ArgumentNullException(nameof(migrationApplicator));
     }
 
     public void Run(string[] args)
@@ -56,7 +63,6 @@ public sealed class Migrate : ICapability
                           $"{_database.Connection.Database}:" +
                           $"{_database.Connection.ServerVersion}");
 
-        // Create schema table if not found
         if (!_database.HasMigrationTable)
         {
             Console.WriteLine
@@ -81,75 +87,18 @@ public sealed class Migrate : ICapability
             .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
             .Where(pendingMigration =>
             {
-
-               if (pendingMigration.MigrationType is MigrationType.Repeatable) return true;
-
-                return VersionComparator.Compare
-                    (pendingMigration.Version!,
-                     appliedMigrations.Max(x => x.Version)!);
+                return pendingMigration.MigrationType is MigrationType.Repeatable ||
+                       VersionComparator.Compare
+                           (pendingMigration.Version!,
+                               appliedMigrations.Max(x => x.Version) ?? "0");
             })
             .OrderBy(pendingMigration => pendingMigration.Version)
             .ThenBy(pendingMigration => pendingMigration.Description)
-            .ToArray();
+            .ToArray()
+            .AsReadOnly();
 
-        // Apply migrations
-        var installRank = appliedMigrations
-            .Select(m => m.InstalledRank)
-            .DefaultIfEmpty(0)
-            .Max();
-
-        using var transaction = _database.Connection.BeginTransaction();
-        var appliedMigrationCount = 0;
-        var executionTime = TimeSpan.Zero;
-        foreach (var pendingMigration in pendingMigrations)
-        {
-            try
-            {
-                var migrationSql = _fileSystem.File.ReadAllText(pendingMigration.FilePath);
-
-                if (pendingMigration.MigrationType is MigrationType.Versioned)
-                {
-                    Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
-                                      $"to version {pendingMigration.Version} - {pendingMigration.Description}");
-                }
-
-                var checksum = migrationSql.Checksum();
-                if (pendingMigration.MigrationType is MigrationType.Repeatable)
-                {
-                    if (appliedMigrations.Any(m => m.Checksum == checksum)) continue;
-
-                    Console.WriteLine($"Applying repeatable migration - {pendingMigration.Description}");
-                }
-
-                executionTime += _database.ExecuteMigration(transaction, migrationSql);
-
-                var migration = new AppliedMigration(
-                    ++installRank,
-                    pendingMigration.Version,
-                    pendingMigration.Description,
-                    "SQL",
-                    pendingMigration.FileName,
-                    checksum,
-                    _configuration.InstalledBy,
-                    default,
-                    executionTime.TotalMilliseconds,
-                    true);
-
-                _database.InsertSchemaHistory(transaction, migration);
-
-                appliedMigrationCount++;
-            }
-            catch (OdbcException exception)
-            {
-                transaction.Rollback();
-
-                throw new Exception
-                    ($"Failed to apply migration \"{pendingMigration}\"; rolled back the transaction.",
-                     exception);
-            }
-        }
-
-        transaction.Commit();
+        var (appliedMigrationCount, executionTime) =
+            _migrationApplicator.Apply(pendingMigrations, appliedMigrations);
 
         if (appliedMigrationCount == 0)
         {

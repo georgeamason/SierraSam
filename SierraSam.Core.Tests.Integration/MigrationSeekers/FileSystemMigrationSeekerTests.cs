@@ -44,7 +44,7 @@ public class FileSystemMigrationSeekerTests
 
         migrations
             .Should()
-            .BeEquivalentTo(new[] { Path.Combine("C:", searchPath, fileName) });
+            .BeEquivalentTo(Path.Combine("C:", searchPath, fileName));
     }
 
     [Test]

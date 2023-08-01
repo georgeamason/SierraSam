@@ -16,7 +16,7 @@ public sealed class PendingMigration
 
         return new PendingMigration
             (string.IsNullOrEmpty(version) ? null : version,
-             description,
+             string.IsNullOrEmpty(description) ? null! : description,
              fileInfo.Name.StartsWith(configuration.RepeatableMigrationPrefix)
                  ? MigrationType.Repeatable
                  : MigrationType.Versioned,
@@ -54,15 +54,29 @@ public sealed class PendingMigration
             ?? throw new ArgumentNullException(nameof(fileName));
     }
 
-    private static string? GetVersion(Configuration configuration, string fileName) =>
-        Regex.Match(fileName,
-             $"(?<={configuration.MigrationPrefix})" +
-            @$"((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
-             $"(?={configuration.MigrationSeparator})").Value;
+    private static string? GetVersion(Configuration configuration, string fileName)
+    {
+        var prefixes = string.Join('|', configuration.MigrationPrefix, configuration.UndoMigrationPrefix);
 
-    private static string GetDescription(Configuration configuration, string fileName) =>
-        Regex.Match(fileName,
-             $"(?<={configuration.MigrationSeparator})" +
-            @$"(\w|\s)+" +
-            @$"(?={string.Join('|', configuration.MigrationSuffixes.Select(suffix => @$"\{suffix}").ToArray())})").Value;
+        // TODO: Pull out the regex pattern into a shared constant.
+        // It's used by both the FileSystemMigrationSeeker and this class.
+        var pattern = $"(?<={prefixes})" +
+                      @$"((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
+                      $"(?={configuration.MigrationSeparator})";
+
+        return Regex.Match(fileName, pattern).Value;
+    }
+
+    private static string GetDescription(Configuration configuration, string fileName)
+    {
+        var suffixes = string.Join('|', configuration.MigrationSuffixes
+            .Select(suffix => @$"\{suffix}")
+            .ToArray());
+
+        var pattern = $"(?<={configuration.MigrationSeparator})" +
+                      @$"(\w|\s)+" +
+                      @$"(?={suffixes})";
+
+        return Regex.Match(fileName, pattern).Value;
+    }
 }

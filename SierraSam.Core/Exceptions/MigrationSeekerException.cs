@@ -4,7 +4,7 @@ namespace SierraSam.Core.Exceptions;
 
 public class MigrationSeekerException : Exception
 {
-    public MigrationSeekerException() { }
+    public MigrationSeekerException() : base("There was a problem finding migrations") { }
 
     public MigrationSeekerException(string message) : base(message) { }
 

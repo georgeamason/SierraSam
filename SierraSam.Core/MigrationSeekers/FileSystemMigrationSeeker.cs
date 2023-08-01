@@ -44,7 +44,7 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                                     .Select(suffix => @$"\{suffix}")
                                     .ToArray());
 
-                            var pattern = @$"{migrationPrefixes}((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
+                            var pattern = @$"({migrationPrefixes})((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
                                           @$"{_configuration.MigrationSeparator}(\w|\s)+" +
                                           $"({migrationSuffixes})";
 

@@ -1,8 +1,6 @@
-﻿
-using System.Data.Odbc;
-using SierraSam.Core;
+﻿using System.Data.Odbc;
 
-namespace SierraSam.Database;
+namespace SierraSam.Core;
 
 public interface IDatabase
 {

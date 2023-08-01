@@ -51,28 +51,30 @@ public static class Program
                     services.AddSingleton<App>();
 
                     services.AddSingleton<OdbcConnection>
-                    (s => OdbcConnectionFactory.Create
-                    (s.GetRequiredService<ILogger<App>>(),
-                        s.GetRequiredService<Configuration>()));
+                        (s => OdbcConnectionFactory.Create
+                            (s.GetRequiredService<ILogger<App>>(),
+                             s.GetRequiredService<Configuration>()));
 
                     services.AddSingleton<Configuration>
-                    (s => ConfigurationFactory.Create
-                    (s.GetRequiredService<ILoggerFactory>(),
-                        s.GetRequiredService<IFileSystem>(),
-                        ConfigPaths(),
-                        args));
+                        (s => ConfigurationFactory.Create
+                            (s.GetRequiredService<ILoggerFactory>(),
+                             s.GetRequiredService<IFileSystem>(),
+                             ConfigPaths(),
+                             args));
 
                     services.AddSingleton<IDatabase>
-                    (s => DatabaseFactory.Create
-                    (s.GetRequiredService<OdbcConnection>(),
-                        s.GetRequiredService<Configuration>()));
+                        (s => DatabaseFactory.Create
+                            (s.GetRequiredService<OdbcConnection>(),
+                             s.GetRequiredService<Configuration>()));
 
                     services.AddSingleton<IFileSystem, FileSystem>();
 
                     services.AddSingleton<IMigrationSeeker>
-                    (s => MigrationSeekerFactory.Create
-                    (s.GetRequiredService<Configuration>(),
-                        s.GetRequiredService<IFileSystem>()));
+                        (s => MigrationSeekerFactory.Create
+                            (s.GetRequiredService<Configuration>(),
+                             s.GetRequiredService<IFileSystem>()));
+
+                    services.AddSingleton<IMigrationApplicator, MigrationApplicator>();
 
                     services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                     services.AddSingleton<ICapability, Version>();

@@ -25,7 +25,8 @@ internal sealed class MigrateTests
                  DatabaseFactory.Create(new OdbcConnection(), configuration),
                  configuration,
                  Substitute.For<IFileSystem>(),
-                 Substitute.For<IMigrationSeeker>())))
+                 Substitute.For<IMigrationSeeker>(),
+                 Substitute.For<IMigrationApplicator>())))
             .SetName("Null logger");
 
         yield return new TestCaseData
@@ -34,7 +35,8 @@ internal sealed class MigrateTests
                  null!, 
                  configuration,
                  Substitute.For<IFileSystem>(),
-                 Substitute.For<IMigrationSeeker>())))
+                 Substitute.For<IMigrationSeeker>(),
+                 Substitute.For<IMigrationApplicator>())))
             .SetName("Null ODBC connection");
 
         yield return new TestCaseData
@@ -43,7 +45,8 @@ internal sealed class MigrateTests
                  DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  null!,
                  Substitute.For<IFileSystem>(),
-                 Substitute.For<IMigrationSeeker>())))
+                 Substitute.For<IMigrationSeeker>(),
+                 Substitute.For<IMigrationApplicator>())))
             .SetName("Null configuration");
 
         yield return new TestCaseData
@@ -52,17 +55,29 @@ internal sealed class MigrateTests
                  DatabaseFactory.Create(new OdbcConnection(), configuration), 
                  new Configuration(),
                  null!,
-                 Substitute.For<IMigrationSeeker>())))
+                 Substitute.For<IMigrationSeeker>(),
+                 Substitute.For<IMigrationApplicator>())))
             .SetName("Null file system");
 
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
-            (Substitute.For<ILogger<Migrate>>(),
-                DatabaseFactory.Create(new OdbcConnection(), configuration),
-                new Configuration(),
-                Substitute.For<IFileSystem>(),
-                null!)))
+                (Substitute.For<ILogger<Migrate>>(),
+                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 new Configuration(),
+                 Substitute.For<IFileSystem>(),
+                 null!,
+                 Substitute.For<IMigrationApplicator>())))
             .SetName("Null migration seeker");
+
+        yield return new TestCaseData
+            (new TestDelegate(() => new Migrate
+                (Substitute.For<ILogger<Migrate>>(),
+                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 new Configuration(),
+                 Substitute.For<IFileSystem>(),
+                 Substitute.For<IMigrationSeeker>(),
+                 null!)))
+            .SetName("Null migration applicator");
         // ReSharper restore ObjectCreationAsStatement
     }
 

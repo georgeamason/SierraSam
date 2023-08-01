@@ -76,6 +76,7 @@ public abstract class DefaultDatabase : IDatabase
                   $"FROM \"{schema}\".\"{table}\" " +
                   "ORDER BY \"installed_rank\"";
 
+        // TODO: These mappings can throw...
         return _odbcExecutor.ExecuteReader<AppliedMigration>
             (sql,
              reader => new AppliedMigration

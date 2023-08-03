@@ -34,12 +34,18 @@ public sealed class PendingMigration
 
     public string FileName { get; }
 
-    private PendingMigration(string? version,
+    internal PendingMigration(string? version,
                              string description,
                              MigrationType migrationType,
                              string filePath,
                              string fileName)
     {
+        if (migrationType is MigrationType.Versioned && string.IsNullOrEmpty(version))
+        {
+            throw new ArgumentNullException(nameof(version),
+                "Version cannot be null or empty for versioned migrations.");
+        }
+
         Version = version;
 
         Description = description

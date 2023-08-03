@@ -31,24 +31,34 @@ internal sealed class MigrateTests
     {
         yield return new TestCaseData
             (DbContainerFactory.CreateMsSqlContainer(Password),
-             $"Driver={{ODBC Driver 17 for SQL Server}};Server=127.0.0.1,1433;UID=sa;PWD={Password};",
+             "Driver={{ODBC Driver 17 for SQL Server}};" +
+             "Server=127.0.0.1,{0};" +
+             "UID=sa;" +
+             $"PWD={Password};",
+             1433,
              "dbo")
             .SetName("SQL Server");
 
         yield return new TestCaseData
             (DbContainerFactory.CreatePostgresContainer(Password),
-             $"Driver={{PostgreSQL UNICODE}};Server=127.0.0.1;Port=5432;Uid=sa;Pwd={Password};",
+             "Driver={{PostgreSQL UNICODE}};" +
+             "Server=127.0.0.1;" +
+             "Port={0};" +
+             "Uid=sa;" +
+             $"Pwd={Password};",
+             5432,
              "public")
             .SetName("PostgreSQL");
     }
 
     [TestCaseSource(nameof(Database_containers))]
     public async Task Migrate_updates_database_correctly
-        (IContainer container, string connectionString, string defaultSchema)
+        (IContainer container, string connectionString, int containerPort, string defaultSchema)
     {
         await container.StartAsync();
 
-        await using var odbcConnection = new OdbcConnection(connectionString);
+        await using var odbcConnection = new OdbcConnection
+            (string.Format(connectionString, container.GetMappedPublicPort(containerPort)));
 
         var mockFileSystem = new MockFileSystem();
 

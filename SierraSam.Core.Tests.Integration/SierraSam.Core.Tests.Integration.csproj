@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\SierraSam.Core\SierraSam.Core.csproj" />
+      <ProjectReference Include="..\SierraSam.Database\SierraSam.Database.csproj" />
     </ItemGroup>
 
 </Project>

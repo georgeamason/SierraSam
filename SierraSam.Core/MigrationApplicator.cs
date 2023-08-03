@@ -1,4 +1,5 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
+using System.Data.Odbc;
 using System.IO.Abstractions;
 using SierraSam.Core.Exceptions;
 using SierraSam.Core.Extensions;
@@ -36,6 +37,9 @@ public sealed class MigrationApplicator : IMigrationApplicator
             .Select(m => m.InstalledRank)
             .DefaultIfEmpty(0)
             .Max();
+
+        if (_database.Connection.State is not ConnectionState.Open)
+            _database.Connection.Open();
 
         using var transaction = _database.Connection.BeginTransaction();
         var appliedCount = 0;

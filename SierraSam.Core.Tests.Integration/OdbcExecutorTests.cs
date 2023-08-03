@@ -5,28 +5,31 @@ using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core.Tests.Integration;
 
-internal sealed class OdbcExecutorTests : IDisposable
+internal sealed class OdbcExecutorTests
 {
+    private const string Password = "yourStrong(!)Password";
+
     private readonly IContainer _container;
 
     private readonly OdbcConnection _connection;
 
     public OdbcExecutorTests()
     {
-        const string password = "yourStrong(!)Password";
+        _container = DbContainerFactory.CreateMsSqlContainer(Password);
 
-        _container = DbContainerFactory.CreateMsSqlContainer(password);
-
-        _connection = new OdbcConnection
-            ($"Driver={{ODBC Driver 17 for SQL Server}};" +
-             $"Server=127.0.0.1,1433;" +
-             $"UID=sa;PWD={password};");
+        _connection = new OdbcConnection();
     }
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
         await _container.StartAsync();
+
+        _connection.ConnectionString =
+            $"Driver={{ODBC Driver 17 for SQL Server}};" +
+            $"Server=localhost,{_container.GetMappedPublicPort(1433)};" +
+            $"UID=sa;PWD={Password};";
+
         await _connection.OpenAsync();
     }
 
@@ -106,8 +109,9 @@ internal sealed class OdbcExecutorTests : IDisposable
             .WithMessage("Failed to execute SQL statement: 'SELECT Id FROM dbo.Dummy'");
     }
 
-    public void Dispose()
+    [OneTimeTearDown]
+    public async Task Dispose()
     {
-        _connection.Dispose();
+        await _connection.DisposeAsync();
     }
 }

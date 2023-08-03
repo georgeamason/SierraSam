@@ -26,8 +26,8 @@ internal sealed class OdbcExecutorTests
         await _container.StartAsync();
 
         _connection.ConnectionString =
-            $"Driver={{ODBC Driver 17 for SQL Server}};" +
-            $"Server=localhost,{_container.GetMappedPublicPort(1433)};" +
+            "Driver={ODBC Driver 17 for SQL Server};" +
+            $"Server=127.0.0.1,{_container.GetMappedPublicPort(1433)};" +
             $"UID=sa;PWD={Password};";
 
         await _connection.OpenAsync();

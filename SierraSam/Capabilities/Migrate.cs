@@ -92,7 +92,8 @@ public sealed class Migrate : ICapability
                            (pendingMigration.Version!,
                                appliedMigrations.Max(x => x.Version) ?? "0");
             })
-            .OrderBy(pendingMigration => pendingMigration.Version)
+            .OrderBy(pendingMigration => pendingMigration.MigrationType)
+            .ThenBy(pendingMigration => pendingMigration.Version)
             .ThenBy(pendingMigration => pendingMigration.Description)
             .ToArray()
             .AsReadOnly();

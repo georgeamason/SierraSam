@@ -67,8 +67,14 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
                     if (appliedMigration is not null)
                     {
-                        _database.UpdateSchemaHistory(transaction, appliedMigration.WithChecksum(checksum));
+                        var updatedMigration = appliedMigration
+                            .WithChecksum(checksum)
+                            .WithInstalledOn(DateTime.UtcNow);
+
+                        _database.UpdateSchemaHistory(transaction, updatedMigration);
+
                         executionTime += _database.ExecuteMigration(transaction, migrationSql);
+
                         continue;
                     }
                 }

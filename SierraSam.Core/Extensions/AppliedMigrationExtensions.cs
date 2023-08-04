@@ -14,4 +14,17 @@ public static class AppliedMigrationExtensions
                 appliedMigration.InstalledOn,
                 appliedMigration.ExecutionTime,
                 appliedMigration.Success);
+
+    public static AppliedMigration WithInstalledOn
+        (this AppliedMigration appliedMigration, DateTime installedOn)
+        => new (appliedMigration.InstalledRank,
+            appliedMigration.Version,
+            appliedMigration.Description,
+            appliedMigration.Type,
+            appliedMigration.Script,
+            appliedMigration.Checksum,
+            appliedMigration.InstalledBy,
+            installedOn,
+            appliedMigration.ExecutionTime,
+            appliedMigration.Success);
 }

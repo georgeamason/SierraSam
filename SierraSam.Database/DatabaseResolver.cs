@@ -4,7 +4,7 @@ using SierraSam.Database.Databases;
 
 namespace SierraSam.Database;
 
-public static class DatabaseFactory
+public static class DatabaseResolver
 {
     public static IDatabase Create(OdbcConnection odbcConnection, Configuration configuration)
     {

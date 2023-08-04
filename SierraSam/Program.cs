@@ -63,7 +63,7 @@ public static class Program
                              args));
 
                     services.AddSingleton<IDatabase>
-                        (s => DatabaseFactory.Create
+                        (s => DatabaseResolver.Create
                             (s.GetRequiredService<OdbcConnection>(),
                              s.GetRequiredService<Configuration>()));
 
@@ -77,12 +77,13 @@ public static class Program
                     services.AddSingleton<IMigrationApplicator, MigrationApplicator>();
 
                     services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
-                    services.AddSingleton<ICapability, Version>();
+                    services.AddSingleton<ICapability, Auth>();
+                    services.AddSingleton<ICapability, Baseline>();
+                    services.AddSingleton<ICapability, Clean>();
                     services.AddSingleton<ICapability, Help>();
                     services.AddSingleton<ICapability, Migrate>();
-                    services.AddSingleton<ICapability, Auth>();
-                    services.AddSingleton<ICapability, Clean>();
-                    services.AddSingleton<ICapability, Baseline>();
+                    services.AddSingleton<ICapability, Validate>();
+                    services.AddSingleton<ICapability, Version>();
                 })
                 .Build();
 

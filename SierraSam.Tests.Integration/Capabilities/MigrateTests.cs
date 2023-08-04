@@ -77,7 +77,7 @@ internal sealed class MigrateTests
             (url: connectionString,
              defaultSchema: defaultSchema);
 
-        var database = DatabaseFactory.Create
+        var database = DatabaseResolver.Create
             (odbcConnection, configuration);
 
         var migrationSeeker = Substitute.For<IMigrationSeeker>();

@@ -22,7 +22,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (null!,
-                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 DatabaseResolver.Create(new OdbcConnection(), configuration),
                  configuration,
                  Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
@@ -42,7 +42,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseFactory.Create(new OdbcConnection(), configuration), 
+                 DatabaseResolver.Create(new OdbcConnection(), configuration),
                  null!,
                  Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
@@ -52,7 +52,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseFactory.Create(new OdbcConnection(), configuration), 
+                 DatabaseResolver.Create(new OdbcConnection(), configuration),
                  new Configuration(),
                  null!,
                  Substitute.For<IMigrationSeeker>(),
@@ -62,7 +62,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 DatabaseResolver.Create(new OdbcConnection(), configuration),
                  new Configuration(),
                  Substitute.For<IFileSystem>(),
                  null!,
@@ -72,7 +72,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseFactory.Create(new OdbcConnection(), configuration),
+                 DatabaseResolver.Create(new OdbcConnection(), configuration),
                  new Configuration(),
                  Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),

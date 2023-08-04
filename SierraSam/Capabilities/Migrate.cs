@@ -2,9 +2,7 @@
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
-using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationSeekers;
-using SierraSam.Database;
 using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam.Capabilities;
@@ -68,6 +66,7 @@ public sealed class Migrate : ICapability
                 ("Creating Schema History table: " +
                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
 
+            // TODO: How about if the default schema has not been created?
             _database.CreateSchemaHistory
                 (_configuration.DefaultSchema, _configuration.SchemaTable);
         }
@@ -82,8 +81,6 @@ public sealed class Migrate : ICapability
 
         // TODO: There maybe something here about baselines? Need to check what we fetch..
         var pendingMigrations = discoveredMigrations
-            .Select(path => _fileSystem.FileInfo.New(path))
-            .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
             .Where(pendingMigration =>
             {
                 return pendingMigration.MigrationType is MigrationType.Repeatable ||

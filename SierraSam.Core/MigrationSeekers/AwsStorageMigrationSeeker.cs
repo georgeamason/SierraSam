@@ -9,7 +9,7 @@ internal sealed class AwsStorageMigrationSeeker : IMigrationSeeker
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
     }
 
-    public IReadOnlyCollection<string> Find()
+    public IReadOnlyCollection<PendingMigration> Find()
     {
         var migrations = _migrationSeeker.Find();
 

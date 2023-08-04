@@ -16,6 +16,8 @@
         <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
         <InternalsVisibleTo Include="SierraSam.Core.Tests.Unit" />
         <InternalsVisibleTo Include="SierraSam.Core.Tests.Integration" />
+        <InternalsVisibleTo Include="SierraSam.Tests.Unit" />
+        <InternalsVisibleTo Include="SierraSam.Tests.Integration" />
     </ItemGroup>
 
 </Project>

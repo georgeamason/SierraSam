@@ -19,7 +19,7 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
             ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public IReadOnlyCollection<string> Find()
+    public IReadOnlyCollection<PendingMigration> Find()
     {
         return _configuration.Locations
             .Where(location => location.StartsWith("filesystem:"))
@@ -77,6 +77,8 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                         ("No match was found within the regular expression timeout", exception);
                 }
             })
+            .Select(locationPath => _fileSystem.FileInfo.New(locationPath))
+            .Select(fileInfo => PendingMigration.Parse(_configuration, fileInfo))
             .ToArray();
     }
 

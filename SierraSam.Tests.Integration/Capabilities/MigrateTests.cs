@@ -84,7 +84,10 @@ internal sealed class MigrateTests
 
         migrationSeeker
             .Find()
-            .Returns(new[] { "db/migration/V1__Test.sql" });
+            .Returns(new[]
+            {
+                new PendingMigration("1", "Test", MigrationType.Versioned, "db/migration/V1__Test.sql", "V1__Test.sql")
+            });
 
         var migrationApplicator = new MigrationApplicator
             (database, mockFileSystem, configuration);

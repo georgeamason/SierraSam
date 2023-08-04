@@ -16,5 +16,5 @@ public interface IMigrationSeeker
     /// <see cref="PathTooLongException"/>
     /// <see cref="RegexMatchTimeoutException"/>
     /// </exception>
-    IReadOnlyCollection<string> Find();
+    IReadOnlyCollection<PendingMigration> Find();
 }

@@ -38,8 +38,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
             .DefaultIfEmpty(0)
             .Max();
 
-        if (_database.Connection.State is not ConnectionState.Open)
-            _database.Connection.Open();
+        if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
 
         using var transaction = _database.Connection.BeginTransaction();
         var appliedCount = 0;
@@ -62,6 +61,16 @@ public sealed class MigrationApplicator : IMigrationApplicator
                     if (appliedMigrations.Any(m => m.Checksum == checksum)) continue;
 
                     Console.WriteLine($"Applying repeatable migration - {pendingMigration.Description}");
+
+                    var appliedMigration = appliedMigrations.SingleOrDefault
+                        (m => m.Script == pendingMigration.FileName);
+
+                    if (appliedMigration is not null)
+                    {
+                        _database.UpdateSchemaHistory(transaction, appliedMigration.WithChecksum(checksum));
+                        executionTime += _database.ExecuteMigration(transaction, migrationSql);
+                        continue;
+                    }
                 }
 
                 executionTime += _database.ExecuteMigration(transaction, migrationSql);

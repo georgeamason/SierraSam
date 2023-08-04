@@ -26,6 +26,8 @@ public static class OdbcConnectionFactory
             ConnectionTimeout = configuration.ConnectionTimeout
         };
 
+        connection.Open();
+
         connection.InfoMessage += (_, eventArgs) =>
         {
             foreach (OdbcError exception in eventArgs.Errors)

@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Data.Odbc;
+﻿using System.Data;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -54,7 +53,7 @@ public sealed class Migrate : ICapability
     {
         _logger.LogTrace($"{nameof(Migrate)} running");
 
-        _database.Connection.Open();
+        if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
 
         _logger.LogInformation("Driver: {Driver}", _database.Connection.Driver);
         _logger.LogInformation("Database: {Database}", _database.Connection.Database);

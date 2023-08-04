@@ -2,7 +2,6 @@
 using System.Data.Odbc;
 using System.Diagnostics;
 using SierraSam.Core;
-using SierraSam.Core.Extensions;
 
 namespace SierraSam.Database;
 
@@ -118,6 +117,24 @@ public abstract class DefaultDatabase : IDatabase
                  "DEFAULT," +
                 $"{appliedMigration.ExecutionTime}," +
                 $"{(appliedMigration.Success ? 1 : 0)})";
+
+        _odbcExecutor.ExecuteNonQuery(transaction, sql);
+    }
+
+    public virtual void UpdateSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
+    {
+        var sql =
+            $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
+            $"SET \"version\" = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}" + Environment.NewLine +
+                $"\"description\" = N'{appliedMigration.Description}'," + Environment.NewLine +
+                $"\"type\" = N'{appliedMigration.Type}'," + Environment.NewLine +
+                $"\"script\" = N'{appliedMigration.Script}'," + Environment.NewLine +
+                $"\"checksum\" = N'{appliedMigration.Checksum}'," + Environment.NewLine +
+                $"\"installed_by\"   = N'{appliedMigration.InstalledBy}'," + Environment.NewLine +
+                $"\"installed_on\"   = N'{appliedMigration.InstalledOn:yyyy-MM-dd HH:mm:ss}'," + Environment.NewLine +
+                $"\"execution_time\" = N'{appliedMigration.ExecutionTime}'" + Environment.NewLine +
+                // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
+            $"WHERE installed_rank = {appliedMigration.InstalledRank};";
 
         _odbcExecutor.ExecuteNonQuery(transaction, sql);
     }

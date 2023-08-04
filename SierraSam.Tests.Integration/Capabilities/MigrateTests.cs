@@ -4,11 +4,8 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
-using SierraSam.Core.Extensions;
-using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 

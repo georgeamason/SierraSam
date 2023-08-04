@@ -45,6 +45,9 @@ public sealed class App
             case "--migrate" or "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
+            case "--validate" or "validate":
+                _capabilityResolver.Resolve(typeof(Validate)).Run(args[1..]);
+                break;
             case "-v" or "--version" or "version":
                 _capabilityResolver.Resolve(typeof(Capabilities.Version)).Run(Array.Empty<string>());
                 break;

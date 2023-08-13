@@ -10,44 +10,49 @@ internal sealed class ArgsConfigurationBuilderTests
     private static IEnumerable Get_config_overrides()
     {
         yield return new TestCaseData
-                (new[] { "migrate", "--url=fakeConnectionString" }.AsEnumerable())
+                (new[] { "verb", "--url=fakeConnectionString" }.AsEnumerable())
             .Returns(new Configuration(url: "fakeConnectionString"))
             .SetName("url is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--connectionTimeout=3" }.AsEnumerable())
+                (new[] { "verb", "--connectionTimeout=3" }.AsEnumerable())
             .Returns(new Configuration(connectionTimeout: 3))
             .SetName("connectionTimeout is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--connectionRetries=4" }.AsEnumerable())
+                (new[] { "verb", "--connectionRetries=4" }.AsEnumerable())
             .Returns(new Configuration(connectionRetries: 4))
             .SetName("connectionRetries is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--defaultSchema=xyz" }.AsEnumerable())
+                (new[] { "verb", "--defaultSchema=xyz" }.AsEnumerable())
             .Returns(new Configuration(defaultSchema: "xyz"))
             .SetName("defaultSchema is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--initSql=ssf" }.AsEnumerable())
+                (new[] { "verb", "--initSql=ssf" }.AsEnumerable())
             .Returns(new Configuration(initialiseSql: "ssf"))
             .SetName("initSql is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--table=a-table" }.AsEnumerable())
+                (new[] { "verb", "--table=a-table" }.AsEnumerable())
             .Returns(new Configuration(schemaTable: "a-table"))
             .SetName("table is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--repeatableMigrationPrefix=Q" }.AsEnumerable())
+                (new[] { "verb", "--repeatableMigrationPrefix=Q" }.AsEnumerable())
             .Returns(new Configuration(repeatableMigrationPrefix: "Q"))
             .SetName("repeatable migration prefix is set correctly");
 
         yield return new TestCaseData
-                (new[] { "migrate", "--undoMigrationPrefix=Z" }.AsEnumerable())
+                (new[] { "verb", "--undoMigrationPrefix=Z" }.AsEnumerable())
             .Returns(new Configuration(undoMigrationPrefix: "Z"))
             .SetName("undo migration prefix is set correctly");
+
+        yield return new TestCaseData
+                (new[] { "verb", "--ignoredMigrations=*:*" }.AsEnumerable())
+            .Returns(new Configuration(ignoredMigrations: new[] {"*:*"}))
+            .SetName("ignored migrations is set correctly");
     }
 
     [TestCaseSource(nameof(Get_config_overrides))]

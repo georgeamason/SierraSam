@@ -26,6 +26,7 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
             ?? throw new ArgumentNullException(nameof(configurationReader));
     }
 
+    // TODO: Make sure we're setting all the properties here
     public Configuration Build()
     {
         var configuration = _configurationReader.Build();
@@ -101,8 +102,10 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
                 case "--undoMigrationPrefix":
                     configuration.SetUndoMigrationPrefix(kvp.Value);
                     break;
+                case "--ignoredMigrations":
+                    configuration.SetIgnoredMigrations(kvp.Value.Split(','));
+                    break;
                 default:
-                    Console.WriteLine($"Argument '{kvp.Key}' was not recognised.");
                     throw new Exception($"Invalid argument '{kvp.Key}'");
             }
         }

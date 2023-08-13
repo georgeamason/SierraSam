@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace SierraSam.Core;
 
+// TODO: Does this need to be IEquatable?
 public class Configuration : IEquatable<Configuration>
 {
     public Configuration()
@@ -24,6 +25,7 @@ public class Configuration : IEquatable<Configuration>
         Schemas                   = Enumerable.Empty<string>();
         RepeatableMigrationPrefix = "R";
         UndoMigrationPrefix       = "U";
+        IgnoredMigrations         = new [] {"*:future"};
     }
 
     public Configuration(string? url = null,
@@ -40,7 +42,8 @@ public class Configuration : IEquatable<Configuration>
                          string? installedBy = null,
                          IEnumerable<string>? schemas = null,
                          string? repeatableMigrationPrefix = null,
-                         string? undoMigrationPrefix = null)
+                         string? undoMigrationPrefix = null,
+                         IEnumerable<string>? ignoredMigrations = null)
     {
         Url                       = url ?? string.Empty;
         User                      = user ?? string.Empty;
@@ -57,6 +60,7 @@ public class Configuration : IEquatable<Configuration>
         Schemas                   = schemas ?? Enumerable.Empty<string>();
         RepeatableMigrationPrefix = repeatableMigrationPrefix ?? "R";
         UndoMigrationPrefix       = undoMigrationPrefix ?? "U";
+        IgnoredMigrations         = ignoredMigrations ?? new[] {"*:future"};
     }
 
     [JsonPropertyName("url"), JsonInclude]
@@ -110,6 +114,9 @@ public class Configuration : IEquatable<Configuration>
     [RegularExpression("[A-Za-z]")]
     public string UndoMigrationPrefix { get; private set; }
 
+    [JsonPropertyName("ignoredMigrations"), JsonInclude]
+    public IEnumerable<string> IgnoredMigrations  { get; private set; }
+
     #region Setter Methods
     internal void SetUrl(string url) => Url = url;
 
@@ -152,6 +159,9 @@ public class Configuration : IEquatable<Configuration>
     internal void SetUndoMigrationPrefix(string undoMigrationPrefix)
         => UndoMigrationPrefix = undoMigrationPrefix;
 
+    internal void SetIgnoredMigrations(IEnumerable<string> ignoredMigrations)
+        => IgnoredMigrations = ignoredMigrations;
+
     #endregion
 
     #region IEquatable
@@ -174,7 +184,8 @@ public class Configuration : IEquatable<Configuration>
             && InstalledBy == other.InstalledBy
             && Schemas.SequenceEqual(other.Schemas)
             && RepeatableMigrationPrefix == other.RepeatableMigrationPrefix
-            && UndoMigrationPrefix == other.UndoMigrationPrefix;
+            && UndoMigrationPrefix == other.UndoMigrationPrefix
+            && IgnoredMigrations.SequenceEqual(other.IgnoredMigrations);
     }
 
     public override bool Equals(object? obj)
@@ -204,6 +215,7 @@ public class Configuration : IEquatable<Configuration>
         hashCode.Add(Schemas);
         hashCode.Add(RepeatableMigrationPrefix);
         hashCode.Add(UndoMigrationPrefix);
+        hashCode.Add(IgnoredMigrations);
         return hashCode.ToHashCode();
     }
     #endregion

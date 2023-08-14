@@ -13,7 +13,8 @@ public static class MigrationValidatorFactory
         var ignoredMigrations = configuration.IgnoredMigrations
             .Select(pattern =>
             {
-                var split = pattern.Split(':', 2, StringSplitOptions.TrimEntries);
+                var split = pattern.Split
+                    (':', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
                 return split.Length is not 2 ? (string.Empty, string.Empty) : (split[0], split[1]);
             })

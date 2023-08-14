@@ -45,4 +45,10 @@ public sealed class AppliedMigration
     public double ExecutionTime { get; }
 
     public bool Success { get; }
+
+    public MigrationType MigrationType => Version switch
+    {
+        null => MigrationType.Repeatable,
+        _ => MigrationType.Versioned
+    };
 }

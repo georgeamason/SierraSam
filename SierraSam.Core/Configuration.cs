@@ -25,7 +25,7 @@ public class Configuration : IEquatable<Configuration>
         Schemas                   = Enumerable.Empty<string>();
         RepeatableMigrationPrefix = "R";
         UndoMigrationPrefix       = "U";
-        IgnoredMigrations         = new [] {"*:future"};
+        IgnoredMigrations         = new [] {"*:pending"};
     }
 
     public Configuration(string? url = null,
@@ -60,7 +60,7 @@ public class Configuration : IEquatable<Configuration>
         Schemas                   = schemas ?? Enumerable.Empty<string>();
         RepeatableMigrationPrefix = repeatableMigrationPrefix ?? "R";
         UndoMigrationPrefix       = undoMigrationPrefix ?? "U";
-        IgnoredMigrations         = ignoredMigrations ?? new[] {"*:future"};
+        IgnoredMigrations         = ignoredMigrations ?? new[] {"*:pending"};
     }
 
     [JsonPropertyName("url"), JsonInclude]

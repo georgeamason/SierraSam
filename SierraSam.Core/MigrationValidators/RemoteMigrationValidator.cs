@@ -12,19 +12,20 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
 {
     private readonly IFileSystem _fileSystem;
 
-    private readonly Configuration _configuration;
+    private readonly IReadOnlyCollection<(string Type, string Status)> _ignoredMigrations;
+
     private readonly IMigrationValidator _validator;
 
     public RemoteMigrationValidator
         (IFileSystem fileSystem,
-         Configuration configuration,
+            IReadOnlyCollection<(string Type, string Status)> ignoredMigrations,
          IMigrationValidator validator)
     {
         _fileSystem = fileSystem
             ?? throw new ArgumentNullException(nameof(fileSystem));
 
-        _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
+        _ignoredMigrations = ignoredMigrations
+            ?? throw new ArgumentNullException(nameof(ignoredMigrations));
 
         _validator = validator
             ?? throw new ArgumentNullException(nameof(validator));
@@ -40,11 +41,33 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
         var executionTime = _validator.Validate
             (appliedMigrations, discoveredMigrations);
 
-        // TODO: You should be able to skip this step if you want
+        var toIgnore = _ignoredMigrations
+            .Where(pattern => pattern.Status.ToLower() == "missing" || pattern.Status == "*")
+            .ToArray();
+
+        if (toIgnore.Any(pattern => pattern.Type == "*"))
+            return executionTime;
+
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
-        foreach (var appliedMigration in appliedMigrations)
+        var filteredAppliedMigrations = appliedMigrations
+            .Where(m =>
+            {
+                var types = toIgnore
+                    .Select(p => p.Type.ToLower())
+                    .ToArray();
+
+                return types switch
+                {
+                    ["repeatable"] => m.MigrationType is not MigrationType.Repeatable,
+                    ["versioned"] => m.MigrationType is not MigrationType.Versioned,
+                    ["repeatable", "versioned"] or ["versioned", "repeatable"] => false,
+                    _ => true
+                };
+            });
+
+        foreach (var appliedMigration in filteredAppliedMigrations)
         {
             var discoveredMigration = discoveredMigrations
                 .SingleOrDefault(m =>
@@ -60,7 +83,7 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
             if (discoveredMigration is null)
             {
                 throw new Exception
-                    ($"Unable to find local migration {appliedMigration.Script} [{appliedMigration.Checksum}]");
+                    ($"Unable to find local migration {appliedMigration.Script}");
             }
         }
 

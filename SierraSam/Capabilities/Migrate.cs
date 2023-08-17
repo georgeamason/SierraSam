@@ -1,21 +1,19 @@
 ﻿using System.Data;
-using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
+using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
 using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam.Capabilities;
 
-public sealed class Migrate : ICapability
+internal sealed class Migrate : ICapability
 {
     private readonly ILogger _logger;
 
     private readonly IDatabase _database;
 
     private readonly Configuration _configuration;
-
-    private readonly IFileSystem _fileSystem;
 
     private readonly IMigrationSeeker _migrationSeeker;
 
@@ -24,7 +22,6 @@ public sealed class Migrate : ICapability
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
                    Configuration configuration,
-                   IFileSystem fileSystem,
                    IMigrationSeeker migrationSeeker,
                    IMigrationApplicator migrationApplicator)
     {
@@ -36,9 +33,6 @@ public sealed class Migrate : ICapability
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
-
-        _fileSystem = fileSystem
-            ?? throw new ArgumentNullException(nameof(fileSystem));
 
         _migrationSeeker = migrationSeeker
             ?? throw new ArgumentNullException(nameof(migrationSeeker));

@@ -1,4 +1,6 @@
-﻿namespace SierraSam.Core;
+﻿using SierraSam.Core.Enums;
+
+namespace SierraSam.Core;
 
 public sealed class AppliedMigration
 {

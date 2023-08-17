@@ -24,7 +24,6 @@ internal sealed class MigrateTests
                 (null!,
                  DatabaseResolver.Create(new OdbcConnection(), configuration),
                  configuration,
-                 Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null logger");
@@ -34,7 +33,6 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  null!, 
                  configuration,
-                 Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null ODBC connection");
@@ -44,7 +42,6 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  DatabaseResolver.Create(new OdbcConnection(), configuration),
                  null!,
-                 Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null configuration");
@@ -55,17 +52,6 @@ internal sealed class MigrateTests
                  DatabaseResolver.Create(new OdbcConnection(), configuration),
                  new Configuration(),
                  null!,
-                 Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>())))
-            .SetName("Null file system");
-
-        yield return new TestCaseData
-            (new TestDelegate(() => new Migrate
-                (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), configuration),
-                 new Configuration(),
-                 Substitute.For<IFileSystem>(),
-                 null!,
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null migration seeker");
 
@@ -74,7 +60,6 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  DatabaseResolver.Create(new OdbcConnection(), configuration),
                  new Configuration(),
-                 Substitute.For<IFileSystem>(),
                  Substitute.For<IMigrationSeeker>(),
                  null!)))
             .SetName("Null migration applicator");

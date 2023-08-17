@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
-using System.IO.Abstractions;
-using SierraSam.Core.Extensions;
+using SierraSam.Core.Enums;
 
 namespace SierraSam.Core.MigrationValidators;
 
@@ -10,20 +9,14 @@ namespace SierraSam.Core.MigrationValidators;
 /// </summary>
 internal sealed class RemoteMigrationValidator : IMigrationValidator
 {
-    private readonly IFileSystem _fileSystem;
-
     private readonly IReadOnlyCollection<(string Type, string Status)> _ignoredMigrations;
 
     private readonly IMigrationValidator _validator;
 
     public RemoteMigrationValidator
-        (IFileSystem fileSystem,
-            IReadOnlyCollection<(string Type, string Status)> ignoredMigrations,
+        (IReadOnlyCollection<(string Type, string Status)> ignoredMigrations,
          IMigrationValidator validator)
     {
-        _fileSystem = fileSystem
-            ?? throw new ArgumentNullException(nameof(fileSystem));
-
         _ignoredMigrations = ignoredMigrations
             ?? throw new ArgumentNullException(nameof(ignoredMigrations));
 
@@ -70,15 +63,10 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
         foreach (var appliedMigration in filteredAppliedMigrations)
         {
             var discoveredMigration = discoveredMigrations
-                .SingleOrDefault(m =>
-                {
-                    var migrationSql = _fileSystem.File.ReadAllText(m.FilePath);
-
-                    return m.Version == appliedMigration.Version &&
-                           m.FileName == appliedMigration.Script &&
-                           "SQL" == appliedMigration.Type &&
-                           migrationSql.Checksum() == appliedMigration.Checksum;
-                });
+                .SingleOrDefault(m => m.Version == appliedMigration.Version &&
+                                      m.FileName == appliedMigration.Script &&
+                                      "SQL" == appliedMigration.Type &&
+                                      m.Checksum == appliedMigration.Checksum);
 
             if (discoveredMigration is null)
             {

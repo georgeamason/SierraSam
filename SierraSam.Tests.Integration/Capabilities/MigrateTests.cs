@@ -6,6 +6,7 @@ using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
+using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 
@@ -83,7 +84,13 @@ internal sealed class MigrateTests
             .Find()
             .Returns(new[]
             {
-                new PendingMigration("1", "Test", MigrationType.Versioned, "db/migration/V1__Test.sql", "V1__Test.sql")
+                new PendingMigration
+                    ("1",
+                     "Test",
+                     MigrationType.Versioned,
+                     string.Empty,
+                     "db/migration/V1__Test.sql",
+                     "V1__Test.sql")
             });
 
         var migrationApplicator = new MigrationApplicator
@@ -93,7 +100,6 @@ internal sealed class MigrateTests
             (_logger,
              database,
              configuration,
-             mockFileSystem,
              migrationSeeker,
              migrationApplicator);
 

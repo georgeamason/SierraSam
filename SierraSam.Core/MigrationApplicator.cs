@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.Odbc;
 using System.IO.Abstractions;
+using SierraSam.Core.Enums;
 using SierraSam.Core.Exceptions;
 using SierraSam.Core.Extensions;
 
@@ -55,7 +56,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
                                       $"to version {pendingMigration.Version} - {pendingMigration.Description}");
                 }
 
-                var checksum = migrationSql.Checksum();
+                var checksum = pendingMigration.Checksum;
                 if (pendingMigration.MigrationType is MigrationType.Repeatable)
                 {
                     if (appliedMigrations.Any(m => m.Checksum == checksum)) continue;

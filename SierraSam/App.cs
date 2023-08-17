@@ -1,4 +1,5 @@
 ﻿
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using SierraSam.Capabilities;
 
@@ -6,6 +7,10 @@ namespace SierraSam;
 
 public sealed class App
 {
+    private readonly ILogger _logger;
+
+    private readonly ICapabilityResolver _capabilityResolver;
+
     public App
         (ILogger<App> logger,
          ICapabilityResolver capabilityResolver)
@@ -28,6 +33,13 @@ public sealed class App
             return;
         };
 
+        var version = Assembly.GetExecutingAssembly().GetName().Version
+            ?? throw new ApplicationException("No assembly version specified");
+
+        Console.Write(Environment.NewLine);
+        Console.WriteLine($"SierraSam {version.Major}.{version.Minor}.{version.Build}.{version.Revision} by George Mason");
+        Console.Write(Environment.NewLine);
+
         switch (args[0])
         {
             case "--auth" or "auth":
@@ -42,6 +54,9 @@ public sealed class App
             case "--help" or "help":
                 _capabilityResolver.Resolve(typeof(Help)).Run(args[1..]);
                 break;
+            case "--info" or "info":
+                _capabilityResolver.Resolve(typeof(Information)).Run(args[1..]);
+                break;
             case "--migrate" or "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
@@ -53,8 +68,4 @@ public sealed class App
                 break;
         }
     }
-
-    private readonly ILogger _logger;
-
-    private readonly ICapabilityResolver _capabilityResolver;
 }

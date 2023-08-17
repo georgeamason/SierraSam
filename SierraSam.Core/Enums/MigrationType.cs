@@ -1,4 +1,4 @@
-﻿namespace SierraSam.Core;
+﻿namespace SierraSam.Core.Enums;
 
 public enum MigrationType
 {

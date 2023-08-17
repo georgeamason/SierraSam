@@ -3,6 +3,7 @@ using System.IO.Abstractions;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using NSubstitute;
+using SierraSam.Core.Enums;
 
 namespace SierraSam.Core.Tests.Integration;
 
@@ -64,6 +65,7 @@ internal sealed class MigrationApplicatorTests
                 "1",
                 "description",
                 MigrationType.Versioned,
+                string.Empty,
                 string.Empty,
                 "filename.sql")
         };
@@ -128,6 +130,7 @@ internal sealed class MigrationApplicatorTests
                 null,
                 string.Empty,
                 MigrationType.Repeatable,
+                string.Empty,
                 string.Empty,
                 string.Empty)
         };

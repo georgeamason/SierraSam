@@ -77,14 +77,14 @@ public static class Program
 
                 services.AddSingleton<IMigrationValidator>
                     (s => MigrationValidatorFactory.Create
-                        (s.GetRequiredService<Configuration>(),
-                         s.GetRequiredService<IFileSystem>()));
+                        (s.GetRequiredService<Configuration>()));
 
                 services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                 services.AddSingleton<ICapability, Auth>();
                 services.AddSingleton<ICapability, Baseline>();
                 services.AddSingleton<ICapability, Clean>();
                 services.AddSingleton<ICapability, Help>();
+                services.AddSingleton<ICapability, Information>();
                 services.AddSingleton<ICapability, Migrate>();
                 services.AddSingleton<ICapability, Validate>();
                 services.AddSingleton<ICapability, Version>();
@@ -102,6 +102,7 @@ public static class Program
             }
             catch (Exception exception)
             {
+                // logger.LogError(exception, exception.Message);
                 Console.ErrorLine($"{exception.Message}");
             }
     }

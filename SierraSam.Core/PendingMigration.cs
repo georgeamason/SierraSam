@@ -1,10 +1,12 @@
-﻿
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using SierraSam.Core.Enums;
+using SierraSam.Core.Extensions;
 
 namespace SierraSam.Core;
 
+// TODO: This class is a bit messy
 [SuppressMessage("GeneratedRegex", "SYSLIB1045:Convert to \'GeneratedRegexAttribute\'.")]
 public sealed class PendingMigration
 {
@@ -14,12 +16,15 @@ public sealed class PendingMigration
 
         var description = GetDescription(configuration, fileInfo.Name);
 
+        var migrationSql = fileInfo.FileSystem.File.ReadAllText(fileInfo.FullName);
+
         return new PendingMigration
             (string.IsNullOrEmpty(version) ? null : version,
              string.IsNullOrEmpty(description) ? null! : description,
              fileInfo.Name.StartsWith(configuration.RepeatableMigrationPrefix)
                  ? MigrationType.Repeatable
                  : MigrationType.Versioned,
+             migrationSql.Checksum(),
              fileInfo.FullName,
              fileInfo.Name);
     }
@@ -30,6 +35,9 @@ public sealed class PendingMigration
 
     public MigrationType MigrationType { get; }
 
+    public string Checksum { get; }
+
+    // TODO: Not sure we need this now I've added checksum?
     public string FilePath { get; }
 
     public string FileName { get; }
@@ -37,6 +45,7 @@ public sealed class PendingMigration
     internal PendingMigration(string? version,
                              string description,
                              MigrationType migrationType,
+                             string checksum,
                              string filePath,
                              string fileName)
     {
@@ -52,6 +61,9 @@ public sealed class PendingMigration
             ?? throw new ArgumentNullException(nameof(description));
 
         MigrationType = migrationType;
+
+        Checksum = checksum
+            ?? throw new ArgumentNullException(nameof(checksum));
 
         FilePath = filePath
             ?? throw new ArgumentNullException(nameof(filePath));

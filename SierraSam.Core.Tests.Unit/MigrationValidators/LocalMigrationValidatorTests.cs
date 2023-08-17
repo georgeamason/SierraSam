@@ -1,7 +1,7 @@
 ﻿using System.Collections;
-using System.IO.Abstractions;
 using FluentAssertions;
 using NSubstitute;
+using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationValidators;
 
 namespace SierraSam.Core.Tests.Unit.MigrationValidators;
@@ -12,18 +12,13 @@ internal sealed class LocalMigrationValidatorTests
     {
         // ReSharper disable ObjectCreationAsStatement
         yield return new TestCaseData
-                (new TestDelegate(() => new LocalMigrationValidator
-                (null!, Array.Empty<(string, string)>(), Substitute.For<IMigrationValidator>())))
-            .SetName("null file system");
-
-        yield return new TestCaseData
             (new TestDelegate(() => new LocalMigrationValidator
-                (Substitute.For<IFileSystem>(), null!, Substitute.For<IMigrationValidator>())))
+                (null!, Substitute.For<IMigrationValidator>())))
             .SetName("null ignored migrations");
 
         yield return new TestCaseData
             (new TestDelegate(() => new LocalMigrationValidator
-                (Substitute.For<IFileSystem>(), Array.Empty<(string, string)>(), null!)))
+                (Array.Empty<(string, string)>(), null!)))
             .SetName("null validator");
         // ReSharper enable ObjectCreationAsStatement
     }
@@ -46,8 +41,7 @@ internal sealed class LocalMigrationValidatorTests
          IReadOnlyCollection<PendingMigration> discoveredMigrations)
     {
         var sut = new LocalMigrationValidator
-            (Substitute.For<IFileSystem>(),
-             Array.Empty<(string, string)>(),
+            (Array.Empty<(string, string)>(),
              Substitute.For<IMigrationValidator>());
 
         Assert.Throws<ArgumentNullException>(() => sut.Validate(appliedMigrations, discoveredMigrations));
@@ -69,8 +63,7 @@ internal sealed class LocalMigrationValidatorTests
             .Returns(executionTime);
 
         var sut = new LocalMigrationValidator
-            (Substitute.For<IFileSystem>(),
-             new[] {("*", status)},
+            (new[] {("*", status)},
              nestedValidator);
 
         var result = sut.Validate(appliedMigrations, discoveredMigrations);
@@ -120,18 +113,13 @@ internal sealed class LocalMigrationValidatorTests
 
         var nestedValidator = Substitute.For<IMigrationValidator>();
 
-        var fileSystem = Substitute.For<IFileSystem>();
-
         var sut = new LocalMigrationValidator
-            (fileSystem,
-             ignoredMigrations,
+            (ignoredMigrations,
              nestedValidator);
 
         sut.Validate(appliedMigrations, discoveredMigrations);
 
-        fileSystem.File
-            .Received(0)
-            .ReadAllText(Arg.Any<string>());
+        Assert.Fail();
     }
 
     [Test]
@@ -141,8 +129,7 @@ internal sealed class LocalMigrationValidatorTests
         var discoveredMigrations = new[] { CreatePendingMigration(MigrationType.Versioned) };
 
         var sut = new LocalMigrationValidator
-            (Substitute.For<IFileSystem>(),
-             Array.Empty<(string, string)>(),
+            (Array.Empty<(string, string)>(),
              Substitute.For<IMigrationValidator>());
 
         sut
@@ -153,5 +140,5 @@ internal sealed class LocalMigrationValidatorTests
     }
 
     private static PendingMigration CreatePendingMigration(MigrationType migrationType)
-        => new ("1", string.Empty, migrationType, string.Empty, string.Empty);
+        => new ("1", string.Empty, migrationType, string.Empty, string.Empty, string.Empty);
 }

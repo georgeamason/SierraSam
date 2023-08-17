@@ -12,13 +12,8 @@ internal sealed class MigrationValidatorFactoryTests
     {
         yield return new TestCaseData
             (new TestDelegate(() => MigrationValidatorFactory.Create
-                (null!, Substitute.For<IFileSystem>())))
+                (null!)))
             .SetName("null configuration");
-
-        yield return new TestCaseData
-            (new TestDelegate(() => MigrationValidatorFactory.Create
-                (new Configuration(), null!)))
-            .SetName("null file system");
     }
 
     [TestCaseSource(nameof(Create_with_null_args))]
@@ -31,9 +26,8 @@ internal sealed class MigrationValidatorFactoryTests
     public void Create_returns_a_local_migration_validator()
     {
         var configuration = new Configuration();
-        var fileSystem = Substitute.For<IFileSystem>();
 
-        var migrationValidator = MigrationValidatorFactory.Create(configuration, fileSystem);
+        var migrationValidator = MigrationValidatorFactory.Create(configuration);
 
         Assert.That(migrationValidator, Is.TypeOf<LocalMigrationValidator>());
     }
@@ -46,8 +40,7 @@ internal sealed class MigrationValidatorFactoryTests
     public void Create_does_not_throw_for_bad_ignore_pattern(string badPattern)
     {
         var configuration = new Configuration(ignoredMigrations: new []{badPattern});
-        var fileSystem = Substitute.For<IFileSystem>();
 
-        Assert.DoesNotThrow(() => MigrationValidatorFactory.Create(configuration, fileSystem));
+        Assert.DoesNotThrow(() => MigrationValidatorFactory.Create(configuration));
     }
 }

@@ -1,23 +1,23 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace SierraSam.Core.ConfigurationBuilders;
+namespace SierraSam.Core.ConfigurationReaders;
 
-internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
+internal sealed class ArgsConfigurationReader : IConfigurationReader
 {
-    private readonly ILogger<ArgsConfigurationBuilder> _logger;
+    private readonly ILogger<ArgsConfigurationReader> _logger;
 
     private readonly IEnumerable<string> _args;
 
-    private readonly IConfigurationBuilder _configurationReader;
+    private readonly IConfigurationReader _configurationReader;
 
 
-    public ArgsConfigurationBuilder(ILoggerFactory loggerFactory,
+    public ArgsConfigurationReader(ILoggerFactory loggerFactory,
                                     string[] args,
-                                    IConfigurationBuilder configurationReader)
+                                    IConfigurationReader configurationReader)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory, nameof(loggerFactory));
 
-        _logger = loggerFactory.CreateLogger<ArgsConfigurationBuilder>();
+        _logger = loggerFactory.CreateLogger<ArgsConfigurationReader>();
 
         _args = args
                 ?? throw new ArgumentNullException(nameof(args));
@@ -27,9 +27,9 @@ internal sealed class ArgsConfigurationBuilder : IConfigurationBuilder
     }
 
     // TODO: Make sure we're setting all the properties here
-    public Configuration Build()
+    public Configuration Read()
     {
-        var configuration = _configurationReader.Build();
+        var configuration = _configurationReader.Read();
 
         // here we can optionally override any of the configuration picked up from the configFile
         foreach (var arg in _args)

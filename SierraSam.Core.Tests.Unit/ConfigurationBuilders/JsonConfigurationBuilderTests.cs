@@ -3,7 +3,7 @@ using System.IO.Abstractions;
 using System.Text.Json;
 using FluentAssertions;
 using NSubstitute;
-using SierraSam.Core.ConfigurationBuilders;
+using SierraSam.Core.ConfigurationReaders;
 
 namespace SierraSam.Core.Tests.Unit.ConfigurationBuilders;
 
@@ -50,10 +50,10 @@ internal sealed class JsonConfigurationBuilderTests
         fileSystem.File.Exists(string.Empty).ReturnsForAnyArgs(true);
         fileSystem.File.ReadAllText(string.Empty).ReturnsForAnyArgs(config);
 
-        var jsonBuilder = new JsonConfigurationBuilder
+        var jsonBuilder = new JsonConfigurationReader
             (fileSystem, new []{ string.Empty });
 
-        return jsonBuilder.Build();
+        return jsonBuilder.Read();
     }
 
     [Test]
@@ -71,10 +71,10 @@ internal sealed class JsonConfigurationBuilderTests
             .ReadAllText(string.Empty)
             .ReturnsForAnyArgs("{ \"this\": \"is\" } not json");
 
-        var jsonBuilder = new JsonConfigurationBuilder
+        var jsonBuilder = new JsonConfigurationReader
             (fileSystem, new []{ string.Empty });
 
-        var func = () => jsonBuilder.Build();
+        var func = () => jsonBuilder.Read();
 
         func.Should().Throw<JsonException>();
     }
@@ -89,9 +89,9 @@ internal sealed class JsonConfigurationBuilderTests
             .Exists(string.Empty)
             .ReturnsForAnyArgs(false);
 
-        var jsonBuilder = new JsonConfigurationBuilder
+        var jsonBuilder = new JsonConfigurationReader
             (fileSystem, new[] { string.Empty });
 
-        jsonBuilder.Build().Should().BeEquivalentTo(new Configuration());
+        jsonBuilder.Read().Should().BeEquivalentTo(new Configuration());
     }
 }

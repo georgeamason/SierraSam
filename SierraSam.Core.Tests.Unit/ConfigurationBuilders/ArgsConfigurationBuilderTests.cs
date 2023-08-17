@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using SierraSam.Core.ConfigurationBuilders;
+using SierraSam.Core.ConfigurationReaders;
 
 namespace SierraSam.Core.Tests.Unit.ConfigurationBuilders;
 
@@ -58,17 +58,17 @@ internal sealed class ArgsConfigurationBuilderTests
     [TestCaseSource(nameof(Get_config_overrides))]
     public Configuration Config_overrides_are_read_correctly(string[] args)
     {
-        var configurationBuilder = Substitute.For<IConfigurationBuilder>();
+        var configurationBuilder = Substitute.For<IConfigurationReader>();
 
         configurationBuilder
-            .Build()
+            .Read()
             .Returns(new Configuration());
 
         var loggerFactory = Substitute.For<ILoggerFactory>();
 
-        var argsConfigurationBuilder = new ArgsConfigurationBuilder
+        var argsConfigurationBuilder = new ArgsConfigurationReader
             (loggerFactory, args, configurationBuilder);
 
-        return argsConfigurationBuilder.Build();
+        return argsConfigurationBuilder.Read();
     }
 }

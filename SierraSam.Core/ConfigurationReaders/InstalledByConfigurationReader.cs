@@ -3,22 +3,22 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Principal;
 using SierraSam.Core.Extensions;
 
-namespace SierraSam.Core.ConfigurationBuilders;
+namespace SierraSam.Core.ConfigurationReaders;
 
-internal sealed class InstalledByConfigurationBuilder : IConfigurationBuilder
+internal sealed class InstalledByConfigurationReader : IConfigurationReader
 {
-    private readonly IConfigurationBuilder _configurationBuilder;
+    private readonly IConfigurationReader _configurationReader;
 
-    public InstalledByConfigurationBuilder(IConfigurationBuilder configurationBuilder)
+    public InstalledByConfigurationReader(IConfigurationReader configurationReader)
     {
-        _configurationBuilder = configurationBuilder
-            ?? throw new ArgumentNullException(nameof(configurationBuilder));
+        _configurationReader = configurationReader
+            ?? throw new ArgumentNullException(nameof(configurationReader));
     }
 
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    public Configuration Build()
+    public Configuration Read()
     {
-        var configuration = _configurationBuilder.Build();
+        var configuration = _configurationReader.Read();
 
         if (!string.IsNullOrEmpty(configuration.User)) return configuration;
 

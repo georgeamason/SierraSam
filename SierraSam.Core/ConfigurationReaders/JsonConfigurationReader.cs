@@ -2,15 +2,15 @@
 using System.Text.Json;
 using SierraSam.Core.Extensions;
 
-namespace SierraSam.Core.ConfigurationBuilders;
+namespace SierraSam.Core.ConfigurationReaders;
 
-internal sealed class JsonConfigurationBuilder : IConfigurationBuilder
+internal sealed class JsonConfigurationReader : IConfigurationReader
 {
     private readonly IFileSystem _fileSystem;
 
     private readonly IEnumerable<string> _defaultConfigPaths;
 
-    public JsonConfigurationBuilder(IFileSystem fileSystem,
+    public JsonConfigurationReader(IFileSystem fileSystem,
                                     IEnumerable<string> defaultConfigPaths)
     {
         _fileSystem = fileSystem
@@ -20,7 +20,7 @@ internal sealed class JsonConfigurationBuilder : IConfigurationBuilder
             ?? throw new ArgumentNullException(nameof(defaultConfigPaths));
     }
 
-    public Configuration Build()
+    public Configuration Read()
     {
         // Check flyway configuration file for info on how to complete migration
         // default location <base_location>\conf\flyway.config

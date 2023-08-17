@@ -1,20 +1,20 @@
 ﻿using System.Data.Odbc;
 
-namespace SierraSam.Core.ConfigurationBuilders;
+namespace SierraSam.Core.ConfigurationReaders;
 
-internal sealed class DefaultSchemaConfigurationBuilder : IConfigurationBuilder
+internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 {
-    private readonly IConfigurationBuilder _configurationBuilder;
+    private readonly IConfigurationReader _configurationReader;
 
-    public DefaultSchemaConfigurationBuilder(IConfigurationBuilder configurationBuilder)
+    public DefaultSchemaConfigurationReader(IConfigurationReader configurationReader)
     {
-        _configurationBuilder = configurationBuilder
-            ?? throw new ArgumentNullException(nameof(configurationBuilder));
+        _configurationReader = configurationReader
+            ?? throw new ArgumentNullException(nameof(configurationReader));
     }
 
-    public Configuration Build()
+    public Configuration Read()
     {
-        var configuration = _configurationBuilder.Build();
+        var configuration = _configurationReader.Read();
 
         if (!string.IsNullOrEmpty(configuration.DefaultSchema)) return configuration;
 

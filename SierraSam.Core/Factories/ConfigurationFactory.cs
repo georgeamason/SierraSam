@@ -1,6 +1,6 @@
 ﻿using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
-using SierraSam.Core.ConfigurationBuilders;
+using SierraSam.Core.ConfigurationReaders;
 
 namespace SierraSam.Core.Factories;
 
@@ -13,15 +13,15 @@ public static class ConfigurationFactory
                                        string[] args)
     {
         // Ordering is important here
-        var reader = new InstalledByConfigurationBuilder
-            (new DefaultSchemaConfigurationBuilder
-                (new ArgsConfigurationBuilder
-                    (loggerFactory, args, new JsonConfigurationBuilder
+        var reader = new InstalledByConfigurationReader
+            (new DefaultSchemaConfigurationReader
+                (new ArgsConfigurationReader
+                    (loggerFactory, args, new JsonConfigurationReader
                         (fileSystem, defaultConfigPaths)
                     )
                 )
             );
 
-        return reader.Build();
+        return reader.Read();
     }
 }

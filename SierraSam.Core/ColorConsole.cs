@@ -23,5 +23,4 @@ public static class ColorConsole
     public static void WarningLine(string message) => WriteLine(message, WarningColor);
 
     public static void ErrorLine(string message) => WriteLine(message, ErrorColor);
-
 }

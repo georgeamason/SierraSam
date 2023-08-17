@@ -53,6 +53,7 @@ public sealed class Validate : ICapability
 
         var discoveredMigrations = _migrationSeeker.Find();
 
+        // TODO: Should migration validator have a constructor and not take args in Validate?
         var executionTime = _migrationValidator.Validate
             (appliedMigrations, discoveredMigrations);
 

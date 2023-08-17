@@ -79,6 +79,8 @@ public static class Program
                     (s => MigrationValidatorFactory.Create
                         (s.GetRequiredService<Configuration>()));
 
+                services.AddSingleton<IMigrationMerger, MigrationMerger>();
+
                 services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                 services.AddSingleton<ICapability, Auth>();
                 services.AddSingleton<ICapability, Baseline>();

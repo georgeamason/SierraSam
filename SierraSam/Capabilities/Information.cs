@@ -23,10 +23,7 @@ internal sealed class Information : ICapability
     {
         _logger.LogTrace($"{nameof(Information)} running");
 
-        var migrations = _migrationMerger
-            .Merge()
-            .ToArray()
-            .AsReadOnly();
+        var migrations = _migrationMerger.Merge();
 
         var table = new Table { Border = TableBorder.Ascii2 };
 

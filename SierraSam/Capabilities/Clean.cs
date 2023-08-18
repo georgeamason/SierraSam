@@ -4,6 +4,8 @@ namespace SierraSam.Capabilities;
 
 internal sealed class Clean : ICapability
 {
+    private readonly ILogger<Clean> _logger;
+
     public Clean(ILogger<Clean> logger)
     {
         _logger = logger
@@ -14,6 +16,4 @@ internal sealed class Clean : ICapability
     {
         _logger.LogTrace($"{nameof(Clean)} is running");
     }
-
-    private readonly ILogger<Clean> _logger;
 }

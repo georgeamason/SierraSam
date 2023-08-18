@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using SierraSam.Core.Enums;
+﻿using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Core;
@@ -37,7 +36,7 @@ public class MigrationMerger : IMigrationMerger
                     MigrationState.Pending);
             });
 
-        var appliedMigrations = _database
+        return _database
             .GetSchemaHistory(_configuration.DefaultSchema, _configuration.SchemaTable)
             .Select(m =>
             {
@@ -53,12 +52,10 @@ public class MigrationMerger : IMigrationMerger
                     m.Checksum,
                     m.InstalledOn,
                     isDiscovered ? MigrationState.Applied : MigrationState.Missing);
-            });
-
-        return appliedMigrations
+            })
             .UnionBy(discoveredMigrations, migration => migration.Checksum)
             .OrderBy(m => m.InstalledOn ?? DateTime.MaxValue)
             .ThenBy(m => m.Version)
-            .ToImmutableList();
+            .ToArray();
     }
 }

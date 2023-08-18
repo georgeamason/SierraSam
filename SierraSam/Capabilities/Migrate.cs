@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Immutable;
+using System.Data;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Enums;
@@ -10,13 +11,9 @@ namespace SierraSam.Capabilities;
 internal sealed class Migrate : ICapability
 {
     private readonly ILogger _logger;
-
     private readonly IDatabase _database;
-
     private readonly Configuration _configuration;
-
     private readonly IMigrationSeeker _migrationSeeker;
-
     private readonly IMigrationApplicator _migrationApplicator;
 
     public Migrate(ILogger<Migrate> logger,
@@ -85,8 +82,7 @@ internal sealed class Migrate : ICapability
             .OrderBy(pendingMigration => pendingMigration.MigrationType)
             .ThenBy(pendingMigration => pendingMigration.Version)
             .ThenBy(pendingMigration => pendingMigration.Description)
-            .ToArray()
-            .AsReadOnly();
+            .ToImmutableArray();
 
         var (appliedMigrationCount, executionTime) =
             _migrationApplicator.Apply(pendingMigrations, appliedMigrations);

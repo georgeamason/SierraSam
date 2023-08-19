@@ -3,20 +3,27 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using NSubstitute;
+using SierraSam.Core.Enums;
 using SierraSam.Core.Exceptions;
+using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Core.Tests.Integration.MigrationSeekers;
 
 public class FileSystemMigrationSeekerTests
 {
-    [TestCase("V1__My_description.sql")]
-    [TestCase("V2__Desc.sql")]
-    [TestCase("V2__Add a new table.sql")]
-    [TestCase("V1004__make_v11_sql_monitor_license.sql")]
-    [TestCase("V1003__delete invalid license.sql")]
-    [TestCase("V2023.01.12.4343__create_users_table.sql")]
-    public void Find_returns_expected_migrations(string fileName)
+    [TestCase("V1__My_description.sql", "1", "My_description")]
+    [TestCase("R__My_description.sql", null, "My_description", MigrationType.Repeatable)]
+    [TestCase("V2__Desc.sql", "2", "Desc")]
+    [TestCase("V2__Add a new table.sql", "2", "Add a new table")]
+    [TestCase("V1004__make_v11_sql_monitor_license.sql", "1004", "make_v11_sql_monitor_license")]
+    [TestCase("V1003__delete invalid license.sql", "1003", "delete invalid license")]
+    [TestCase("V2023.01.12.4343__create_users_table.sql", "2023.01.12.4343", "create_users_table")]
+    public void Find_returns_expected_migrations(
+        string fileName,
+        string? version,
+        string description,
+        MigrationType type = MigrationType.Versioned)
     {
         var searchPath = Path.Combine("db", "migrations");
 
@@ -44,7 +51,16 @@ public class FileSystemMigrationSeekerTests
 
         migrations
             .Should()
-            .BeEquivalentTo(Path.Combine("C:", searchPath, fileName));
+            .BeEquivalentTo(new []
+            {
+                new PendingMigration(
+                    version,
+                    description,
+                    type,
+                    string.Empty.Checksum(),
+                    Path.Combine("C:", searchPath, fileName),
+                    fileName)
+            });
     }
 
     [Test]
@@ -78,15 +94,23 @@ public class FileSystemMigrationSeekerTests
             .Should()
             .BeEquivalentTo(new[]
             {
-                Path.Combine("C:", searchPath, @"subdir\V1__My_description.sql")
+                new PendingMigration(
+                    "1",
+                    "My_description",
+                    MigrationType.Versioned,
+                    string.Empty.Checksum(),
+                    Path.Combine("C:", searchPath, @"subdir\V1__My_description.sql"),
+                    "V1__My_description.sql")
             });
     }
 
-    [Test]
-    public void Find_returns_empty_collection_for_bad_location()
+    [TestCase("filesystem:")]
+    [TestCase("filesystem")]
+    [TestCase(":")]
+    public void Find_returns_empty_collection_for_bad_location(string location)
     {
         var configuration = new Configuration
-            (locations: new []{ $"filesystem:" });
+            (locations: new []{ location });
 
         var fileSystem = Substitute.For<IFileSystem>();
 
@@ -97,7 +121,7 @@ public class FileSystemMigrationSeekerTests
 
         migrations
             .Should()
-            .BeEquivalentTo(Enumerable.Empty<string>());
+            .BeEquivalentTo(Enumerable.Empty<PendingMigration>());
     }
 
     [Test]

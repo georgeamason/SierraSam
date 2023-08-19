@@ -88,7 +88,7 @@ internal sealed class MigrateTests
                     ("1",
                      "Test",
                      MigrationType.Versioned,
-                     string.Empty,
+                     "72e60a278ed8d3655565a63940a34c2c",
                      "db/migration/V1__Test.sql",
                      "V1__Test.sql")
             });
@@ -117,7 +117,7 @@ internal sealed class MigrateTests
         migrations[0].Description.Should().Be("Test");
         migrations[0].Type.Should().Be("SQL");
         migrations[0].Script.Should().Be("V1__Test.sql");
-        migrations[0].Checksum.Should().Be("72e60a278ed8d3655565a63940a34c2c");
+         migrations[0].Checksum.Should().Be("72e60a278ed8d3655565a63940a34c2c");
         migrations[0].InstalledBy.Should().Be(string.Empty);
         migrations[0].InstalledOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         migrations[0].Success.Should().BeTrue();

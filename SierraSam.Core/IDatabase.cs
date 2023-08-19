@@ -14,7 +14,14 @@ public interface IDatabase
 
     void CreateSchemaHistory(string schema, string table);
 
-    IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string schema, string table);
+    /// <summary>
+    /// Get the schema history for the given schema and table.
+    /// If no schema and table is provided, the defaults are used.
+    /// </summary>
+    /// <param name="schema">The database schema</param>
+    /// <param name="table">The database table</param>
+    /// <returns>A collection of applied migrations</returns>
+    IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null);
 
     void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration);
 

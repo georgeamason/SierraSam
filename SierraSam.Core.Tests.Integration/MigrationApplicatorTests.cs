@@ -65,7 +65,7 @@ internal sealed class MigrationApplicatorTests
                 "1",
                 "description",
                 MigrationType.Versioned,
-                string.Empty,
+                "02a983b498212d3f65c244f14de9572c",
                 string.Empty,
                 "filename.sql")
         };
@@ -130,7 +130,7 @@ internal sealed class MigrationApplicatorTests
                 null,
                 string.Empty,
                 MigrationType.Repeatable,
-                string.Empty,
+                "02a983b498212d3f65c244f14de9572c",
                 string.Empty,
                 string.Empty)
         };

@@ -77,9 +77,12 @@ public static class Program
 
                 services.AddSingleton<IMigrationValidator>
                     (s => MigrationValidatorFactory.Create
-                        (s.GetRequiredService<Configuration>()));
+                        (s.GetRequiredService<IMigrationSeeker>(),
+                         s.GetRequiredService<IDatabase>(),
+                         s.GetRequiredService<IIgnoredMigrationsFactory>()));
 
                 services.AddSingleton<IMigrationMerger, MigrationMerger>();
+                services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();
 
                 services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                 services.AddSingleton<ICapability, Auth>();

@@ -2,23 +2,64 @@
 using FluentAssertions;
 using NSubstitute;
 using SierraSam.Core.Enums;
+using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationSeekers;
 using SierraSam.Core.MigrationValidators;
 
 namespace SierraSam.Core.Tests.Unit.MigrationValidators;
 
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 internal sealed class LocalMigrationValidatorTests
 {
+    private readonly IMigrationSeeker _migrationSeeker = Substitute.For<IMigrationSeeker>();
+    private readonly IDatabase _database = Substitute.For<IDatabase>();
+    private readonly IIgnoredMigrationsFactory _ignoredMigrationsFactory = Substitute.For<IIgnoredMigrationsFactory>();
+    private readonly IMigrationValidator _validator = Substitute.For<IMigrationValidator>();
+
+    private readonly IMigrationValidator _localMigrationValidator;
+
+    public LocalMigrationValidatorTests()
+    {
+        _localMigrationValidator = new LocalMigrationValidator(
+            _migrationSeeker,
+            _database,
+            _ignoredMigrationsFactory,
+            _validator);
+    }
+
     private static IEnumerable Constructor_with_null_args()
     {
         // ReSharper disable ObjectCreationAsStatement
         yield return new TestCaseData
-            (new TestDelegate(() => new LocalMigrationValidator
-                (null!, Substitute.For<IMigrationValidator>())))
-            .SetName("null ignored migrations");
+            (new TestDelegate(() => new LocalMigrationValidator(
+                null!,
+                Substitute.For<IDatabase>(),
+                Substitute.For<IIgnoredMigrationsFactory>(),
+                Substitute.For<IMigrationValidator>())))
+            .SetName("null migration seeker");
 
         yield return new TestCaseData
-            (new TestDelegate(() => new LocalMigrationValidator
-                (Array.Empty<(string, string)>(), null!)))
+            (new TestDelegate(() => new LocalMigrationValidator(
+                Substitute.For<IMigrationSeeker>(),
+                null!,
+                Substitute.For<IIgnoredMigrationsFactory>(),
+                Substitute.For<IMigrationValidator>())))
+            .SetName("null database");
+
+        yield return new TestCaseData
+            (new TestDelegate(() => new LocalMigrationValidator(
+                Substitute.For<IMigrationSeeker>(),
+                Substitute.For<IDatabase>(),
+                null!,
+                Substitute.For<IMigrationValidator>())))
+            .SetName("null ignored migrations factory");
+
+        yield return new TestCaseData
+            (new TestDelegate(() => new LocalMigrationValidator(
+                Substitute.For<IMigrationSeeker>(),
+                Substitute.For<IDatabase>(),
+                Substitute.For<IIgnoredMigrationsFactory>(),
+                null!)))
             .SetName("null validator");
         // ReSharper enable ObjectCreationAsStatement
     }
@@ -29,116 +70,197 @@ internal sealed class LocalMigrationValidatorTests
         Assert.That(constructor, Throws.TypeOf<ArgumentNullException>());
     }
 
-    private static IEnumerable Validate_null_args()
+    [Test]
+    public void Validate_returns_result_from_validator()
     {
-        yield return new TestCaseData(null, Array.Empty<PendingMigration>());
-        yield return new TestCaseData(Array.Empty<AppliedMigration>(), null);
+        _validator
+            .Validate()
+            .Returns(1);
+
+        _localMigrationValidator
+            .Validate()
+            .Should()
+            .Be(1);
     }
 
-    [TestCaseSource(nameof(Validate_null_args))]
-    public void Validate_throws_for_null_args
-        (IReadOnlyCollection<AppliedMigration> appliedMigrations,
-         IReadOnlyCollection<PendingMigration> discoveredMigrations)
+    [TestCase(MigrationType.Any, MigrationState.Any)]
+    [TestCase(MigrationType.Any, MigrationState.Pending)]
+    public void Validate_short_circuits_when_appropriate_migrations_are_ignored(
+        MigrationType type,
+        MigrationState state)
     {
-        var sut = new LocalMigrationValidator
-            (Array.Empty<(string, string)>(),
-             Substitute.For<IMigrationValidator>());
+        _validator
+            .Validate()
+            .Returns(1);
 
-        Assert.Throws<ArgumentNullException>(() => sut.Validate(appliedMigrations, discoveredMigrations));
+        _ignoredMigrationsFactory
+            .Create()
+            .Returns(new[] { (type, state) });
+
+        _localMigrationValidator
+            .Validate()
+            .Should()
+            .Be(1);
+
+        _migrationSeeker
+            .DidNotReceive()
+            .Find();
     }
 
-    [TestCase("pending")]
-    [TestCase("*")]
-    public void Validate_returns_execution_time_from_nested_validator_for_ignore_pattern
-        (string status)
+    [TestCase(MigrationType.Versioned, MigrationState.Pending)]
+    [TestCase(MigrationType.Versioned, MigrationState.Any)]
+    public void Validate_returns_when_versioned_migration_is_not_applied_and_is_ignored(
+        MigrationType type,
+        MigrationState state)
     {
-        var appliedMigrations = Array.Empty<AppliedMigration>();
-        var discoveredMigrations = Array.Empty<PendingMigration>();
-        var executionTime = TimeSpan.FromMilliseconds(123);
+        _validator
+            .Validate()
+            .Returns(1);
 
-        var nestedValidator = Substitute.For<IMigrationValidator>();
+        _ignoredMigrationsFactory
+            .Create()
+            .Returns(new[] { (type, state) });
 
-        nestedValidator
-            .Validate(appliedMigrations, discoveredMigrations)
-            .Returns(executionTime);
+        _migrationSeeker
+            .Find()
+            .Returns(new[]
+            {
+                new PendingMigration(
+                    "1",
+                    string.Empty,
+                    MigrationType.Versioned,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty)
+            });
 
-        var sut = new LocalMigrationValidator
-            (new[] {("*", status)},
-             nestedValidator);
+        _database
+            .GetSchemaHistory()
+            .Returns(Array.Empty<AppliedMigration>());
 
-        var result = sut.Validate(appliedMigrations, discoveredMigrations);
-
-        Assert.That(result, Is.EqualTo(executionTime));
+        _localMigrationValidator
+            .Validate()
+            .Should()
+            .Be(1);
     }
 
-    private static IEnumerable Ignored_migration_patterns()
+    [TestCase(MigrationType.Repeatable, MigrationState.Pending)]
+    [TestCase(MigrationType.Repeatable, MigrationState.Any)]
+    public void Validate_returns_when_repeatable_migration_is_not_applied_and_is_ignored(
+        MigrationType type,
+        MigrationState state)
     {
-        yield return new TestCaseData
-            (new[] { ("repeatable", "*"), ("versioned", "*") },
-            new[]
+        _validator
+            .Validate()
+            .Returns(1);
+
+        _ignoredMigrationsFactory
+            .Create()
+            .Returns(new[] { (type, state) });
+
+        _migrationSeeker
+            .Find()
+            .Returns(new[]
             {
-                CreatePendingMigration(MigrationType.Versioned),
-                CreatePendingMigration(MigrationType.Repeatable)
+                new PendingMigration(
+                    "1",
+                    string.Empty,
+                    MigrationType.Repeatable,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty)
             });
 
-        yield return new TestCaseData
-            (new[] { ("versioned", "*"), ("repeatable", "*") },
-            new[]
-            {
-                CreatePendingMigration(MigrationType.Versioned),
-                CreatePendingMigration(MigrationType.Repeatable)
-            });
+        _database
+            .GetSchemaHistory()
+            .Returns(Array.Empty<AppliedMigration>());
 
-        yield return new TestCaseData
-            (new[] { ("repeatable", "*") },
-            new[]
-            {
-                CreatePendingMigration(MigrationType.Repeatable)
-            });
-
-        yield return new TestCaseData
-            (new[] { ("versioned", "*") },
-            new[]
-            {
-                CreatePendingMigration(MigrationType.Versioned)
-            });
-    }
-
-    [TestCaseSource(nameof(Ignored_migration_patterns))]
-    public void Validate_filters_discovered_migrations
-        (IReadOnlyCollection<(string, string)> ignoredMigrations,
-         PendingMigration[] discoveredMigrations)
-    {
-        var appliedMigrations = Array.Empty<AppliedMigration>();
-
-        var nestedValidator = Substitute.For<IMigrationValidator>();
-
-        var sut = new LocalMigrationValidator
-            (ignoredMigrations,
-             nestedValidator);
-
-        sut.Validate(appliedMigrations, discoveredMigrations);
-
-        Assert.Fail();
+        _localMigrationValidator
+            .Validate()
+            .Should()
+            .Be(1);
     }
 
     [Test]
-    public void Validate_throws_when_discovered_migration_is_not_applied()
+    public void Validate_throws_when_migration_has_miss_matching_checksums()
     {
-        var appliedMigrations = Array.Empty<AppliedMigration>();
-        var discoveredMigrations = new[] { CreatePendingMigration(MigrationType.Versioned) };
+        _validator
+            .Validate()
+            .Returns(1);
 
-        var sut = new LocalMigrationValidator
-            (Array.Empty<(string, string)>(),
-             Substitute.For<IMigrationValidator>());
+        _ignoredMigrationsFactory
+            .Create()
+            .Returns(new[] { (MigrationType.None, MigrationState.None) });
 
-        sut
-            .Invoking(v => v.Validate(appliedMigrations, discoveredMigrations))
+        _migrationSeeker
+            .Find()
+            .Returns(new[]
+            {
+                new PendingMigration(
+                    "1",
+                    string.Empty,
+                    MigrationType.Versioned,
+                    string.Empty,
+                    string.Empty,
+                    "Filename.sql")
+            });
+
+        _database
+            .GetSchemaHistory()
+            .Returns(new []
+            {
+                new AppliedMigration(
+                    1,
+                    "1",
+                    string.Empty,
+                    "SQL",
+                    "Filename.sql",
+                    "miss-matched-checksum",
+                    string.Empty,
+                    DateTime.MinValue,
+                    double.MinValue,
+                    default)
+            });
+
+        _localMigrationValidator
+            .Invoking(v => v.Validate())
             .Should()
             .Throw<Exception>()
-            .WithMessage($"Unable to find remote migration {string.Empty}");
+            .WithMessage("Unable to find remote migration Filename.sql");
     }
 
-    private static PendingMigration CreatePendingMigration(MigrationType migrationType)
-        => new ("1", string.Empty, migrationType, string.Empty, string.Empty, string.Empty);
+    [Test]
+    public void Validate_throws_when_migration_is_not_applied_and_not_ignored()
+    {
+        _validator
+            .Validate()
+            .Returns(1);
+
+        _ignoredMigrationsFactory
+            .Create()
+            .Returns(new[] { (MigrationType.None, MigrationState.None) });
+
+        _migrationSeeker
+            .Find()
+            .Returns(new[]
+            {
+                new PendingMigration(
+                    "1",
+                    string.Empty,
+                    MigrationType.Versioned,
+                    string.Empty,
+                    string.Empty,
+                    "Filename.sql")
+            });
+
+        _database
+            .GetSchemaHistory()
+            .Returns(Array.Empty<AppliedMigration>());
+
+        _localMigrationValidator
+            .Invoking(v => v.Validate())
+            .Should()
+            .Throw<Exception>()
+            .WithMessage("Unable to find remote migration Filename.sql");
+    }
 }

@@ -1,27 +1,29 @@
-﻿using System.IO.Abstractions;
+﻿using SierraSam.Core.MigrationSeekers;
 using SierraSam.Core.MigrationValidators;
 
 namespace SierraSam.Core.Factories;
 
 public static class MigrationValidatorFactory
 {
-    public static IMigrationValidator Create(Configuration configuration)
+    public static IMigrationValidator Create(
+        IMigrationSeeker migrationSeeker,
+        IDatabase database,
+        IIgnoredMigrationsFactory ignoredMigrationsFactory)
     {
-        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
-
-        var ignoredMigrations = configuration.IgnoredMigrations
-            .Select(pattern =>
-            {
-                var split = pattern.Split
-                    (':', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-                return split.Length is not 2 ? (string.Empty, string.Empty) : (split[0], split[1]);
-            })
-            .ToArray<(string Type, string Status)>()
-            .AsReadOnly();
-
-        return new LocalMigrationValidator(ignoredMigrations,
-                new RemoteMigrationValidator(ignoredMigrations,
-                    new DistinctVersionMigrationValidator()));
+        return new LocalMigrationValidator(
+            migrationSeeker,
+            database,
+            ignoredMigrationsFactory,
+            new RemoteMigrationValidator(
+                migrationSeeker,
+                database,
+                ignoredMigrationsFactory,
+                new DistinctVersionMigrationValidator(
+                    migrationSeeker,
+                    new DistinctChecksumMigrationValidator(
+                        migrationSeeker)
+                    )
+                )
+            );
     }
 }

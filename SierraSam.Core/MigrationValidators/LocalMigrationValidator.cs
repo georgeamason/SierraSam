@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
-using SierraSam.Core.Enums;
+﻿using SierraSam.Core.Enums;
+using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Core.MigrationValidators;
 
@@ -9,60 +10,65 @@ namespace SierraSam.Core.MigrationValidators;
 /// </summary>
 internal sealed class LocalMigrationValidator : IMigrationValidator
 {
-    private readonly IReadOnlyCollection<(string Type, string Status)> _ignoredMigrations;
-
     private readonly IMigrationValidator _validator;
+    private readonly IMigrationSeeker _migrationSeeker;
+    private readonly IDatabase _database;
+    private readonly IIgnoredMigrationsFactory _ignoredMigrationsFactory;
 
-    public LocalMigrationValidator
-        (IReadOnlyCollection<(string Type, string Status)> ignoredMigrations,
-         IMigrationValidator validator)
+    public LocalMigrationValidator(
+        IMigrationSeeker migrationSeeker,
+        IDatabase database,
+        IIgnoredMigrationsFactory ignoredMigrationsFactory,
+        IMigrationValidator validator)
     {
-        _ignoredMigrations = ignoredMigrations
-            ?? throw new ArgumentNullException(nameof(ignoredMigrations));
-
         _validator = validator
             ?? throw new ArgumentNullException(nameof(validator));
+
+        _migrationSeeker = migrationSeeker
+            ?? throw new ArgumentNullException(nameof(migrationSeeker));
+
+        _database = database
+            ?? throw new ArgumentNullException(nameof(database));
+
+        _ignoredMigrationsFactory = ignoredMigrationsFactory
+            ?? throw new ArgumentNullException(nameof(ignoredMigrationsFactory));
     }
 
-    public TimeSpan Validate
-        (IReadOnlyCollection<AppliedMigration> appliedMigrations,
-         IReadOnlyCollection<PendingMigration> discoveredMigrations)
+    public int Validate()
     {
-        if (appliedMigrations == null) throw new ArgumentNullException(nameof(appliedMigrations));
-        if (discoveredMigrations == null) throw new ArgumentNullException(nameof(discoveredMigrations));
+        var validated = _validator.Validate();
 
-        var executionTime = _validator.Validate
-            (appliedMigrations, discoveredMigrations);
+        // TODO: This could probably be injected from the MigrationValidatorFactory class tbh
+        var ignoredMigrations = _ignoredMigrationsFactory.Create();
 
-        var toIgnore = _ignoredMigrations
-            .Where(pattern => pattern.Status.ToLower() == "pending" || pattern.Status == "*")
+        var shortCircuit = ignoredMigrations.Any(i => i is
+        {
+            Type: MigrationType.Any,
+            State: MigrationState.Any or MigrationState.Pending
+        });
+
+        if (shortCircuit) return validated;
+
+        var ignoredMigrationTypes = ignoredMigrations
+            .Where(i => i.State is MigrationState.Any or MigrationState.Pending)
+            .Select(p => p.Type)
             .ToArray();
 
-        if (toIgnore.Any(pattern => pattern.Type == "*"))
-            return executionTime;
-
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-
-        var filteredDiscoveredMigrations = discoveredMigrations
-            .Where(m =>
+        var filteredDiscoveredMigrations = _migrationSeeker
+            .Find()
+            .Where(m => ignoredMigrationTypes switch
             {
-                var types = toIgnore
-                    .Select(p => p.Type.ToLower())
-                    .ToArray();
-
-                return types switch
-                {
-                    ["repeatable"] => m.MigrationType is not MigrationType.Repeatable,
-                    ["versioned"] => m.MigrationType is not MigrationType.Versioned,
-                    ["repeatable", "versioned"] or ["versioned", "repeatable"] => false,
-                    _ => true
-                };
+                [MigrationType.Repeatable] => m.MigrationType is not MigrationType.Repeatable,
+                [MigrationType.Versioned] => m.MigrationType is not MigrationType.Versioned,
+                [MigrationType.Repeatable, MigrationType.Versioned] => false,
+                [MigrationType.Versioned, MigrationType.Repeatable] => false,
+                _ => true
             });
 
         foreach (var discoveredMigration in filteredDiscoveredMigrations)
         {
-            var appliedMigration = appliedMigrations
+            var appliedMigration = _database
+                .GetSchemaHistory()
                 .SingleOrDefault(m => m.Version == discoveredMigration.Version &&
                                       m.Script == discoveredMigration.FileName &&
                                       m.Type == "SQL" &&
@@ -76,8 +82,6 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
             }
         }
 
-        stopwatch.Stop();
-
-        return executionTime.Add(stopwatch.Elapsed);
+        return validated;
     }
 }

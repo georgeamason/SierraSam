@@ -42,8 +42,11 @@ public abstract class DefaultDatabase : IDatabase
         return false;
     }
 
-    public virtual void CreateSchemaHistory(string schema, string table)
+    public virtual void CreateSchemaHistory(string? schema = null, string? table = null)
     {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
         var sql =
             $"CREATE TABLE {schema}.{table} (" +
              "\"installed_rank\" INT PRIMARY KEY NOT NULL," +

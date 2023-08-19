@@ -2,7 +2,9 @@
 
 public interface IMigrationValidator
 {
-    TimeSpan Validate
-        (IReadOnlyCollection<AppliedMigration> appliedMigrations,
-         IReadOnlyCollection<PendingMigration> discoveredMigrations);
+    /// <summary>
+    /// Validates migrations
+    /// </summary>
+    /// <returns>The number of migrations validated</returns>
+    int Validate();
 }

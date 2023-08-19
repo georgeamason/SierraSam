@@ -1,5 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Immutable;
 using SierraSam.Core.Enums;
+using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationSeekers;
+using static SierraSam.Core.Enums.MigrationState;
+using static SierraSam.Core.Enums.MigrationType;
 
 namespace SierraSam.Core.MigrationValidators;
 
@@ -9,60 +13,64 @@ namespace SierraSam.Core.MigrationValidators;
 /// </summary>
 internal sealed class RemoteMigrationValidator : IMigrationValidator
 {
-    private readonly IReadOnlyCollection<(string Type, string Status)> _ignoredMigrations;
-
     private readonly IMigrationValidator _validator;
+    private readonly IMigrationSeeker _migrationSeeker;
+    private readonly IDatabase _database;
+    private readonly IIgnoredMigrationsFactory _ignoredMigrationsFactory;
 
-    public RemoteMigrationValidator
-        (IReadOnlyCollection<(string Type, string Status)> ignoredMigrations,
-         IMigrationValidator validator)
+    public RemoteMigrationValidator(
+        IMigrationSeeker migrationSeeker,
+        IDatabase database,
+        IIgnoredMigrationsFactory ignoredMigrationsFactory,
+        IMigrationValidator validator)
     {
-        _ignoredMigrations = ignoredMigrations
-            ?? throw new ArgumentNullException(nameof(ignoredMigrations));
-
         _validator = validator
             ?? throw new ArgumentNullException(nameof(validator));
+
+        _migrationSeeker = migrationSeeker
+            ?? throw new ArgumentNullException(nameof(migrationSeeker));
+
+        _database = database
+            ?? throw new ArgumentNullException(nameof(database));
+
+        _ignoredMigrationsFactory = ignoredMigrationsFactory
+            ?? throw new ArgumentNullException(nameof(ignoredMigrationsFactory));
     }
 
-    public TimeSpan Validate
-        (IReadOnlyCollection<AppliedMigration> appliedMigrations,
-         IReadOnlyCollection<PendingMigration> discoveredMigrations)
+    public int Validate()
     {
-        if (appliedMigrations == null) throw new ArgumentNullException(nameof(appliedMigrations));
-        if (discoveredMigrations == null) throw new ArgumentNullException(nameof(discoveredMigrations));
+        var validated = _validator.Validate();
 
-        var executionTime = _validator.Validate
-            (appliedMigrations, discoveredMigrations);
+        var ignoredMigrations = _ignoredMigrationsFactory.Create();
 
-        var toIgnore = _ignoredMigrations
-            .Where(pattern => pattern.Status.ToLower() == "missing" || pattern.Status == "*")
-            .ToArray();
+        var shortCircuit = ignoredMigrations.Any(i => i is
+        {
+            Type: MigrationType.Any,
+            State: MigrationState.Any or Missing
+        });
 
-        if (toIgnore.Any(pattern => pattern.Type == "*"))
-            return executionTime;
+        if (shortCircuit) return validated;
 
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
+        var migrationTypesToIgnore = ignoredMigrations
+            .Where(i => i.State is Missing or MigrationState.Any)
+            .Select(i => i.Type)
+            .ToImmutableArray();
 
-        var filteredAppliedMigrations = appliedMigrations
-            .Where(m =>
+        var filteredAppliedMigrations = _database
+            .GetSchemaHistory()
+            .Where(m => migrationTypesToIgnore switch
             {
-                var types = toIgnore
-                    .Select(p => p.Type.ToLower())
-                    .ToArray();
-
-                return types switch
-                {
-                    ["repeatable"] => m.MigrationType is not MigrationType.Repeatable,
-                    ["versioned"] => m.MigrationType is not MigrationType.Versioned,
-                    ["repeatable", "versioned"] or ["versioned", "repeatable"] => false,
-                    _ => true
-                };
+                [Repeatable] => m.MigrationType is not Repeatable,
+                [Versioned] => m.MigrationType is not Versioned,
+                [Repeatable, Versioned] => false,
+                [Versioned, Repeatable] => false,
+                _ => true
             });
 
         foreach (var appliedMigration in filteredAppliedMigrations)
         {
-            var discoveredMigration = discoveredMigrations
+            var discoveredMigration = _migrationSeeker
+                .Find()
                 .SingleOrDefault(m => m.Version == appliedMigration.Version &&
                                       m.FileName == appliedMigration.Script &&
                                       "SQL" == appliedMigration.Type &&
@@ -70,13 +78,12 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
 
             if (discoveredMigration is null)
             {
+                // TODO: This should be a custom exception
                 throw new Exception
                     ($"Unable to find local migration {appliedMigration.Script}");
             }
         }
 
-        stopwatch.Stop();
-
-        return executionTime.Add(stopwatch.Elapsed);
+        return validated;
     }
 }

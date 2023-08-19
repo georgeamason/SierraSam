@@ -13,6 +13,7 @@ using SierraSam.Core.MigrationValidators;
 using SierraSam.Database;
 using Version = SierraSam.Capabilities.Version;
 using Console = SierraSam.Core.ColorConsole;
+using IConfiguration = SierraSam.Core.IConfiguration;
 
 namespace SierraSam;
 
@@ -54,7 +55,7 @@ public static class Program
                         (s.GetRequiredService<ILogger<App>>(),
                          s.GetRequiredService<Configuration>()));
 
-                services.AddSingleton<Configuration>
+                services.AddSingleton<IConfiguration>
                     (s => ConfigurationFactory.Create
                         (s.GetRequiredService<ILoggerFactory>(),
                          s.GetRequiredService<IFileSystem>(),

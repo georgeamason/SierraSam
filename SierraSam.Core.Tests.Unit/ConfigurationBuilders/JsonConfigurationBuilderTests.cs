@@ -11,39 +11,44 @@ internal sealed class JsonConfigurationBuilderTests
 {
     private static IEnumerable Example_Configs()
     {
-        yield return new TestCaseData
-                ("{ \"url\": \"Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;\" }")
-            .Returns(new Configuration
-                (url: "Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;"))
+        yield return new TestCaseData(
+                "{ \"url\": \"Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;\" }",
+                new Configuration(url: "Driver={ODBC Driver 17 for SQL Server};Server=myServerAddress;Database=myDataBase;"))
             .SetName("Url is set correctly");
 
-        yield return new TestCaseData("{ \"connectionTimeout\": 5 }")
-            .Returns(new Configuration(connectionTimeout: 5))
+        yield return new TestCaseData(
+                "{ \"connectionTimeout\": 5 }",
+                new Configuration(connectionTimeout: 5))
             .SetName("Connection timeout is set correctly");
 
-        yield return new TestCaseData("{ \"connectionRetries\": 4 }")
-            .Returns(new Configuration(connectionRetries: 4))
+        yield return new TestCaseData(
+                "{ \"connectionRetries\": 4 }",
+                new Configuration(connectionRetries: 4))
             .SetName("Connection retries is set correctly");
 
-        yield return new TestCaseData("{ \"defaultSchema\": \"dbo\" }")
-            .Returns(new Configuration(defaultSchema: "dbo"))
+        yield return new TestCaseData(
+                "{ \"defaultSchema\": \"dbo\" }",
+                new Configuration(defaultSchema: "dbo"))
             .SetName("Default schema is set correctly");
 
-        yield return new TestCaseData("{ \"initialiseSql\": \"ssf\" }")
-            .Returns(new Configuration(initialiseSql: "ssf"))
+        yield return new TestCaseData(
+                "{ \"initialiseSql\": \"ssf\" }",
+                new Configuration(initialiseSql: "ssf"))
             .SetName("Initialise sql is set correctly");
 
-        yield return new TestCaseData("{ \"schemaTable\": \"tableName\" }")
-            .Returns(new Configuration(schemaTable: "tableName"))
+        yield return new TestCaseData(
+                "{ \"schemaTable\": \"tableName\" }",
+                new Configuration(schemaTable: "tableName"))
             .SetName("Schema table is set correctly");
 
-        yield return new TestCaseData(string.Empty)
-            .Returns(new Configuration())
+        yield return new TestCaseData(
+                string.Empty,
+                new Configuration())
             .SetName("empty config");
     }
 
     [TestCaseSource(nameof(Example_Configs))]
-    public Configuration Config_file_is_read_correctly(string config)
+    public void Config_file_is_read_correctly(string config, IConfiguration expected)
     {
         var fileSystem = Substitute.For<IFileSystem>();
 
@@ -53,7 +58,7 @@ internal sealed class JsonConfigurationBuilderTests
         var jsonBuilder = new JsonConfigurationReader
             (fileSystem, new []{ string.Empty });
 
-        return jsonBuilder.Read();
+        jsonBuilder.Read().Should().BeEquivalentTo(expected);
     }
 
     [Test]

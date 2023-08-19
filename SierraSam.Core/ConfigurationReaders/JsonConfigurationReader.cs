@@ -20,7 +20,7 @@ internal sealed class JsonConfigurationReader : IConfigurationReader
             ?? throw new ArgumentNullException(nameof(defaultConfigPaths));
     }
 
-    public Configuration Read()
+    public IConfiguration Read()
     {
         // Check flyway configuration file for info on how to complete migration
         // default location <base_location>\conf\flyway.config

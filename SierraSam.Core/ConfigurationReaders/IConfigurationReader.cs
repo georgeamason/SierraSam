@@ -2,5 +2,5 @@
 
 internal interface IConfigurationReader
 {
-    Configuration Read();
+    IConfiguration Read();
 }

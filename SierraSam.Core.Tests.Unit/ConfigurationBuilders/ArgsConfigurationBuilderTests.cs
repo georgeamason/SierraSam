@@ -56,7 +56,7 @@ internal sealed class ArgsConfigurationBuilderTests
     }
 
     [TestCaseSource(nameof(Get_config_overrides))]
-    public Configuration Config_overrides_are_read_correctly(string[] args)
+    public IConfiguration Config_overrides_are_read_correctly(string[] args)
     {
         var configurationBuilder = Substitute.For<IConfigurationReader>();
 

@@ -16,7 +16,7 @@ internal sealed class InstalledByConfigurationReader : IConfigurationReader
     }
 
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    public Configuration Read()
+    public IConfiguration Read()
     {
         var configuration = _configurationReader.Read();
 
@@ -33,12 +33,12 @@ internal sealed class InstalledByConfigurationReader : IConfigurationReader
                 switch (key.ToLower())
                 {
                     case "trusted_connection":
-                        configuration.SetInstalledBy(WindowsIdentity.GetCurrent().Name);
+                        configuration.InstalledBy = WindowsIdentity.GetCurrent().Name;
                         break;
                     case "user id":
                     case "user":
                     case "uid":
-                        configuration.SetInstalledBy(connStrBuilder.GetValue(key));
+                        configuration.InstalledBy = connStrBuilder.GetValue(key);
                         break;
                 }
             }

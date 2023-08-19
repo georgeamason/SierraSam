@@ -12,13 +12,13 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
             ?? throw new ArgumentNullException(nameof(configurationReader));
     }
 
-    public Configuration Read()
+    public IConfiguration Read()
     {
         var configuration = _configurationReader.Read();
 
         if (!string.IsNullOrEmpty(configuration.DefaultSchema)) return configuration;
 
-        if (configuration.Schemas.Any()) configuration.SetDefaultSchema(configuration.Schemas.First());
+        if (configuration.Schemas.Any()) configuration.DefaultSchema = configuration.Schemas.First();
 
         // TODO: Check what the default database schema is
         try
@@ -33,7 +33,7 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
                 ("SELECT SCHEMA_NAME()",
                  dataReader => dataReader.GetString(0));
 
-            configuration.SetDefaultSchema(defaultSchema.Single());
+            configuration.DefaultSchema = defaultSchema.Single();
         }
         catch (Exception exception)
         {

@@ -6,9 +6,9 @@ namespace SierraSam.Core.Factories;
 
 public sealed class IgnoredMigrationsFactory : IIgnoredMigrationsFactory
 {
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
-    public IgnoredMigrationsFactory(Configuration configuration)
+    public IgnoredMigrationsFactory(IConfiguration configuration)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }

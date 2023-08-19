@@ -5,9 +5,7 @@ namespace SierraSam.Core.ConfigurationReaders;
 internal sealed class ArgsConfigurationReader : IConfigurationReader
 {
     private readonly ILogger<ArgsConfigurationReader> _logger;
-
     private readonly IEnumerable<string> _args;
-
     private readonly IConfigurationReader _configurationReader;
 
 
@@ -27,7 +25,7 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
     }
 
     // TODO: Make sure we're setting all the properties here
-    public Configuration Read()
+    public IConfiguration Read()
     {
         var configuration = _configurationReader.Read();
 
@@ -47,7 +45,7 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
             {
                 case "--url":
                     // https://flywaydb.org/documentation/configuration/parameters/url
-                    configuration.SetUrl(kvp.Value);
+                    configuration.Url = kvp.Value;
                     break;
                 case "--connectionTimeout":
                     if (!int.TryParse(kvp.Value, out var connectionTimeout))
@@ -59,51 +57,51 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
                     if (connectionTimeout < 0)
                         throw new ArgumentException("Connection Timeout cannot be less that 0");
 
-                    configuration.SetConnectionTimeout(connectionTimeout);
+                    configuration.ConnectionTimeout = connectionTimeout;
 
                     break;
                 case "--connectionRetries":
                     // https://flywaydb.org/documentation/configuration/parameters/connectRetries
                     if (int.TryParse(kvp.Value, out var connectionRetries))
                     {
-                        configuration.SetConnectionRetries(connectionRetries);
+                        configuration.ConnectionRetries = connectionRetries;
                     }
                     break;
                 case "--defaultSchema":
                     // https://flywaydb.org/documentation/configuration/parameters/defaultSchema
-                    configuration.SetDefaultSchema(kvp.Value);
+                    configuration.DefaultSchema = kvp.Value;
                     break;
                 case "--initSql":
                     // https://flywaydb.org/documentation/configuration/parameters/initSql
-                    configuration.SetInitialiseSql(kvp.Value);
+                    configuration.InitialiseSql = kvp.Value;
                     break;
                 case "--table":
                     // https://flywaydb.org/documentation/configuration/parameters/table
-                    configuration.SetSchemaTable(kvp.Value);
+                    configuration.SchemaTable = kvp.Value;
                     break;
                 case "--locations":
-                    configuration.SetLocations(kvp.Value.Split(','));
+                    configuration.Locations = kvp.Value.Split(',');
                     break;
                 case "--migrationSuffixes":
-                    configuration.SetMigrationSuffixes(kvp.Value.Split(','));
+                    configuration.MigrationSuffixes = kvp.Value.Split(',');
                     break;
                 case "--migrationSeparator":
-                    configuration.SetMigrationSeparator(kvp.Value);
+                    configuration.MigrationSeparator = kvp.Value;
                     break;
                 case "--migrationPrefix":
-                    configuration.SetMigrationPrefix(kvp.Value);
+                    configuration.MigrationPrefix = kvp.Value;
                     break;
                 case "--installedBy":
-                    configuration.SetInstalledBy(kvp.Value);
+                    configuration.InstalledBy = kvp.Value;
                     break;
                 case "--repeatableMigrationPrefix":
-                    configuration.SetRepeatableMigrationPrefix(kvp.Value);
+                    configuration.RepeatableMigrationPrefix = kvp.Value;
                     break;
                 case "--undoMigrationPrefix":
-                    configuration.SetUndoMigrationPrefix(kvp.Value);
+                    configuration.UndoMigrationPrefix = kvp.Value;
                     break;
                 case "--ignoredMigrations":
-                    configuration.SetIgnoredMigrations(kvp.Value.Split(','));
+                    configuration.IgnoredMigrations = kvp.Value.Split(',');
                     break;
                 default:
                     throw new Exception($"Invalid argument '{kvp.Key}'");

@@ -7,7 +7,7 @@ namespace SierraSam.Core.Factories;
 public static class ConfigurationFactory
 {
 
-    public static Configuration Create(ILoggerFactory loggerFactory,
+    public static IConfiguration Create(ILoggerFactory loggerFactory,
                                        IFileSystem fileSystem,
                                        IEnumerable<string> defaultConfigPaths,
                                        string[] args)

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SierraSam.Core.ConfigurationReaders;
@@ -9,54 +10,52 @@ internal sealed class ArgsConfigurationBuilderTests
 {
     private static IEnumerable Get_config_overrides()
     {
-        yield return new TestCaseData
-                (new[] { "verb", "--url=fakeConnectionString" }.AsEnumerable())
-            .Returns(new Configuration(url: "fakeConnectionString"))
+        yield return new TestCaseData(
+            new [] { "verb", "--url=fakeConnectionString" },
+            new Configuration(url: "fakeConnectionString"))
             .SetName("url is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--connectionTimeout=3" }.AsEnumerable())
-            .Returns(new Configuration(connectionTimeout: 3))
+        yield return new TestCaseData(
+            new[] { "verb", "--connectionTimeout=3" },
+            new Configuration(connectionTimeout: 3))
             .SetName("connectionTimeout is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--connectionRetries=4" }.AsEnumerable())
-            .Returns(new Configuration(connectionRetries: 4))
+        yield return new TestCaseData(new[] { "verb", "--connectionRetries=4" }, new Configuration(connectionRetries: 4))
             .SetName("connectionRetries is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--defaultSchema=xyz" }.AsEnumerable())
-            .Returns(new Configuration(defaultSchema: "xyz"))
+        yield return new TestCaseData(
+            new[] { "verb", "--defaultSchema=xyz" },
+            new Configuration(defaultSchema: "xyz"))
             .SetName("defaultSchema is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--initSql=ssf" }.AsEnumerable())
-            .Returns(new Configuration(initialiseSql: "ssf"))
+        yield return new TestCaseData(
+            new[] { "verb", "--initSql=ssf" },
+            new Configuration(initialiseSql: "ssf"))
             .SetName("initSql is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--table=a-table" }.AsEnumerable())
-            .Returns(new Configuration(schemaTable: "a-table"))
+        yield return new TestCaseData(
+                new[] { "verb", "--table=a-table" },
+            new Configuration(schemaTable: "a-table"))
             .SetName("table is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--repeatableMigrationPrefix=Q" }.AsEnumerable())
-            .Returns(new Configuration(repeatableMigrationPrefix: "Q"))
+        yield return new TestCaseData(
+                new[] { "verb", "--repeatableMigrationPrefix=Q" },
+                new Configuration(repeatableMigrationPrefix: "Q"))
             .SetName("repeatable migration prefix is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--undoMigrationPrefix=Z" }.AsEnumerable())
-            .Returns(new Configuration(undoMigrationPrefix: "Z"))
+        yield return new TestCaseData(
+                new[] { "verb", "--undoMigrationPrefix=Z" },
+                new Configuration(undoMigrationPrefix: "Z"))
             .SetName("undo migration prefix is set correctly");
 
-        yield return new TestCaseData
-                (new[] { "verb", "--ignoredMigrations=*:*" }.AsEnumerable())
-            .Returns(new Configuration(ignoredMigrations: new[] {"*:*"}))
+        yield return new TestCaseData(
+                new[] { "verb", "--ignoredMigrations=*:*" },
+                new Configuration(ignoredMigrations: new[] {"*:*"}))
             .SetName("ignored migrations is set correctly");
     }
 
     [TestCaseSource(nameof(Get_config_overrides))]
-    public IConfiguration Config_overrides_are_read_correctly(string[] args)
+    public void Config_overrides_are_read_correctly(string[] args, IConfiguration expected)
     {
         var configurationBuilder = Substitute.For<IConfigurationReader>();
 
@@ -69,6 +68,6 @@ internal sealed class ArgsConfigurationBuilderTests
         var argsConfigurationBuilder = new ArgsConfigurationReader
             (loggerFactory, args, configurationBuilder);
 
-        return argsConfigurationBuilder.Read();
+        argsConfigurationBuilder.Read().Should().BeEquivalentTo(expected);
     }
 }

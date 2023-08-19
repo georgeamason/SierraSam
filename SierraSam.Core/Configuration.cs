@@ -5,8 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace SierraSam.Core;
 
-// TODO: Does this need to be IEquatable?
-public class Configuration : IConfiguration, IEquatable<Configuration>
+public class Configuration : IConfiguration
 {
     public Configuration()
     {
@@ -117,60 +116,4 @@ public class Configuration : IConfiguration, IEquatable<Configuration>
 
     [JsonPropertyName("ignoredMigrations"), JsonInclude]
     public IEnumerable<string> IgnoredMigrations  { get; set; }
-
-    #region IEquatable
-    public bool Equals(Configuration? other)
-    {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return Url == other.Url 
-            && User == other.User
-            && ConnectionTimeout == other.ConnectionTimeout
-            && ConnectionRetries == other.ConnectionRetries
-            && DefaultSchema == other.DefaultSchema
-            && InitialiseSql == other.InitialiseSql
-            && SchemaTable == other.SchemaTable
-            && Locations.SequenceEqual(other.Locations)
-            && MigrationSuffixes.SequenceEqual(other.MigrationSuffixes)
-            && MigrationSeparator == other.MigrationSeparator
-            && MigrationPrefix == other.MigrationPrefix
-            && InstalledBy == other.InstalledBy
-            && Schemas.SequenceEqual(other.Schemas)
-            && RepeatableMigrationPrefix == other.RepeatableMigrationPrefix
-            && UndoMigrationPrefix == other.UndoMigrationPrefix
-            && IgnoredMigrations.SequenceEqual(other.IgnoredMigrations);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-
-        return obj.GetType() == typeof(Configuration) && Equals((Configuration)obj);
-    }
-
-    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
-    public override int GetHashCode()
-    {
-        var hashCode = new HashCode();
-        hashCode.Add(Url);
-        hashCode.Add(User);
-        hashCode.Add(ConnectionTimeout);
-        hashCode.Add(ConnectionRetries);
-        hashCode.Add(DefaultSchema);
-        hashCode.Add(InitialiseSql);
-        hashCode.Add(SchemaTable);
-        hashCode.Add(Locations);
-        hashCode.Add(MigrationSuffixes);
-        hashCode.Add(MigrationSeparator);
-        hashCode.Add(MigrationPrefix);
-        hashCode.Add(InstalledBy);
-        hashCode.Add(Schemas);
-        hashCode.Add(RepeatableMigrationPrefix);
-        hashCode.Add(UndoMigrationPrefix);
-        hashCode.Add(IgnoredMigrations);
-        return hashCode.ToHashCode();
-    }
-    #endregion
 }

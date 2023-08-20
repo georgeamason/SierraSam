@@ -14,7 +14,7 @@ internal sealed class MigrationApplicatorTests
                 (() => new MigrationApplicator
                     (null!,
                      Substitute.For<IFileSystem>(),
-                     Substitute.For<Configuration>())))
+                     Substitute.For<IConfiguration>())))
             .SetName("null database");
 
         yield return new TestCaseData
@@ -22,7 +22,7 @@ internal sealed class MigrationApplicatorTests
                 (() => new MigrationApplicator
                     (Substitute.For<IDatabase>(),
                      null!,
-                     Substitute.For<Configuration>())))
+                     Substitute.For<IConfiguration>())))
             .SetName("null filesystem");
 
         yield return new TestCaseData

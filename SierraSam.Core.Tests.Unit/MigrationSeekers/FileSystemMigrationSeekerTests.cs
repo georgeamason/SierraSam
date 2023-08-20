@@ -20,7 +20,7 @@ internal sealed class FileSystemMigrationSeekerTests
 
         yield return new TestCaseData
             (new TestDelegate
-                (() => new FileSystemMigrationSeeker(new Configuration(), null!)))
+                (() => new FileSystemMigrationSeeker(Substitute.For<IConfiguration>(), null!)))
             .SetName("Null file system");
     }
 

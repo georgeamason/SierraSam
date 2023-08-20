@@ -10,7 +10,7 @@ namespace SierraSam.Core;
 [SuppressMessage("GeneratedRegex", "SYSLIB1045:Convert to \'GeneratedRegexAttribute\'.")]
 public sealed class PendingMigration
 {
-    public static PendingMigration Parse(Configuration configuration, IFileInfo fileInfo)
+    public static PendingMigration Parse(IConfiguration configuration, IFileInfo fileInfo)
     {
         var version = GetVersion(configuration, fileInfo.Name);
 
@@ -72,7 +72,7 @@ public sealed class PendingMigration
             ?? throw new ArgumentNullException(nameof(fileName));
     }
 
-    private static string? GetVersion(Configuration configuration, string fileName)
+    private static string? GetVersion(IConfiguration configuration, string fileName)
     {
         var prefixes = string.Join('|', configuration.MigrationPrefix, configuration.UndoMigrationPrefix);
 
@@ -85,7 +85,7 @@ public sealed class PendingMigration
         return Regex.Match(fileName, pattern).Value;
     }
 
-    private static string GetDescription(Configuration configuration, string fileName)
+    private static string GetDescription(IConfiguration configuration, string fileName)
     {
         var suffixes = string.Join('|', configuration.MigrationSuffixes
             .Select(suffix => @$"\{suffix}")

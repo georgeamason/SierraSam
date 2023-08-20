@@ -6,11 +6,10 @@ namespace SierraSam.Core.MigrationSeekers;
 
 internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
 {
-    private readonly Configuration _configuration;
-
+    private readonly IConfiguration _configuration;
     private readonly IFileSystem _fileSystem;
 
-    public FileSystemMigrationSeeker(Configuration configuration, IFileSystem fileSystem)
+    public FileSystemMigrationSeeker(IConfiguration configuration, IFileSystem fileSystem)
     {
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));

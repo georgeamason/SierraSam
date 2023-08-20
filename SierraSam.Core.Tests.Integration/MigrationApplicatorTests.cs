@@ -11,17 +11,9 @@ internal sealed class MigrationApplicatorTests
 {
     private const string Password = "azyxqw!df323e";
 
-    private readonly IContainer _container;
+    private readonly IContainer _container = DbContainerFactory.CreateMsSqlContainer(Password);
 
-    private readonly OdbcConnection _connection;
-
-    public MigrationApplicatorTests()
-    {
-
-        _container = DbContainerFactory.CreateMsSqlContainer(Password);
-
-        _connection = new OdbcConnection();
-    }
+    private readonly OdbcConnection _connection = new();
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -39,7 +31,11 @@ internal sealed class MigrationApplicatorTests
     [Test]
     public void Apply_makes_expected_calls_to_odbc_executor()
     {
-        var configuration = new Configuration();
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration
+            .DefaultSchema
+            .Returns("dbo");
 
         var database = Substitute.For<IDatabase>();
 
@@ -104,7 +100,11 @@ internal sealed class MigrationApplicatorTests
     [Test]
     public void Apply_skips_migration_when_checksum_matches()
     {
-        var configuration = new Configuration();
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration
+            .DefaultSchema
+            .Returns("dbo");
 
         var database = Substitute.For<IDatabase>();
 

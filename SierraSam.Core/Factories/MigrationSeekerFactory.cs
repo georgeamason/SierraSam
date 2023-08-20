@@ -5,7 +5,7 @@ namespace SierraSam.Core.Factories;
 
 public static class MigrationSeekerFactory
 {
-    public static IMigrationSeeker Create(Configuration configuration, IFileSystem fileSystem)
+    public static IMigrationSeeker Create(IConfiguration configuration, IFileSystem fileSystem)
     {
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
         ArgumentNullException.ThrowIfNull(fileSystem, nameof(fileSystem));

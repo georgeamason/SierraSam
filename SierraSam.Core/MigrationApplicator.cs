@@ -10,15 +10,13 @@ namespace SierraSam.Core;
 public sealed class MigrationApplicator : IMigrationApplicator
 {
     private readonly IDatabase _database;
-
     private readonly IFileSystem _fileSystem;
-
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
     public MigrationApplicator
         (IDatabase database,
          IFileSystem fileSystem,
-         Configuration configuration)
+         IConfiguration configuration)
     {
         _database = database
             ?? throw new ArgumentNullException(nameof(database));
@@ -30,6 +28,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
             ?? throw new ArgumentNullException(nameof(configuration));
     }
 
+    // TODO: Can I refactor this further?
     public (int appliedMigrations, TimeSpan executionTime) Apply
         (IReadOnlyCollection<PendingMigration> pendingMigrations,
          IReadOnlyCollection<AppliedMigration> appliedMigrations)

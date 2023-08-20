@@ -16,14 +16,12 @@ internal sealed class MigrateTests
 {
     private static IEnumerable Constructors_with_null_arguments()
     {
-        var configuration = new Configuration();
-
         // ReSharper disable ObjectCreationAsStatement
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (null!,
-                 DatabaseResolver.Create(new OdbcConnection(), configuration),
-                 configuration,
+                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null logger");
@@ -32,7 +30,7 @@ internal sealed class MigrateTests
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
                  null!, 
-                 configuration,
+                 Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null ODBC connection");
@@ -40,7 +38,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), configuration),
+                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
                  null!,
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
@@ -49,8 +47,8 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), configuration),
-                 new Configuration(),
+                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IConfiguration>(),
                  null!,
                  Substitute.For<IMigrationApplicator>())))
             .SetName("Null migration seeker");
@@ -58,8 +56,8 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), configuration),
-                 new Configuration(),
+                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  null!)))
             .SetName("Null migration applicator");

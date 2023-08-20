@@ -53,7 +53,7 @@ public static class Program
                 services.AddSingleton<OdbcConnection>
                     (s => OdbcConnectionFactory.Create
                         (s.GetRequiredService<ILogger<App>>(),
-                         s.GetRequiredService<Configuration>()));
+                         s.GetRequiredService<IConfiguration>()));
 
                 services.AddSingleton<IConfiguration>
                     (s => ConfigurationFactory.Create
@@ -65,13 +65,13 @@ public static class Program
                 services.AddSingleton<IDatabase>
                     (s => DatabaseResolver.Create
                         (s.GetRequiredService<OdbcConnection>(),
-                         s.GetRequiredService<Configuration>()));
+                         s.GetRequiredService<IConfiguration>()));
 
                 services.AddSingleton<IFileSystem, FileSystem>();
 
                 services.AddSingleton<IMigrationSeeker>
                     (s => MigrationSeekerFactory.Create
-                        (s.GetRequiredService<Configuration>(),
+                        (s.GetRequiredService<IConfiguration>(),
                          s.GetRequiredService<IFileSystem>()));
 
                 services.AddSingleton<IMigrationApplicator, MigrationApplicator>();

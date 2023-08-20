@@ -12,13 +12,13 @@ internal sealed class Migrate : ICapability
 {
     private readonly ILogger _logger;
     private readonly IDatabase _database;
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IMigrationApplicator _migrationApplicator;
 
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
-                   Configuration configuration,
+                   IConfiguration configuration,
                    IMigrationSeeker migrationSeeker,
                    IMigrationApplicator migrationApplicator)
     {

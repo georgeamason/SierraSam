@@ -16,7 +16,7 @@ internal sealed class MigrationMergerTests
     {
         _migrationSeeker = Substitute.For<IMigrationSeeker>();
         _database = Substitute.For<IDatabase>();
-        var configuration = new Configuration();
+        var configuration = Substitute.For<IConfiguration>();
 
         _migrationMerger = new MigrationMerger(
             _migrationSeeker,

@@ -5,9 +5,9 @@ namespace SierraSam.Database.Databases;
 
 public class MssqlDatabase : DefaultDatabase
 {
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
-    public MssqlDatabase(OdbcConnection odbcConnection, Configuration configuration)
+    public MssqlDatabase(OdbcConnection odbcConnection, IConfiguration configuration)
         : base(odbcConnection, configuration)
     {
         _configuration = configuration

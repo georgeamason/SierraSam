@@ -22,7 +22,6 @@ internal sealed class InstalledByConfigurationReader : IConfigurationReader
 
         if (!string.IsNullOrEmpty(configuration.User)) return configuration;
 
-        // TODO: Obtain the user from the connection string
         try
         {
             var connStrBuilder = new OdbcConnectionStringBuilder
@@ -30,6 +29,7 @@ internal sealed class InstalledByConfigurationReader : IConfigurationReader
 
             foreach (string key in connStrBuilder.Keys!)
             {
+                // TODO: Are these all the places where we can get the user from?
                 switch (key.ToLower())
                 {
                     case "trusted_connection":

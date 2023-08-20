@@ -6,7 +6,7 @@ namespace SierraSam.Database;
 
 public static class DatabaseResolver
 {
-    public static IDatabase Create(OdbcConnection odbcConnection, Configuration configuration)
+    public static IDatabase Create(OdbcConnection odbcConnection, IConfiguration configuration)
     {
         var connectionString = odbcConnection.ConnectionString;
 

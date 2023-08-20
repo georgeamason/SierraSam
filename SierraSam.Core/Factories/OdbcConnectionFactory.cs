@@ -5,7 +5,7 @@ namespace SierraSam.Core.Factories;
 
 public static class OdbcConnectionFactory
 {
-    public static OdbcConnection Create(ILogger logger, Configuration configuration)
+    public static OdbcConnection Create(ILogger logger, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));

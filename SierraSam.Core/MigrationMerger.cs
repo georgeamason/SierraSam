@@ -7,12 +7,12 @@ public class MigrationMerger : IMigrationMerger
 {
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IDatabase _database;
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
     public MigrationMerger(
         IMigrationSeeker migrationSeeker,
         IDatabase database,
-        Configuration configuration)
+        IConfiguration configuration)
     {
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
         _database = database ?? throw new ArgumentNullException(nameof(database));

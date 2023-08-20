@@ -6,11 +6,11 @@ namespace SierraSam.Database.Databases;
 
 public class PostgresDatabase : DefaultDatabase
 {
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
     private readonly OdbcExecutor _odbcExecutor;
 
-    public PostgresDatabase(OdbcConnection connection, Configuration configuration)
+    public PostgresDatabase(OdbcConnection connection, IConfiguration configuration)
         : base(connection, configuration)
     {
         _configuration = configuration
@@ -21,10 +21,13 @@ public class PostgresDatabase : DefaultDatabase
 
     public override string Name => "PostgreSQL";
 
-    public override void CreateSchemaHistory(string schema, string table)
+    public override void CreateSchemaHistory(string? schema = null, string? table = null)
     {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
         var sql =
-            $"CREATE TABLE {schema}.{table}(" +
+            $"CREATE TABLE \"{schema}\".\"{table}\"(" +
             $"\"installed_rank\" INT PRIMARY KEY NOT NULL," +
             $"\"version\" VARCHAR(50) NULL," +
             $"\"description\" VARCHAR(200) NOT NULL," +
@@ -42,7 +45,7 @@ public class PostgresDatabase : DefaultDatabase
     public override void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
     {
         var sql =
-            $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
+            $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +
                 "\"installed_rank\"," +
                 "\"version\"," +
                 "\"description\"," +

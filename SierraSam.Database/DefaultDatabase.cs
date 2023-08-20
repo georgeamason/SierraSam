@@ -7,11 +7,11 @@ namespace SierraSam.Database;
 
 public abstract class DefaultDatabase : IDatabase
 {
-    private readonly Configuration _configuration;
+    private readonly IConfiguration _configuration;
 
     private readonly OdbcExecutor _odbcExecutor;
 
-    protected DefaultDatabase(OdbcConnection connection, Configuration configuration)
+    protected DefaultDatabase(OdbcConnection connection, IConfiguration configuration)
     {
         Connection = connection
             ?? throw new ArgumentNullException(nameof(connection));
@@ -63,8 +63,11 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor.ExecuteNonQuery(sql);
     }
 
-    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string schema, string table)
+    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null)
     {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
         var sql = "SELECT \"installed_rank\"," +
                   "\"version\"," +
                   "\"description\"," +
@@ -79,20 +82,20 @@ public abstract class DefaultDatabase : IDatabase
                   "ORDER BY \"installed_rank\"";
 
         // TODO: These mappings can throw...
-        return _odbcExecutor.ExecuteReader<AppliedMigration>
-            (sql,
-             reader => new AppliedMigration
-                (reader.GetInt32("installed_rank"),
-                 reader["version"] as string,
-                 reader.GetString("description"),
-                 reader.GetString("type"),
-                 reader.GetString("script"),
-                 reader.GetString("checksum"),
-                 reader.GetString("installed_by"),
-                 reader.GetDateTime("installed_on"),
-                 reader.GetDouble("execution_time"),
-                 reader.GetBoolean("success"))
-             );
+        return _odbcExecutor.ExecuteReader<AppliedMigration>(
+            sql,
+            reader => new AppliedMigration(
+                reader.GetInt32("installed_rank"),
+                reader["version"] as string,
+                reader.GetString("description"),
+                reader.GetString("type"),
+                reader.GetString("script"),
+                reader.GetString("checksum"),
+                reader.GetString("installed_by"),
+                reader.GetDateTime("installed_on"),
+                reader.GetDouble("execution_time"),
+                reader.GetBoolean("success"))
+        );
     }
 
     public virtual void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)

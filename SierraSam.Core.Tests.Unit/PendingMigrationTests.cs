@@ -1,5 +1,6 @@
 ﻿using System.IO.Abstractions.TestingHelpers;
 using FluentAssertions;
+using NSubstitute;
 
 namespace SierraSam.Core.Tests.Unit;
 
@@ -26,9 +27,10 @@ internal sealed class PendingMigrationTests
 
         var mockFileInfo = new MockFileInfo(mockFileSystem, filePath);
 
-        var configuration = new Configuration
-            (migrationPrefix: prefix,
-             migrationSeparator: separator);
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.MigrationPrefix.Returns(prefix);
+        configuration.MigrationSeparator.Returns(separator);
 
         var migration = PendingMigration.Parse(configuration, mockFileInfo);
 
@@ -49,7 +51,9 @@ internal sealed class PendingMigrationTests
 
         var mockFileInfo = new MockFileInfo(mockFileSystem, filePath);
 
-        var configuration = new Configuration();
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.RepeatableMigrationPrefix.Returns("R");
 
         var act = () => PendingMigration.Parse(configuration, mockFileInfo);
 

@@ -27,25 +27,27 @@ public class FileSystemMigrationSeekerTests
     {
         var searchPath = Path.Combine("db", "migrations");
 
-        var configuration = new Configuration
-            (locations: new []{ $"filesystem:{searchPath}" },
-             migrationPrefix: "V",
-             migrationSeparator: "__",
-             migrationSuffixes: new []{ ".sql" });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
+        configuration.RepeatableMigrationPrefix.Returns("R");
+        configuration.MigrationPrefix.Returns("V");
+        configuration.MigrationSeparator.Returns("__");
+        configuration.MigrationSuffixes.Returns(new []{ ".sql" });
 
         var fileSystem = new MockFileSystem();
 
         fileSystem.Directory.CreateDirectory(searchPath);
 
-        fileSystem.File.Create
-            (Path.Combine(searchPath, fileName));
+        fileSystem.File.Create(Path.Combine(searchPath, fileName));
 
         // Add bad file
         const string badFileName = "V1__My_description.txt";
         fileSystem.File.Create(Path.Combine(searchPath, badFileName));
 
-        var migrationSeeker = new FileSystemMigrationSeeker
-            (configuration, fileSystem);
+        var migrationSeeker = new FileSystemMigrationSeeker(
+            configuration,
+            fileSystem);
 
         var migrations = migrationSeeker.Find();
 
@@ -68,11 +70,13 @@ public class FileSystemMigrationSeekerTests
     {
         var searchPath = Path.Combine("db", "migrations");
 
-        var configuration = new Configuration
-            (locations: new []{ $"filesystem:{searchPath}" },
-             migrationPrefix: "V",
-             migrationSeparator: "__",
-             migrationSuffixes: new []{ ".sql" });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
+        configuration.RepeatableMigrationPrefix.Returns("R");
+        configuration.MigrationPrefix.Returns("V");
+        configuration.MigrationSeparator.Returns("__");
+        configuration.MigrationSuffixes.Returns(new []{ ".sql" });
 
         var fileSystem = new MockFileSystem();
 
@@ -109,8 +113,9 @@ public class FileSystemMigrationSeekerTests
     [TestCase(":")]
     public void Find_returns_empty_collection_for_bad_location(string location)
     {
-        var configuration = new Configuration
-            (locations: new []{ location });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ location });
 
         var fileSystem = Substitute.For<IFileSystem>();
 
@@ -129,8 +134,13 @@ public class FileSystemMigrationSeekerTests
     {
         var searchPath = Path.Combine("db", "migrations");
 
-        var configuration = new Configuration
-            (locations: new []{ $"filesystem:{searchPath}" });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
+        configuration.RepeatableMigrationPrefix.Returns("R");
+        configuration.MigrationPrefix.Returns("V");
+        configuration.MigrationSeparator.Returns("__");
+        configuration.MigrationSuffixes.Returns(new []{ ".sql" });
 
         var fileSystem = Substitute.For<IFileSystem>();
 
@@ -153,8 +163,9 @@ public class FileSystemMigrationSeekerTests
     {
         var searchPath = Path.Combine("db", "migrations");
 
-        var configuration = new Configuration
-            (locations: new []{ $"filesystem:{searchPath}" });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
 
         var fileSystem = new MockFileSystem();
 
@@ -173,8 +184,9 @@ public class FileSystemMigrationSeekerTests
     {
         const string searchPath = "";
 
-        var configuration = new Configuration
-            (locations: new []{ $"filesystem:{searchPath}" });
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
 
         var fileSystem = Substitute.For<IFileSystem>();
 

@@ -20,7 +20,6 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
         if (configuration.Schemas.Any()) configuration.DefaultSchema = configuration.Schemas.First();
 
-        // TODO: Check what the default database schema is
         try
         {
             using var connection = new OdbcConnection(configuration.Url);
@@ -29,6 +28,7 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
             var executor = new OdbcExecutor(connection);
 
+            // TODO: Will this work for all databases?
             var defaultSchema = executor.ExecuteReader<string>
                 ("SELECT SCHEMA_NAME()",
                  dataReader => dataReader.GetString(0));

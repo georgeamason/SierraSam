@@ -42,25 +42,28 @@ public sealed class App
 
         switch (args[0])
         {
-            case "--auth" or "auth":
+            case "auth":
                 _capabilityResolver.Resolve(typeof(Auth)).Run(args[1..]);
                 break;
-            case "--baseline" or "baseline":
+            case "baseline":
                 _capabilityResolver.Resolve(typeof(Baseline)).Run(args[1..]);
                 break;
-            case "--clean" or "clean":
+            case "clean":
                 _capabilityResolver.Resolve(typeof(Clean)).Run(args[1..]);
                 break;
-            case "--help" or "help":
+            case "help":
                 _capabilityResolver.Resolve(typeof(Help)).Run(args[1..]);
                 break;
-            case "--info" or "info":
+            case "init":
+                _capabilityResolver.Resolve(typeof(Initialise)).Run(args[1..]);
+                break;
+            case "info":
                 _capabilityResolver.Resolve(typeof(Information)).Run(args[1..]);
                 break;
-            case "--migrate" or "migrate":
+            case "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
-            case "--validate" or "validate":
+            case "validate":
                 _capabilityResolver.Resolve(typeof(Validate)).Run(args[1..]);
                 break;
             case "-v" or "--version" or "version":

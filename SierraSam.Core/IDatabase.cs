@@ -28,4 +28,8 @@ public interface IDatabase
     void UpdateSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration);
 
     TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql);
+
+    IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, OdbcTransaction? transaction = null);
+
+    void DropSchemaObject(OdbcTransaction transaction, DatabaseObject obj);
 }

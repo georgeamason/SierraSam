@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
+using System.Text;
 using SierraSam.Core;
 
 namespace SierraSam.Database;
@@ -8,7 +9,6 @@ namespace SierraSam.Database;
 public abstract class DefaultDatabase : IDatabase
 {
     private readonly IConfiguration _configuration;
-
     private readonly OdbcExecutor _odbcExecutor;
 
     protected DefaultDatabase(OdbcConnection connection, IConfiguration configuration)
@@ -80,6 +80,13 @@ public abstract class DefaultDatabase : IDatabase
                   "\"success\" " +
                   $"FROM \"{schema}\".\"{table}\" " +
                   "ORDER BY \"installed_rank\"";
+
+        if (HasMigrationTable is false)
+        {
+            throw new InvalidOperationException($"Schema history table " +
+                                                $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
+                                                $"does not exist");
+        }
 
         // TODO: These mappings can throw...
         return _odbcExecutor.ExecuteReader<AppliedMigration>(
@@ -154,5 +161,53 @@ public abstract class DefaultDatabase : IDatabase
         stopwatch.Stop();
 
         return stopwatch.Elapsed;
+    }
+
+    public virtual IReadOnlyCollection<DatabaseObject> GetSchemaObjects(
+        string? schema = null,
+        OdbcTransaction? transaction = null)
+    {
+        schema ??= _configuration.DefaultSchema;
+
+        //  TODO: How about Triggers - they are not in sys.objects
+        var sql = "SELECT o.name, o.type, t.name AS parent" + Environment.NewLine +
+                  "FROM sys.objects o" + Environment.NewLine +
+                  "INNER JOIN sys.schemas s ON s.[schema_id] = o.[schema_id]" + Environment.NewLine +
+                  "LEFT JOIN sys.tables t ON t.[object_id] = o.parent_object_id" + Environment.NewLine +
+                  $"WHERE s.name = '{schema}'" + Environment.NewLine +
+                  "AND o.is_ms_shipped = 0" + Environment.NewLine +
+                  "ORDER BY o.parent_object_id DESC, o.[object_id] DESC";
+
+        return _odbcExecutor.ExecuteReader(
+            sql,
+            reader => new DatabaseObject(
+                schema,
+                reader.GetString("name").Trim(),
+                reader.GetString("type").Trim(),
+                reader["parent"] as string),
+            transaction);
+    }
+
+    public virtual void DropSchemaObject(OdbcTransaction transaction, DatabaseObject obj)
+    {
+        var objectType = obj.Type switch
+        {
+            "AF" => "AGGREGATE",
+            "C" or "D" or "F" or "PK" or "UQ" => "CONSTRAINT",
+            "FN" or "IF" or "TF" => "FUNCTION",
+            "P" => "PROCEDURE",
+            "U" => "TABLE",
+            "V" => "VIEW",
+            _   => throw new ArgumentOutOfRangeException(nameof(obj), $"Unknown database object type '{obj.Type}'")
+        };
+
+        var sb = new StringBuilder();
+
+        if (obj.Parent is not null)
+            sb.Append($"ALTER TABLE \"{obj.Schema}\".\"{obj.Parent}\"");
+
+        sb.Append($"DROP {objectType} \"{obj.Name}\"");
+
+        _odbcExecutor.ExecuteNonQuery(transaction, sb.ToString());
     }
 }

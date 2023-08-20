@@ -13,11 +13,18 @@ public sealed class OdbcExecutor
             ?? throw new ArgumentNullException(nameof(connection));
     }
 
-    public IReadOnlyCollection<T> ExecuteReader<T>(string sql, Func<OdbcDataReader, T> rowMapper)
+    public IReadOnlyCollection<T> ExecuteReader<T>(
+        string sql,
+        Func<OdbcDataReader, T> rowMapper,
+        OdbcTransaction? transaction = null)
     {
         try
         {
             using var command = new OdbcCommand(sql, _connection);
+
+            if (transaction is not null)
+                command.Transaction = transaction;
+
             using var dataReader = command.ExecuteReader();
 
             if (!dataReader.HasRows) return Array.Empty<T>();

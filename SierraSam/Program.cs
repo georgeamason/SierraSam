@@ -91,6 +91,7 @@ public static class Program
                 services.AddSingleton<ICapability, Clean>();
                 services.AddSingleton<ICapability, Help>();
                 services.AddSingleton<ICapability, Information>();
+                services.AddSingleton<ICapability, Initialise>();
                 services.AddSingleton<ICapability, Migrate>();
                 services.AddSingleton<ICapability, Validate>();
                 services.AddSingleton<ICapability, Version>();

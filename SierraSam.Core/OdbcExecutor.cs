@@ -45,27 +45,14 @@ public sealed class OdbcExecutor
         }
     }
 
-    public void ExecuteNonQuery(string sql)
+    public void ExecuteNonQuery(string sql, OdbcTransaction? transaction = null)
     {
         try
         {
             using var command = new OdbcCommand(sql, _connection);
 
-            command.ExecuteNonQuery();
-        }
-        catch (OdbcException exception)
-        {
-            throw new OdbcExecutorException(
-                $"Failed to execute SQL statement: '{sql}'",
-                exception);
-        }
-    }
-
-    public void ExecuteNonQuery(OdbcTransaction transaction, string sql)
-    {
-        try
-        {
-            using var command = new OdbcCommand(sql, _connection, transaction);
+            if (transaction is not null)
+                command.Transaction = transaction;
 
             command.ExecuteNonQuery();
         }

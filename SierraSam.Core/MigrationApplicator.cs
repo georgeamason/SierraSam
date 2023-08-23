@@ -71,15 +71,15 @@ public sealed class MigrationApplicator : IMigrationApplicator
                             .WithChecksum(checksum)
                             .WithInstalledOn(DateTime.UtcNow);
 
-                        _database.UpdateSchemaHistory(transaction, updatedMigration);
+                        _database.UpdateSchemaHistory(updatedMigration, transaction);
 
-                        executionTime += _database.ExecuteMigration(transaction, migrationSql);
+                        executionTime += _database.ExecuteMigration(migrationSql, transaction);
 
                         continue;
                     }
                 }
 
-                executionTime += _database.ExecuteMigration(transaction, migrationSql);
+                executionTime += _database.ExecuteMigration(migrationSql, transaction);
 
                 var migration = new AppliedMigration(
                     ++installRank,
@@ -93,7 +93,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
                     executionTime.TotalMilliseconds,
                     true);
 
-                _database.InsertSchemaHistory(transaction, migration);
+                _database.InsertSchemaHistory(migration, transaction);
 
                 appliedCount++;
             }

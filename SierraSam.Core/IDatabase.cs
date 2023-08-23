@@ -23,13 +23,13 @@ public interface IDatabase
     /// <returns>A collection of applied migrations</returns>
     IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null);
 
-    void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration);
+    void InsertSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null);
 
-    void UpdateSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration);
+    void UpdateSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null);
 
-    TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql);
+    TimeSpan ExecuteMigration(string sql, OdbcTransaction? transaction = null);
 
     IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, OdbcTransaction? transaction = null);
 
-    void DropSchemaObject(OdbcTransaction transaction, DatabaseObject obj);
+    void DropSchemaObject(DatabaseObject obj, OdbcTransaction? transaction = null);
 }

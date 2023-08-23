@@ -105,7 +105,7 @@ public abstract class DefaultDatabase : IDatabase
         );
     }
 
-    public virtual void InsertSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
+    public virtual void InsertSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null)
     {
         var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
@@ -131,10 +131,10 @@ public abstract class DefaultDatabase : IDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{(appliedMigration.Success ? 1 : 0)})";
 
-        _odbcExecutor.ExecuteNonQuery(transaction, sql);
+        _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual void UpdateSchemaHistory(OdbcTransaction transaction, AppliedMigration appliedMigration)
+    public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null)
     {
         var sql =
             $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
@@ -149,15 +149,15 @@ public abstract class DefaultDatabase : IDatabase
                 // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
             $"WHERE installed_rank = {appliedMigration.InstalledRank};";
 
-        _odbcExecutor.ExecuteNonQuery(transaction, sql);
+        _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual TimeSpan ExecuteMigration(OdbcTransaction transaction, string sql)
+    public virtual TimeSpan ExecuteMigration(string sql, OdbcTransaction? transaction = null)
     {
         var stopwatch = new Stopwatch();
 
         stopwatch.Start();
-        _odbcExecutor.ExecuteNonQuery(transaction, sql);
+        _odbcExecutor.ExecuteNonQuery(sql, transaction);
         stopwatch.Stop();
 
         return stopwatch.Elapsed;
@@ -188,7 +188,7 @@ public abstract class DefaultDatabase : IDatabase
             transaction);
     }
 
-    public virtual void DropSchemaObject(OdbcTransaction transaction, DatabaseObject obj)
+    public virtual void DropSchemaObject(DatabaseObject obj, OdbcTransaction? transaction = null)
     {
         var objectType = obj.Type switch
         {
@@ -208,6 +208,6 @@ public abstract class DefaultDatabase : IDatabase
 
         sb.Append($"DROP {objectType} \"{obj.Name}\"");
 
-        _odbcExecutor.ExecuteNonQuery(transaction, sb.ToString());
+        _odbcExecutor.ExecuteNonQuery(sb.ToString(), transaction);
     }
 }

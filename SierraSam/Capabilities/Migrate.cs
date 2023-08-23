@@ -54,7 +54,7 @@ internal sealed class Migrate : ICapability
         if (!_database.HasMigrationTable)
         {
             Console.WriteLine
-                ("Creating Schema History table: " +
+                ("Creating schema history table: " +
                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
 
             // TODO: How about if the default schema has not been created?

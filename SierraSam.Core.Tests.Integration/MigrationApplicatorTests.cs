@@ -79,7 +79,7 @@ internal sealed class MigrationApplicatorTests
 
         database
             .Received(1)
-            .ExecuteMigration(Arg.Any<OdbcTransaction>(), migrationSql);
+            .ExecuteMigration(migrationSql, Arg.Any<OdbcTransaction>());
 
         database
             .ReceivedWithAnyArgs(1)

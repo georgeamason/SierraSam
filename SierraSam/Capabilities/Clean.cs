@@ -35,7 +35,7 @@ internal sealed class Clean : ICapability
                 foreach (var obj in _database.GetSchemaObjects(schema, transaction))
                 {
                     _logger.LogInformation("{index}: {objectName}", i, obj.Name);
-                    _database.DropSchemaObject(transaction, obj);
+                    _database.DropSchemaObject(obj, transaction);
                     i++;
                 }
             }

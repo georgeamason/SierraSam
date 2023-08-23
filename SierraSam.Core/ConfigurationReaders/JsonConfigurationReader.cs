@@ -40,7 +40,8 @@ internal sealed class JsonConfigurationReader : IConfigurationReader
             var jsonSerializerOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                AllowTrailingCommas         = true
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
             };
 
             return JsonSerializer.Deserialize<Configuration>

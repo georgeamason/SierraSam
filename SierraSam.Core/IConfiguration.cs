@@ -18,4 +18,5 @@ public interface IConfiguration
     string RepeatableMigrationPrefix { get; set; }
     string UndoMigrationPrefix { get; set; }
     IEnumerable<string> IgnoredMigrations { get; set; }
+    string InitialiseVersion { get; set; }
 }

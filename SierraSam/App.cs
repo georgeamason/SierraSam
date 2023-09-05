@@ -45,9 +45,6 @@ public sealed class App
             case "auth":
                 _capabilityResolver.Resolve(typeof(Auth)).Run(args[1..]);
                 break;
-            case "baseline":
-                _capabilityResolver.Resolve(typeof(Baseline)).Run(args[1..]);
-                break;
             case "clean":
                 _capabilityResolver.Resolve(typeof(Clean)).Run(args[1..]);
                 break;
@@ -62,6 +59,9 @@ public sealed class App
                 break;
             case "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
+                break;
+            case "rollup":
+                _capabilityResolver.Resolve(typeof(Rollup)).Run(args[1..]);
                 break;
             case "validate":
                 _capabilityResolver.Resolve(typeof(Validate)).Run(args[1..]);

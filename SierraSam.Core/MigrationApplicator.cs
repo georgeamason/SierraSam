@@ -28,7 +28,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
             ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    // TODO: Can I refactor this further?
+    // TODO: Can I refactor this further? Maybe an applicator for each of the migration types?
     public (int appliedMigrations, TimeSpan executionTime) Apply
         (IReadOnlyCollection<PendingMigration> pendingMigrations,
          IReadOnlyCollection<AppliedMigration> appliedMigrations)
@@ -97,12 +97,12 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
                 appliedCount++;
             }
-            catch (OdbcException exception)
+            catch (OdbcExecutorException exception)
             {
                 transaction.Rollback();
 
                 throw new MigrationApplicatorException
-                    ($"Failed to apply migration \"{pendingMigration}\"; rolled back the transaction.",
+                    ($"Failed to apply migration \"{pendingMigration.FileName}\"; rolled back the transaction.",
                      exception);
             }
         }

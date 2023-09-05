@@ -42,7 +42,10 @@ public abstract class DefaultDatabase : IDatabase
         return false;
     }
 
-    public virtual void CreateSchemaHistory(string? schema = null, string? table = null)
+    public virtual void CreateSchemaHistory(
+        string? schema = null,
+        string? table = null,
+        OdbcTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
@@ -60,7 +63,7 @@ public abstract class DefaultDatabase : IDatabase
              "\"execution_time\" FLOAT NOT NULL," +
              "\"success\" BIT NOT NULL)";
 
-        _odbcExecutor.ExecuteNonQuery(sql);
+        _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null)

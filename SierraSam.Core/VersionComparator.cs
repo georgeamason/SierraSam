@@ -3,22 +3,40 @@ using System.Text.RegularExpressions;
 
 namespace SierraSam.Core;
 
-public static class VersionComparator
+public partial class VersionComparator
 {
-    [SuppressMessage("GeneratedRegex", "SYSLIB1045:Convert to \'GeneratedRegexAttribute\'.")]
-    public static bool Compare(string version1, string version2)
+    private readonly string _version;
+
+    public VersionComparator(string version)
     {
-        ArgumentNullException.ThrowIfNull(version1, nameof(version1));
-        ArgumentNullException.ThrowIfNull(version2, nameof(version2));
+        _version = version ?? throw new ArgumentNullException(nameof(version));
+    }
 
-        static IEnumerable<string> GetVersionComponents(string version)
-        {
-            return Regex.Matches(version, "\\d").Select(m => m.Value);
-        }
+    public bool IsGreaterThan(string version)
+    {
+        ArgumentNullException.ThrowIfNull(version, nameof(version));
 
-        var v1 = string.Join(string.Empty, GetVersionComponents(version1));
-        var v2 = string.Join(string.Empty, GetVersionComponents(version2));;
+        var v1 = string.Concat(GetDigits(_version));
+        var v2 = string.Concat(GetDigits(version));
 
         return long.Parse(v1) > long.Parse(v2);
     }
+
+    public bool IsLessThanOrEqualTo(string version)
+    {
+        ArgumentNullException.ThrowIfNull(version, nameof(version));
+
+        var v1 = string.Concat(GetDigits(_version));
+        var v2 = string.Concat(GetDigits(version));
+
+        return long.Parse(v1) <= long.Parse(v2);
+    }
+
+    private static IEnumerable<string> GetDigits(string version)
+    {
+        return DigitRegex().Matches(version).Select(m => m.Value);
+    }
+
+    [GeneratedRegex("\\d")]
+    private static partial Regex DigitRegex();
 }

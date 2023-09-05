@@ -103,6 +103,9 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
                 case "--ignoredMigrations":
                     configuration.IgnoredMigrations = kvp.Value.Split(',');
                     break;
+                case "--initialiseVersion":
+                    configuration.InitialiseVersion = kvp.Value;
+                    break;
                 default:
                     throw new Exception($"Invalid argument '{kvp.Key}'");
             }

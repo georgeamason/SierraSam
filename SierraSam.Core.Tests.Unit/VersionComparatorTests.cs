@@ -10,6 +10,6 @@ internal sealed class VersionComparatorTests
     public bool Comparing_versions_returns_correct_result
         (string version1, string version2)
     {
-        return VersionComparator.Compare(version1, version2);
+        return new VersionComparator(version1).IsGreaterThan(version2);
     }
 }

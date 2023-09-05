@@ -2,8 +2,8 @@
 using System.Data;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
-using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
+using static SierraSam.Core.Enums.MigrationType;
 using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam.Capabilities;
@@ -74,10 +74,9 @@ internal sealed class Migrate : ICapability
         var pendingMigrations = discoveredMigrations
             .Where(pendingMigration =>
             {
-                return pendingMigration.MigrationType is MigrationType.Repeatable ||
-                       VersionComparator.Compare
-                           (pendingMigration.Version!,
-                               appliedMigrations.Max(x => x.Version) ?? "0");
+                return pendingMigration.MigrationType is Repeatable ||
+                       new VersionComparator(pendingMigration.Version!)
+                           .IsGreaterThan(appliedMigrations.Max(x => x.Version) ?? "0");
             })
             .OrderBy(pendingMigration => pendingMigration.MigrationType)
             .ThenBy(pendingMigration => pendingMigration.Version)
@@ -96,6 +95,6 @@ internal sealed class Migrate : ICapability
 
         Console.SuccessLine($"Successfully applied {appliedMigrationCount} migration(s) " +
                             $"to schema \"{_configuration.DefaultSchema}\" " +
-                            $"(execution time {executionTime:mm\\:ss\\.fff}s)");
+                            $@"(execution time {executionTime:mm\:ss\.fff}s)");
     }
 }

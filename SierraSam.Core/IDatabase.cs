@@ -12,7 +12,7 @@ public interface IDatabase
 
     bool HasTable(string tableName);
 
-    void CreateSchemaHistory(string? schema = null, string? table = null);
+    void CreateSchemaHistory(string? schema = null, string? table = null, OdbcTransaction? transaction = null);
 
     /// <summary>
     /// Get the schema history for the given schema and table.

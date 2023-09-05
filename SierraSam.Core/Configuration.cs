@@ -25,6 +25,7 @@ public class Configuration : IConfiguration
         RepeatableMigrationPrefix = "R";
         UndoMigrationPrefix = "U";
         IgnoredMigrations = new[] { "*:pending" };
+        InitialiseVersion = string.Empty;
     }
 
     public Configuration(
@@ -43,7 +44,8 @@ public class Configuration : IConfiguration
         IEnumerable<string>? schemas = null,
         string? repeatableMigrationPrefix = null,
         string? undoMigrationPrefix = null,
-        IEnumerable<string>? ignoredMigrations = null)
+        IEnumerable<string>? ignoredMigrations = null,
+        string? initialiseVersion = null)
     {
         Url = url ?? string.Empty;
         User = user ?? string.Empty;
@@ -61,6 +63,7 @@ public class Configuration : IConfiguration
         RepeatableMigrationPrefix = repeatableMigrationPrefix ?? "R";
         UndoMigrationPrefix = undoMigrationPrefix ?? "U";
         IgnoredMigrations = ignoredMigrations ?? new[] { "*:pending" };
+        InitialiseVersion = initialiseVersion ?? string.Empty;
     }
 
     [JsonPropertyName("url"), JsonInclude]
@@ -116,4 +119,7 @@ public class Configuration : IConfiguration
 
     [JsonPropertyName("ignoredMigrations"), JsonInclude]
     public IEnumerable<string> IgnoredMigrations  { get; set; }
+
+    [JsonPropertyName("initialiseVersion"), JsonInclude]
+    public string InitialiseVersion { get; set; }
 }

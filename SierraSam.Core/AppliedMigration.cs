@@ -4,17 +4,17 @@ namespace SierraSam.Core;
 
 public sealed class AppliedMigration
 {
-    public AppliedMigration
-        (int installedRank,
-         string? version,
-         string description,
-         string type,
-         string script,
-         string checksum,
-         string installedBy,
-         DateTime installedOn,
-         double executionTime,
-         bool success)
+    public AppliedMigration(
+        int installedRank,
+        string? version,
+        string description,
+        string type,
+        string script, // TODO: Nullable ?
+        string checksum, // TODO: Nullable ?
+        string installedBy,
+        DateTime installedOn,
+        double executionTime,
+        bool success)
     {
         InstalledRank = installedRank;
         Version = version;

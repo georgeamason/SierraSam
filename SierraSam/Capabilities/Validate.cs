@@ -32,6 +32,6 @@ public sealed class Validate : ICapability
         stopwatch.Stop();
 
         Console.SuccessLine($"Successfully validated {validated} migrations " +
-                            $"(execution time: {stopwatch.ElapsedMilliseconds:mm\\:ss\\.fff}s)");
+                            $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)");
     }
 }

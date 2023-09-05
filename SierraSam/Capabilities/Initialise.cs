@@ -1,5 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Data.Odbc;
+using System.Text;
+using Microsoft.Extensions.Logging;
 using SierraSam.Core;
+using SierraSam.Core.Enums;
+using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Capabilities;
 
@@ -8,12 +12,18 @@ internal sealed class Initialise : ICapability
     private readonly ILogger<Initialise> _logger;
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
+    private readonly IMigrationSeeker _migrationSeeker;
 
-    public Initialise(ILogger<Initialise> logger, IDatabase database, IConfiguration configuration)
+    public Initialise(
+        ILogger<Initialise> logger,
+        IDatabase database,
+        IConfiguration configuration,
+        IMigrationSeeker migrationSeeker)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
     }
 
     public void Run(string[] args)
@@ -29,10 +39,59 @@ internal sealed class Initialise : ICapability
             return;
         }
 
-        _database.CreateSchemaHistory();
+        var transaction = _database.Connection.BeginTransaction();
 
-        ColorConsole.SuccessLine($"Schema history table " +
-                                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
-                                 $"created");
+        try
+        {
+            _database.CreateSchemaHistory(transaction: transaction);
+
+            var sb = new StringBuilder();
+
+            sb.Append($"Schema history table " +
+                      $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"" +
+                      $"created");
+
+            if (!string.IsNullOrEmpty(_configuration.InitialiseVersion))
+            {
+                var filteredMigrations = _migrationSeeker
+                    .Find()
+                    .Where(m => m.MigrationType is MigrationType.Versioned)
+                    .Where(m =>
+                        new VersionComparator(m.Version!).IsLessThanOrEqualTo(_configuration.InitialiseVersion));
+
+                var i = 1;
+                foreach (var filteredMigration in filteredMigrations)
+                {
+                    var migration = new AppliedMigration(
+                        i++,
+                        filteredMigration.Version,
+                        filteredMigration.Description,
+                        "SQL",
+                        filteredMigration.FileName,
+                        filteredMigration.Checksum,
+                        _configuration.InstalledBy,
+                        DateTime.UtcNow,
+                        TimeSpan.Zero.TotalMilliseconds,
+                        true);
+
+                    _database.InsertSchemaHistory(migration, transaction);
+                }
+
+                sb.Clear();
+                sb.Append($"Schema history table " +
+                          $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"" +
+                          $"initialised to version {_configuration.InitialiseVersion}");
+            }
+
+            transaction.Commit();
+
+            ColorConsole.SuccessLine(sb.ToString());
+        }
+        catch (OdbcException exception)
+        {
+            transaction.Rollback();
+
+            throw exception;
+        }
     }
 }

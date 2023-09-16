@@ -34,6 +34,6 @@ public sealed class IgnoredMigrationsFactory : IIgnoredMigrationsFactory
 
                 return (type, state);
             })
-            .ToImmutableArray();
+            .ToArray();
     }
 }

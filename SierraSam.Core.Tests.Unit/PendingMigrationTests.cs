@@ -19,7 +19,7 @@ internal sealed class PendingMigrationTests
     [TestCase("./Repp__desc.sql", "Repp", null, "__", "desc")]
     [TestCase("./Verr2__Desc.sql", "Verr", "2", "__", "Desc")]
     public void Properties_return_expected_result
-        (string filePath, string prefix, string version, string separator, string description)
+        (string filePath, string prefix, string? version, string separator, string description)
     {
         var mockFileSystem = new MockFileSystem();
 
@@ -29,6 +29,8 @@ internal sealed class PendingMigrationTests
 
         var configuration = Substitute.For<IConfiguration>();
 
+        var repeatableMigrationPrefix = version is not null ? "R" : prefix;
+        configuration.RepeatableMigrationPrefix.Returns(repeatableMigrationPrefix);
         configuration.MigrationPrefix.Returns(prefix);
         configuration.MigrationSeparator.Returns(separator);
 

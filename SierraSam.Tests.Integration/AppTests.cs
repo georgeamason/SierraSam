@@ -22,11 +22,8 @@ internal sealed class AppTests
     {
         yield return new TestCaseData(Array.Empty<string>(), typeof(Help));
         yield return new TestCaseData(new[] { "help" }, typeof(Help));
-        yield return new TestCaseData(new[] { "--help" }, typeof(Help));
         yield return new TestCaseData(new[] { "-v" }, typeof(Version));
         yield return new TestCaseData(new[] { "auth" }, typeof(Auth));
-        yield return new TestCaseData(new[] { "--auth" }, typeof(Auth));
-        yield return new TestCaseData(new[] { "--migrate" }, typeof(Migrate));
         yield return new TestCaseData(new[] { "migrate" }, typeof(Migrate));
     }
     

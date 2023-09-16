@@ -31,7 +31,7 @@ internal sealed class MigrationMergerTests
             .Find()
             .Returns(new[]
             {
-                CreatePendingMigration(MigrationType.Versioned, "abcd")
+                CreatePendingMigration(MigrationType.Versioned)
             });
 
         var installedOn = DateTime.UtcNow;
@@ -40,7 +40,7 @@ internal sealed class MigrationMergerTests
             .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new[]
             {
-                CreateAppliedMigration(installedOn, "abcd")
+                CreateAppliedMigration(installedOn, "d41d8cd98f00b204e9800998ecf8427e")
             });
 
         _migrationMerger
@@ -51,7 +51,7 @@ internal sealed class MigrationMergerTests
                 "1",
                 string.Empty,
                 "SQL",
-                "abcd",
+                "d41d8cd98f00b204e9800998ecf8427e",
                 installedOn,
                 MigrationState.Applied));
     }
@@ -92,7 +92,7 @@ internal sealed class MigrationMergerTests
             .Find()
             .Returns(new []
             {
-                CreatePendingMigration(MigrationType.Versioned, "abcd")
+                CreatePendingMigration(MigrationType.Versioned)
             });
 
         _database
@@ -105,17 +105,30 @@ internal sealed class MigrationMergerTests
             .Equal(new TerseMigration(
                 MigrationType.Versioned,
                 "1",
-                string.Empty,
+                "description",
                 "SQL",
-                "abcd",
+                "d41d8cd98f00b204e9800998ecf8427e",
                 null,
                 MigrationState.Pending));
     }
 
     private static AppliedMigration CreateAppliedMigration(DateTime installedOn, string checksum) =>
-        new(1, "1", string.Empty, "SQL", string.Empty, checksum, string.Empty, installedOn, double.MinValue, true);
+        new(1,
+            "1",
+            string.Empty,
+            "SQL",
+            string.Empty,
+            checksum,
+            string.Empty,
+            installedOn,
+            double.MinValue,
+            true);
 
-    private static PendingMigration CreatePendingMigration(MigrationType migrationType, string checksum) =>
-        new("1", string.Empty, migrationType, checksum, string.Empty, string.Empty);
+    private static PendingMigration CreatePendingMigration(MigrationType migrationType) =>
+        new("1",
+            "description",
+            migrationType,
+            string.Empty,
+            string.Empty);
 }
 

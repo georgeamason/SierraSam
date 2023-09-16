@@ -43,17 +43,9 @@ internal sealed class MigrationApplicatorTests
             .Connection
             .Returns(_connection);
 
-        var fileSystem = Substitute.For<IFileSystem>();
-
         const string migrationSql = "CREATE TABLE dbo.Dummy (Id INT)";
 
-        fileSystem
-            .File
-            .ReadAllText(Arg.Any<string>())
-            .Returns(migrationSql);
-
-        var migrationApplicator = new MigrationApplicator
-            (database, fileSystem, configuration);
+        var migrationApplicator = new MigrationApplicator(database, configuration);
 
         var pendingMigrations = new[]
         {
@@ -61,8 +53,7 @@ internal sealed class MigrationApplicatorTests
                 "1",
                 "description",
                 MigrationType.Versioned,
-                "02a983b498212d3f65c244f14de9572c",
-                string.Empty,
+                migrationSql,
                 "filename.sql")
         };
 
@@ -112,26 +103,17 @@ internal sealed class MigrationApplicatorTests
             .Connection
             .Returns(_connection);
 
-        var fileSystem = Substitute.For<IFileSystem>();
-
         const string migrationSql = "CREATE TABLE dbo.Dummy (Id INT)";
 
-        fileSystem
-            .File
-            .ReadAllText(Arg.Any<string>())
-            .Returns(migrationSql);
-
-        var migrationApplicator = new MigrationApplicator
-            (database, fileSystem, configuration);
+        var migrationApplicator = new MigrationApplicator(database, configuration);
 
         var pendingMigrations = new[]
         {
             new PendingMigration(
                 null,
-                string.Empty,
+                "description",
                 MigrationType.Repeatable,
-                "02a983b498212d3f65c244f14de9572c",
-                string.Empty,
+                migrationSql,
                 string.Empty)
         };
 

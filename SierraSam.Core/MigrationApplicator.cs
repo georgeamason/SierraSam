@@ -10,19 +10,12 @@ namespace SierraSam.Core;
 public sealed class MigrationApplicator : IMigrationApplicator
 {
     private readonly IDatabase _database;
-    private readonly IFileSystem _fileSystem;
     private readonly IConfiguration _configuration;
 
-    public MigrationApplicator
-        (IDatabase database,
-         IFileSystem fileSystem,
-         IConfiguration configuration)
+    public MigrationApplicator(IDatabase database, IConfiguration configuration)
     {
         _database = database
             ?? throw new ArgumentNullException(nameof(database));
-
-        _fileSystem = fileSystem
-            ?? throw new ArgumentNullException(nameof(fileSystem));
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
@@ -47,8 +40,6 @@ public sealed class MigrationApplicator : IMigrationApplicator
         {
             try
             {
-                var migrationSql = _fileSystem.File.ReadAllText(pendingMigration.FilePath);
-
                 if (pendingMigration.MigrationType is MigrationType.Versioned)
                 {
                     Console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +
@@ -73,13 +64,13 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
                         _database.UpdateSchemaHistory(updatedMigration, transaction);
 
-                        executionTime += _database.ExecuteMigration(migrationSql, transaction);
+                        executionTime += _database.ExecuteMigration(pendingMigration.Sql, transaction);
 
                         continue;
                     }
                 }
 
-                executionTime += _database.ExecuteMigration(migrationSql, transaction);
+                executionTime += _database.ExecuteMigration(pendingMigration.Sql, transaction);
 
                 var migration = new AppliedMigration(
                     ++installRank,

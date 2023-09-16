@@ -13,7 +13,6 @@ internal sealed class MigrationApplicatorTests
             (new TestDelegate
                 (() => new MigrationApplicator
                     (null!,
-                     Substitute.For<IFileSystem>(),
                      Substitute.For<IConfiguration>())))
             .SetName("null database");
 
@@ -21,15 +20,6 @@ internal sealed class MigrationApplicatorTests
             (new TestDelegate
                 (() => new MigrationApplicator
                     (Substitute.For<IDatabase>(),
-                     null!,
-                     Substitute.For<IConfiguration>())))
-            .SetName("null filesystem");
-
-        yield return new TestCaseData
-            (new TestDelegate
-                (() => new MigrationApplicator
-                    (Substitute.For<IDatabase>(),
-                     Substitute.For<IFileSystem>(),
                      null!)))
             .SetName("null configuration");
         // ReSharper enable ObjectCreationAsStatement

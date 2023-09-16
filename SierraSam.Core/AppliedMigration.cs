@@ -4,13 +4,14 @@ namespace SierraSam.Core;
 
 public sealed class AppliedMigration
 {
+    // TODO: Property null or empty checks...
     public AppliedMigration(
         int installedRank,
         string? version,
         string description,
         string type,
-        string script, // TODO: Nullable ?
-        string checksum, // TODO: Nullable ?
+        string script,
+        string checksum,
         string installedBy,
         DateTime installedOn,
         double executionTime,

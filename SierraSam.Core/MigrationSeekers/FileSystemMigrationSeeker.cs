@@ -1,5 +1,6 @@
 ﻿using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using SierraSam.Core.Constants;
 using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core.MigrationSeekers;
@@ -43,15 +44,15 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                                     .Select(suffix => @$"\{suffix}")
                                     .ToArray());
 
-                            var pattern = @$"({migrationPrefixes})((\d+)((\.{{1}}\d+)*)(\.{{0}}))?" +
-                                          @$"{_configuration.MigrationSeparator}(\w|\s)+" +
+                            var pattern = @$"({migrationPrefixes}){MigrationRegex.VersionRegex}" +
+                                          @$"{_configuration.MigrationSeparator}{MigrationRegex.DescriptionRegex}" +
                                           $"({migrationSuffixes})";
 
-                            return Regex.IsMatch
-                                (fileInfo.Name,
-                                 pattern,
-                                 RegexOptions.None,
-                                 new TimeSpan(0, 0, 2));
+                            return Regex.IsMatch(
+                                fileInfo.Name,
+                                pattern,
+                                RegexOptions.None,
+                                new TimeSpan(0, 0, 2));
                         });
                 }
                 catch (UnauthorizedAccessException exception)

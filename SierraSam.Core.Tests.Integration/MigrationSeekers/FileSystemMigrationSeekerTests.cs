@@ -32,6 +32,7 @@ public class FileSystemMigrationSeekerTests
         configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
         configuration.RepeatableMigrationPrefix.Returns("R");
         configuration.MigrationPrefix.Returns("V");
+        configuration.UndoMigrationPrefix.Returns("U");
         configuration.MigrationSeparator.Returns("__");
         configuration.MigrationSuffixes.Returns(new []{ ".sql" });
 
@@ -59,8 +60,7 @@ public class FileSystemMigrationSeekerTests
                     version,
                     description,
                     type,
-                    string.Empty.Checksum(),
-                    Path.Combine("C:", searchPath, fileName),
+                    string.Empty,
                     fileName)
             });
     }
@@ -102,8 +102,7 @@ public class FileSystemMigrationSeekerTests
                     "1",
                     "My_description",
                     MigrationType.Versioned,
-                    string.Empty.Checksum(),
-                    Path.Combine("C:", searchPath, @"subdir\V1__My_description.sql"),
+                    string.Empty,
                     "V1__My_description.sql")
             });
     }

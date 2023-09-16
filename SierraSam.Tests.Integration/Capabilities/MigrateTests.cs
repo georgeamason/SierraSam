@@ -45,26 +45,21 @@ internal sealed class MigrateTests
     }
 
     [TestCaseSource(nameof(Database_containers))]
-    public async Task Migrate_updates_database_correctly
-        (IContainer container, string connectionString, int containerPort, string defaultSchema)
+    public async Task Migrate_updates_database_correctly(
+        IContainer container,
+        string connectionString,
+        int containerPort,
+        string defaultSchema)
     {
         await container.StartAsync();
 
-        await using var odbcConnection = new OdbcConnection
-            (string.Format(connectionString, container.GetMappedPublicPort(containerPort)));
+        await using var odbcConnection = new OdbcConnection(
+            string.Format(connectionString, container.GetMappedPublicPort(containerPort))
+        );
 
-        var mockFileSystem = new MockFileSystem();
-
-        var contents = Encoding.UTF8.GetBytes
-            ("CREATE TABLE Test(" +
-             "\"ID\" int PRIMARY KEY NOT NULL," +
-             "\"Description\" varchar(255) NOT NULL)");
-
-        mockFileSystem.AddDirectory("db/migration");
-
-        mockFileSystem.AddFile
-            ("db/migration/V1__Test.sql",
-             new MockFileData(contents));
+        const string sql = "CREATE TABLE Test(" +
+                           "\"ID\" int PRIMARY KEY NOT NULL," +
+                           "\"Description\" varchar(255) NOT NULL)";
 
         var configuration = Substitute.For<IConfiguration>();
 
@@ -76,8 +71,7 @@ internal sealed class MigrateTests
         configuration.MigrationSuffixes.Returns(new []{ ".sql" });
         configuration.InstalledBy.Returns(string.Empty);
 
-        var database = DatabaseResolver.Create
-            (odbcConnection, configuration);
+        var database = DatabaseResolver.Create(odbcConnection, configuration);
 
         var migrationSeeker = Substitute.For<IMigrationSeeker>();
 
@@ -85,28 +79,24 @@ internal sealed class MigrateTests
             .Find()
             .Returns(new[]
             {
-                new PendingMigration
-                    ("1",
-                     "Test",
-                     MigrationType.Versioned,
-                     "72e60a278ed8d3655565a63940a34c2c",
-                     "db/migration/V1__Test.sql",
-                     "V1__Test.sql")
+                new PendingMigration(
+                    "1",
+                    "Test",
+                    MigrationType.Versioned,
+                    sql,
+                    "V1__Test.sql")
             });
 
-        var migrationApplicator = new MigrationApplicator
-            (database, mockFileSystem, configuration);
+        var migrationApplicator = new MigrationApplicator(database, configuration);
 
-        var migrate = new Migrate
-            (_logger,
-             database,
-             configuration,
-             migrationSeeker,
-             migrationApplicator);
+        var migrate = new Migrate(
+            _logger,
+            database,
+            configuration,
+            migrationSeeker,
+            migrationApplicator);
 
-        var args = Array.Empty<string>();
-
-        migrate.Run(args);
+        migrate.Run(Array.Empty<string>());
 
         var migrations = database
             .GetSchemaHistory(configuration.DefaultSchema, configuration.SchemaTable)

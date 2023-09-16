@@ -206,9 +206,8 @@ internal sealed class RemoteMigrationValidatorTests
             {
                 new PendingMigration(
                     "1",
-                    string.Empty,
+                    "description",
                     MigrationType.Versioned,
-                    string.Empty,
                     string.Empty,
                     "Filename.sql")
             });

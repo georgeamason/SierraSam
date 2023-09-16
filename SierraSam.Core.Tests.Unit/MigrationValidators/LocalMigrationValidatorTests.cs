@@ -127,9 +127,8 @@ internal sealed class LocalMigrationValidatorTests
             {
                 new PendingMigration(
                     "1",
-                    string.Empty,
+                    "description",
                     MigrationType.Versioned,
-                    string.Empty,
                     string.Empty,
                     string.Empty)
             });
@@ -164,9 +163,8 @@ internal sealed class LocalMigrationValidatorTests
             {
                 new PendingMigration(
                     "1",
-                    string.Empty,
+                    "description",
                     MigrationType.Repeatable,
-                    string.Empty,
                     string.Empty,
                     string.Empty)
             });
@@ -198,9 +196,8 @@ internal sealed class LocalMigrationValidatorTests
             {
                 new PendingMigration(
                     "1",
-                    string.Empty,
+                    "description",
                     MigrationType.Versioned,
-                    string.Empty,
                     string.Empty,
                     "Filename.sql")
             });
@@ -246,9 +243,8 @@ internal sealed class LocalMigrationValidatorTests
             {
                 new PendingMigration(
                     "1",
-                    string.Empty,
+                    "description",
                     MigrationType.Versioned,
-                    string.Empty,
                     string.Empty,
                     "Filename.sql")
             });

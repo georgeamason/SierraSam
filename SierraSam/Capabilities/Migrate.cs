@@ -3,8 +3,8 @@ using System.Data;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.MigrationSeekers;
+using Spectre.Console;
 using static SierraSam.Core.Enums.MigrationType;
-using Console = SierraSam.Core.ColorConsole;
 
 namespace SierraSam.Capabilities;
 
@@ -88,13 +88,17 @@ internal sealed class Migrate : ICapability
 
         if (appliedMigrationCount == 0)
         {
-            Console.SuccessLine($"Schema \"{_configuration.DefaultSchema}\" is up to date");
+            AnsiConsole.MarkupLine(
+                $"[green]Schema \"{_configuration.DefaultSchema}\" is up to date[/]"
+            );
 
             return;
         }
 
-        Console.SuccessLine($"Successfully applied {appliedMigrationCount} migration(s) " +
-                            $"to schema \"{_configuration.DefaultSchema}\" " +
-                            $@"(execution time {executionTime:mm\:ss\.fff}s)");
+        AnsiConsole.MarkupLine(
+            $"[green]Successfully applied {appliedMigrationCount} migration(s) " +
+            $"to schema \"{_configuration.DefaultSchema}\" " +
+            $@"(execution time {executionTime:mm\:ss\.fff}s)[/]"
+        );
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
+using Spectre.Console;
 
 namespace SierraSam.Capabilities;
 
@@ -32,9 +33,11 @@ internal sealed class Initialise : ICapability
 
         if (_database.HasMigrationTable)
         {
-            ColorConsole.WarningLine($"Schema history table " +
-                                     $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
-                                     $"already exists");
+            AnsiConsole.MarkupLine(
+                $"[yellow]Schema history table " +
+                $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
+                $"already exists[/]"
+            );
 
             return;
         }
@@ -85,7 +88,7 @@ internal sealed class Initialise : ICapability
 
             transaction.Commit();
 
-            ColorConsole.SuccessLine(sb.ToString());
+            AnsiConsole.MarkupLine($"[green]{sb}[/]");
         }
         catch (OdbcException exception)
         {

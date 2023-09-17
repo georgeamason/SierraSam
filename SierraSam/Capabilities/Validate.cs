@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core.MigrationValidators;
-using Console = SierraSam.Core.ColorConsole;
+using Spectre.Console;
 
 namespace SierraSam.Capabilities;
 
@@ -31,7 +31,9 @@ public sealed class Validate : ICapability
         var validated = _migrationValidator.Validate();
         stopwatch.Stop();
 
-        Console.SuccessLine($"Successfully validated {validated} migrations " +
-                            $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)");
+        AnsiConsole.MarkupLine(
+            $"[green]Successfully validated {validated} migrations " +
+            $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)[/]"
+        );
     }
 }

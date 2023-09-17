@@ -1,5 +1,4 @@
-﻿
-using System.Data.Odbc;
+﻿using System.Data.Odbc;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +10,8 @@ using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Core.MigrationValidators;
 using SierraSam.Database;
+using Spectre.Console;
 using Version = SierraSam.Capabilities.Version;
-using Console = SierraSam.Core.ColorConsole;
 using IConfiguration = SierraSam.Core.IConfiguration;
 
 namespace SierraSam;
@@ -110,7 +109,7 @@ public static class Program
             catch (Exception exception)
             {
                 // logger.LogError(exception, exception.Message);
-                Console.ErrorLine($"{exception.Message}");
+                AnsiConsole.MarkupLine($"[red]{exception.Message}[/]");
             }
     }
 

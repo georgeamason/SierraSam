@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.Exceptions;
+using Spectre.Console;
 
 namespace SierraSam.Capabilities;
 
@@ -42,8 +43,9 @@ internal sealed class Clean : ICapability
 
             transaction.Commit();
 
-            ColorConsole.SuccessLine
-                ($"Cleaned schema(s) \"{string.Join(", ", schemas)}\"");
+            AnsiConsole.MarkupLine(
+                $"[green]Cleaned schema(s) \"{string.Join(", ", schemas)}\"[/]"
+            );
         }
         catch (Exception exception)
         when (exception is OdbcException or ArgumentOutOfRangeException)

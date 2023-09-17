@@ -1,4 +1,5 @@
 ﻿using SierraSam.Core.Enums;
+using SierraSam.Core.Exceptions;
 using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
 
@@ -76,9 +77,9 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
 
             if (appliedMigration is null)
             {
-                // TODO: Make custom exception
-                throw new Exception(
-                    $"Unable to find remote migration {discoveredMigration.FileName}");
+                throw new MigrationValidatorException(
+                    $"Unable to find remote migration {discoveredMigration.FileName}"
+                );
             }
         }
 

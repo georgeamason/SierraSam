@@ -137,7 +137,7 @@ internal sealed class RemoteMigrationValidatorTests
                     "Filename.sql",
                     string.Empty,
                     string.Empty,
-                    DateTime.MinValue,
+                    DateTime.UtcNow,
                     double.MinValue,
                     default)
             });
@@ -178,7 +178,7 @@ internal sealed class RemoteMigrationValidatorTests
                     "Filename.sql",
                     string.Empty,
                     string.Empty,
-                    DateTime.MinValue,
+                    DateTime.UtcNow,
                     double.MinValue,
                     default)
             });
@@ -224,7 +224,7 @@ internal sealed class RemoteMigrationValidatorTests
                     "Filename.sql",
                     "miss-matched-checksum",
                     string.Empty,
-                    DateTime.MinValue,
+                    DateTime.UtcNow,
                     double.MinValue,
                     default)
             });
@@ -263,7 +263,7 @@ internal sealed class RemoteMigrationValidatorTests
                     "Filename.sql",
                     string.Empty,
                     string.Empty,
-                    DateTime.MinValue,
+                    DateTime.UtcNow,
                     double.MinValue,
                     default)
             });

@@ -80,7 +80,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
                     pendingMigration.FileName,
                     checksum,
                     _configuration.InstalledBy,
-                    default,
+                    DateTime.UtcNow,
                     executionTime.TotalMilliseconds,
                     true);
 

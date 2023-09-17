@@ -214,7 +214,7 @@ internal sealed class LocalMigrationValidatorTests
                     "Filename.sql",
                     "miss-matched-checksum",
                     string.Empty,
-                    DateTime.MinValue,
+                    DateTime.UtcNow,
                     double.MinValue,
                     default)
             });

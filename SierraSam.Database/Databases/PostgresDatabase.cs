@@ -37,7 +37,7 @@ public class PostgresDatabase : DefaultDatabase
             $"\"script\" VARCHAR(1000) NOT NULL," +
             $"\"checksum\" VARCHAR(32) NOT NULL," +
             $"\"installed_by\" VARCHAR(100) NOT NULL," +
-            $"\"installed_on\" TIMESTAMP NOT NULL DEFAULT now()," +
+            $"\"installed_on\" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc')," +
             $"\"execution_time\" REAL NOT NULL," +
             $"\"success\" BOOLEAN NOT NULL)";
 

@@ -4,7 +4,6 @@ namespace SierraSam.Core;
 
 public sealed class AppliedMigration
 {
-    // TODO: Property null or empty checks...
     public AppliedMigration(
         int installedRank,
         string? version,
@@ -17,6 +16,16 @@ public sealed class AppliedMigration
         double executionTime,
         bool success)
     {
+        if (version == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(version));
+        }
+
+        if (installedOn.Kind is not DateTimeKind.Utc)
+        {
+            throw new ArgumentException("Must be UTC", nameof(installedOn));
+        }
+
         InstalledRank = installedRank;
         Version = version;
         Description = description ?? throw new ArgumentNullException(nameof(description));

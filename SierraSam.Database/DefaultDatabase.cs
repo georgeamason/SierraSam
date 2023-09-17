@@ -59,7 +59,7 @@ public abstract class DefaultDatabase : IDatabase
              "\"script\" NVARCHAR(1000) NOT NULL," +
              "\"checksum\" NVARCHAR(32) NOT NULL," +
              "\"installed_by\" NVARCHAR(100) NOT NULL," +
-             "\"installed_on\" DATETIME NOT NULL DEFAULT (GETDATE())," +
+             "\"installed_on\" DATETIME NOT NULL DEFAULT (GETUTCDATE())," +
              "\"execution_time\" FLOAT NOT NULL," +
              "\"success\" BIT NOT NULL)";
 
@@ -102,7 +102,10 @@ public abstract class DefaultDatabase : IDatabase
                 reader.GetString("script"),
                 reader.GetString("checksum"),
                 reader.GetString("installed_by"),
-                reader.GetDateTime("installed_on"),
+                new DateTime(
+                    reader.GetDateTime("installed_on").Ticks,
+                    DateTimeKind.Utc
+                ),
                 reader.GetDouble("execution_time"),
                 reader.GetBoolean("success"))
         );

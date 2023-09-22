@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam", "SierraSam\SierraSam.csproj", "{70FEBC93-010C-4D16-830F-C3742092B664}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam", "Source\SierraSam\SierraSam.csproj", "{70FEBC93-010C-4D16-830F-C3742092B664}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4C09092B-84F7-4896-8E78-53C00FD2E60F}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,17 +11,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frameworks", "Frameworks", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3FF61FE5-367A-4FD2-85CF-11CA53C92DAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Tests.Unit", "SierraSam.Tests.Unit\SierraSam.Tests.Unit.csproj", "{F709FFB0-BDCA-48CE-8689-423F2DC1FF18}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Tests.Unit", "Tests\SierraSam.Unit\SierraSam.Tests.Unit.csproj", "{F709FFB0-BDCA-48CE-8689-423F2DC1FF18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Tests.Integration", "SierraSam.Tests.Integration\SierraSam.Tests.Integration.csproj", "{6488ECE3-9C82-4958-9726-55DA883AFED8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Tests.Integration", "Tests\SierraSam.Integration\SierraSam.Tests.Integration.csproj", "{6488ECE3-9C82-4958-9726-55DA883AFED8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core", "SierraSam.Core\SierraSam.Core.csproj", "{0EA88A94-6866-44EE-857F-AAD5ED2528A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core", "Source\SierraSam.Core\SierraSam.Core.csproj", "{0EA88A94-6866-44EE-857F-AAD5ED2528A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Unit", "SierraSam.Core.Tests.Unit\SierraSam.Core.Tests.Unit.csproj", "{891BD478-D86E-492C-8716-EF1859A51E78}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Unit", "Tests\Core.Unit\SierraSam.Core.Tests.Unit.csproj", "{891BD478-D86E-492C-8716-EF1859A51E78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Integration", "SierraSam.Core.Tests.Integration\SierraSam.Core.Tests.Integration.csproj", "{3CD502E6-90CA-41D4-B3DF-18556D784938}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Core.Tests.Integration", "Tests\Core.Integration\SierraSam.Core.Tests.Integration.csproj", "{3CD502E6-90CA-41D4-B3DF-18556D784938}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Database", "SierraSam.Database\SierraSam.Database.csproj", "{BE3C88F6-830E-456B-9065-8C0C1DECA33A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SierraSam.Database", "Source\SierraSam.Database\SierraSam.Database.csproj", "{BE3C88F6-830E-456B-9065-8C0C1DECA33A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

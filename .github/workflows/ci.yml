@@ -34,16 +34,3 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-restore --verbosity normal
-
-      - name: Publish Artifact
-        if: success()
-        run: |
-          dotnet publish -c Release -o ${{ github.workspace }}/publish
-          echo "::set-output name=artifact_path::${{ github.workspace }}/publish"
-
-      - name: Upload Artifact
-        if: success()
-        uses: actions/upload-artifact@v2
-        with:
-          name: dotnet-publish
-          path: ${{ steps.publish.outputs.artifact_path }}

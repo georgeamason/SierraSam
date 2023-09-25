@@ -1,36 +1,20 @@
 name: Build and Test .NET 7
 
-on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - main
+on: [push]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Install Postgres ODBC Driver
         run: |
           sudo apt-get update
           sudo apt-get install -y odbc-postgresql
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.x.x
-
-      - name: Restore Dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release
-
-      - name: Test
-        run: dotnet test --configuration Release --no-restore --verbosity normal
+          cache: true
+      - run: dotnet restore --locked-mode
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet test --configuration Release --no-build

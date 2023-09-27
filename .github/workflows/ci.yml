@@ -15,6 +15,7 @@ jobs:
       - run: dotnet restore --locked-mode
       - run: dotnet build --configuration Release --no-restore
       - uses: actions/upload-artifact@v3
+        if: success()
         with:
           name: build-artifact
           path: ./*/bin/

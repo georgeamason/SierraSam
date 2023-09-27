@@ -18,6 +18,7 @@ jobs:
         with:
           name: build-artifact
           path: ./*/bin/
+          retention-days: 1
   test:
     runs-on: ubuntu-latest
     steps:

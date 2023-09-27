@@ -3,7 +3,22 @@ name: Build and Test .NET 7
 on: [push]
 
 jobs:
-  build-and-test:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.x.x
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - run: dotnet restore --locked-mode
+      - run: dotnet build --configuration Release --no-restore
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: ./*/bin/
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Install Postgres ODBC Driver
@@ -16,6 +31,8 @@ jobs:
           dotnet-version: 7.x.x
           cache: true
           cache-dependency-path: ./SierraSam/packages.lock.json
-      - run: dotnet restore --locked-mode
-      - run: dotnet build --configuration Release --no-restore
-      - run: dotnet test --configuration Release --no-build
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+      - name: Run Tests
+        run: dotnet test --configuration Release --no-build

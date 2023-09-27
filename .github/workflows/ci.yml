@@ -32,8 +32,6 @@ jobs:
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.x.x
-          cache: true
-          cache-dependency-path: ./SierraSam/packages.lock.json
       - uses: actions/download-artifact@v3
         with:
           name: build-artifact

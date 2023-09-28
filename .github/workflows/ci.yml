@@ -3,7 +3,7 @@ name: SierraSam Build
 on: [push]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -18,26 +18,55 @@ jobs:
         run: dotnet restore --locked-mode
       - name: Build
         run: dotnet build --configuration Release --no-restore
+      - name: Cache Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ~/.nuget/packages/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - name: Install Postgres ODBC Driver
-        if: success()
         run: |
           sudo apt-get update
           sudo apt-get install -y odbc-postgresql
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ~/.nuget/packages/
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Run Tests
         if: success()
         run: dotnet test --configuration Release --no-build --verbosity normal
 
+
   publish:
-    needs: build-and-test
+    needs: test
     runs-on: ubuntu-latest
     strategy:
       matrix:
         runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
     steps:
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ~/.nuget/packages/
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Publish
         run: |
           dotnet publish \
           --configuration Release \
+          -- no-build \
           --verbosity normal \
           --runtime ${{ matrix.runtime }} \
           --self-contained true

@@ -4,9 +4,6 @@ on: [push]
 
 jobs:
   build-and-test:
-    strategy:
-        matrix:
-            runtime: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -29,12 +26,18 @@ jobs:
       - name: Run Tests
         if: success()
         run: dotnet test --configuration Release --no-build --verbosity normal
+
+  publish:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
+    steps:
       - name: Publish
-        if: success()
         run: |
           dotnet publish \
           --configuration Release \
-          --no-build \
           --verbosity normal \
           --runtime ${{ matrix.runtime }} \
           --self-contained true

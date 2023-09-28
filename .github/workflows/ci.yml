@@ -24,9 +24,7 @@ jobs:
       - name: Cache Build Artifacts
         uses: actions/cache@v3
         with:
-          path: |
-            ./*/bin/
-            ~/.nuget/packages/
+          path: ./*/bin/
           key: ${{ runner.os }}-build-${{ github.sha }}
 
   test:
@@ -39,6 +37,10 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
       - name: Install Postgres ODBC Driver
         run: |
           sudo apt-get update
@@ -46,9 +48,7 @@ jobs:
       - name: Restore Build Artifacts
         uses: actions/cache@v3
         with:
-          path: |
-            ./*/bin/
-            ~/.nuget/packages/
+          path: ./*/bin/
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Run Tests
         if: success()
@@ -68,19 +68,20 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
       - name: Restore Build Artifacts
         uses: actions/cache@v3
         with:
-          path: |
-            ./*/bin/
-            ~/.nuget/packages/
+          path: ./*/bin/
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Publish
         run: |
           dotnet publish \
           --configuration Release \
           -- no-build \
-          --verbosity normal \
           --runtime ${{ matrix.runtime }} \
           --self-contained true
       - name: Upload Artifact

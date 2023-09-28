@@ -18,7 +18,9 @@ jobs:
         if: success()
         with:
           name: build-artifact
-          path: ./*/bin/
+          path: |
+            ./*/bin/
+            .nuget/packages/
           retention-days: 1
   test:
     runs-on: ubuntu-latest

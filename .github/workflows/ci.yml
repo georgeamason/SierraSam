@@ -86,7 +86,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Publish
         run: |
-          dotnet publish \
+          dotnet publish ./SierraSam/SierraSam.csproj \
           --configuration Release \
           --no-build \
           --runtime ${{ matrix.runtime }} \

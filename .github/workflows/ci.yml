@@ -23,7 +23,12 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore --locked-mode
       - name: Build
-        run: dotnet build --configuration Release --no-restore --runtime ${{ matrix.runtime }}
+        run: |
+          dotnet build ./SierraSam/SierraSam.csproj \
+          --configuration Release \
+          --no-restore \
+          --runtime ${{ matrix.runtime }} \
+          --self-contained
       - name: Cache Build Artifacts
         uses: actions/cache@v3
         with:

@@ -83,7 +83,7 @@ jobs:
           --configuration Release \
           --no-build \
           --runtime ${{ matrix.runtime }} \
-          --self-contained true
+          --self-contained
       - name: Upload Artifact
         if: success()
         uses: actions/upload-artifact@v3

@@ -8,6 +8,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,18 +23,21 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore --locked-mode
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore --runtime ${{ matrix.runtime }}
       - name: Cache Build Artifacts
         uses: actions/cache@v3
         with:
           path: |
             ./*/bin/
             ./*/obj/
-          key: ${{ runner.os }}-build-${{ github.sha }}
+          key: ${{ matrix.runtime }}-build-${{ github.sha }}
 
   test:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -49,7 +55,7 @@ jobs:
           path: |
             ./*/bin/
             ./*/obj/
-          key: ${{ runner.os }}-build-${{ github.sha }}
+          key: ${{ matrix.runtime }}-build-${{ github.sha }}
       - name: Install Postgres ODBC Driver
         if: success()
         run: |
@@ -57,7 +63,7 @@ jobs:
           sudo apt-get install -y odbc-postgresql
       - name: Run Tests
         if: success()
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal --runtime ${{ matrix.runtime }}
 
 
   publish:
@@ -83,7 +89,7 @@ jobs:
           path: |
             ./*/bin/
             ./*/obj/
-          key: ${{ runner.os }}-build-${{ github.sha }}
+          key: ${{ matrix.runtime }}-build-${{ github.sha }}
       - name: Publish
         run: |
           dotnet publish ./SierraSam/SierraSam.csproj \

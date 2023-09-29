@@ -1,0 +1,99 @@
+name: SierraSam Build
+
+on: [push]
+
+env:
+  DOTNET_VERSION: 7.x.x
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Build
+        run: |
+          dotnet build ./SierraSam/SierraSam.csproj \
+          --configuration Release \
+          --no-restore \
+          --runtime ${{ matrix.runtime }} \
+          --self-contained
+      - name: Cache Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ./*/obj/
+          key: ${{ matrix.runtime }}-build-${{ github.sha }}
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Install Postgres ODBC Driver
+        if: success()
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y odbc-postgresql
+      - name: Run Tests
+        if: success()
+        run: dotnet test --configuration Release --verbosity normal
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ./*/obj/
+          key: ${{ matrix.runtime }}-build-${{ github.sha }}
+      - name: Publish
+        run: |
+          dotnet publish ./SierraSam/SierraSam.csproj \
+          --configuration Release \
+          --no-build \
+          --runtime ${{ matrix.runtime }} \
+          --self-contained
+      - name: Upload Artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: SierraSam-${{ matrix.runtime }}
+          path: ./SierraSam/bin/Release/net7.0/${{ matrix.runtime }}/publish

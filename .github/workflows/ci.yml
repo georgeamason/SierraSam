@@ -24,7 +24,9 @@ jobs:
       - name: Cache Build Artifacts
         uses: actions/cache@v3
         with:
-          path: ./*/bin/
+          path: |
+            ./*/bin/
+            ./*/obj/
           key: ${{ runner.os }}-build-${{ github.sha }}
 
   test:
@@ -41,15 +43,18 @@ jobs:
           cache-dependency-path: ./SierraSam/packages.lock.json
       - name: Restore Dependencies
         run: dotnet restore --locked-mode
-      - name: Install Postgres ODBC Driver
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y odbc-postgresql
       - name: Restore Build Artifacts
         uses: actions/cache@v3
         with:
-          path: ./*/bin/
+          path: |
+            ./*/bin/
+            ./*/obj/
           key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Install Postgres ODBC Driver
+        if: success()
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y odbc-postgresql
       - name: Run Tests
         if: success()
         run: dotnet test --configuration Release --no-build --verbosity normal
@@ -75,7 +80,9 @@ jobs:
       - name: Restore Build Artifacts
         uses: actions/cache@v3
         with:
-          path: ./*/bin/
+          path: |
+            ./*/bin/
+            ./*/obj/
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Publish
         run: |

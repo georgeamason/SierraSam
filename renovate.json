@@ -4,7 +4,7 @@
   "labels": ["renovate"],
   "packageRules": [
     {
-      "matchDatasource": ["nuget"],
+      "matchDatasources": ["nuget"],
       "automerge": true,
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     }

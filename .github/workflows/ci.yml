@@ -6,11 +6,25 @@ env:
   DOTNET_VERSION: 7.x.x
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      runtimes: ${{ steps.runtimes.outputs.runtimes }}
+    steps:
+      - name: Set Runtimes
+        id: runtimes
+        run: |
+          [ ${{ github.ref_name }} -eq 'main' ] && \
+          RUNTIMES=[\"win-x64\", \"linux-x64\", \"linux-arm64\", \"osx-x64\", \"osx-arm64\"] || \
+          RUNTIMES=[\"linux-x64\"]
+          echo "runtimes=$RUNTIMES" >> $GITHUB_OUTPUT
+
   build:
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
+        runtime: ${{ fromJson(needs.setup.outputs.runtimes) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -62,11 +76,11 @@ jobs:
 
   publish:
     if: ${{ github.ref_name == 'main' }}
-    needs: test
+    needs: [setup, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        runtime: [ win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64 ]
+        runtime: ${{ fromJson(needs.setup.outputs.runtimes) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

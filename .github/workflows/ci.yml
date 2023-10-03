@@ -14,10 +14,12 @@ jobs:
       - name: Set Runtimes
         id: runtimes
         run: |
-          [ ${{ github.ref_name }} -eq 'main' ] && \
-          RUNTIMES=[\"win-x64\", \"linux-x64\", \"linux-arm64\", \"osx-x64\", \"osx-arm64\"] || \
-          RUNTIMES=[\"linux-x64\"]
+          [[ ${{ github.ref_name }} == main ]] && \
+          RUNTIMES="[\"win-x64\", \"linux-x64\", \"linux-arm64\", \"osx-x64\", \"osx-arm64\"]" || \
+          RUNTIMES="[\"linux-x64\"]"
+          echo $RUNTIMES
           echo "runtimes=$RUNTIMES" >> $GITHUB_OUTPUT
+        shell: bash
 
   build:
     needs: setup

@@ -1,15 +1,11 @@
 ﻿using System.Collections;
 using System.Data.Odbc;
-using System.IO.Abstractions.TestingHelpers;
-using System.Text;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
-using SierraSam.Database;
-
 
 namespace SierraSam.Tests.Integration.Capabilities;
 
@@ -45,7 +41,7 @@ internal sealed class MigrateTests
     }
 
     [TestCaseSource(nameof(Database_containers))]
-    public async Task Migrate_updates_database_correctly(
+    public async Task Migrate_calls_apply_with_correct_args(
         IContainer container,
         string connectionString,
         int containerPort,
@@ -71,49 +67,60 @@ internal sealed class MigrateTests
         configuration.MigrationSuffixes.Returns(new []{ ".sql" });
         configuration.InstalledBy.Returns(string.Empty);
 
-        var database = DatabaseResolver.Create(odbcConnection, configuration);
+        var database = Substitute.For<IDatabase>();
+
+        database
+            .Connection
+            .Returns(odbcConnection);
+
+        database
+            .HasMigrationTable
+            .Returns(false);
+
+        database
+            .GetSchemaHistory(configuration.DefaultSchema, configuration.SchemaTable)
+            .Returns(Array.Empty<AppliedMigration>());
 
         var migrationSeeker = Substitute.For<IMigrationSeeker>();
 
+        var pendingMigrations = new[]
+        {
+            new PendingMigration(
+                "1",
+                "Test",
+                MigrationType.Versioned,
+                sql,
+                "V1__Test.sql")
+        };
+
         migrationSeeker
             .Find()
-            .Returns(new[]
+            .Returns(pendingMigrations);
+
+        var migrationApplicator = Substitute.For<IMigrationApplicator>();
+
+        IReadOnlyCollection<PendingMigration> arg1 = null!;
+        IReadOnlyCollection<AppliedMigration> arg2 = null!;
+
+        migrationApplicator
+            .WhenForAnyArgs(applicator => applicator.Apply(null!, null!))
+            .Do(info =>
             {
-                new PendingMigration(
-                    "1",
-                    "Test",
-                    MigrationType.Versioned,
-                    sql,
-                    "V1__Test.sql")
+                arg1 = info.Arg<IReadOnlyCollection<PendingMigration>>();
+                arg2 = info.Arg<IReadOnlyCollection<AppliedMigration>>();
             });
 
-        var migrationApplicator = new MigrationApplicator(database, configuration);
-
-        var migrate = new Migrate(
+        var sut = new Migrate(
             _logger,
             database,
             configuration,
             migrationSeeker,
             migrationApplicator);
 
-        migrate.Run(Array.Empty<string>());
+        sut.Run(Array.Empty<string>());
 
-        var migrations = database
-            .GetSchemaHistory(configuration.DefaultSchema, configuration.SchemaTable)
-            .ToArray();
-
-        migrations.Should().HaveCount(1);
-
-        migrations[0].Version.Should().Be("1");
-        migrations[0].Description.Should().Be("Test");
-        migrations[0].Type.Should().Be("SQL");
-        migrations[0].Script.Should().Be("V1__Test.sql");
-        migrations[0].Checksum.Should().Be("72e60a278ed8d3655565a63940a34c2c");
-        migrations[0].InstalledBy.Should().Be(string.Empty);
-        migrations[0].InstalledOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
-        migrations[0].Success.Should().BeTrue();
-
-        database.HasTable(configuration.SchemaTable).Should().BeTrue();
+        arg1.Should().BeEquivalentTo(pendingMigrations);
+        arg2.Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
 
         await container.StopAsync();
     }

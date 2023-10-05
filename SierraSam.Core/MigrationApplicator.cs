@@ -33,9 +33,10 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
         if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
 
+        // TODO: Make use of IDbTransaction. Something like _database.BeginTransaction()?
         using var transaction = _database.Connection.BeginTransaction();
         var appliedCount = 0;
-        var executionTime = TimeSpan.Zero;
+        var totalExecutionTime = TimeSpan.Zero;
         foreach (var pendingMigration in pendingMigrations)
         {
             try
@@ -64,15 +65,16 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
                         _database.UpdateSchemaHistory(updatedMigration, transaction);
 
-                        executionTime += _database.ExecuteMigration(pendingMigration.Sql, transaction);
+                        totalExecutionTime += _database.ExecuteMigration(pendingMigration.Sql, transaction);
 
                         continue;
                     }
                 }
 
-                executionTime += _database.ExecuteMigration(pendingMigration.Sql, transaction);
+                var executionTime = _database.ExecuteMigration(pendingMigration.Sql, transaction);
+                totalExecutionTime += executionTime;
 
-                var migration = new AppliedMigration(
+                var migrationToApply = new AppliedMigration(
                     ++installRank,
                     pendingMigration.Version,
                     pendingMigration.Description,
@@ -84,7 +86,7 @@ public sealed class MigrationApplicator : IMigrationApplicator
                     executionTime.TotalMilliseconds,
                     true);
 
-                _database.InsertSchemaHistory(migration, transaction);
+                _database.InsertSchemaHistory(migrationToApply, transaction);
 
                 appliedCount++;
             }
@@ -100,6 +102,6 @@ public sealed class MigrationApplicator : IMigrationApplicator
 
         transaction.Commit();
 
-        return (appliedCount, executionTime);
+        return (appliedCount, totalExecutionTime);
     }
 }

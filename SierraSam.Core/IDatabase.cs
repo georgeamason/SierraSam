@@ -6,6 +6,7 @@ public interface IDatabase
 {
     string Name { get; }
 
+    // TODO: IDbConnection?
     OdbcConnection Connection { get; }
 
     bool HasMigrationTable { get; }

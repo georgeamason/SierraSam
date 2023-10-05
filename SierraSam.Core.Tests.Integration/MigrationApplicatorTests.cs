@@ -1,9 +1,10 @@
-﻿using System.Data.Odbc;
-using System.IO.Abstractions;
+﻿using System.Collections;
+using System.Data.Odbc;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using NSubstitute;
 using SierraSam.Core.Enums;
+using SierraSam.Core.Extensions;
 
 namespace SierraSam.Core.Tests.Integration;
 
@@ -28,8 +29,58 @@ internal sealed class MigrationApplicatorTests
         await _connection.OpenAsync();
     }
 
-    [Test]
-    public void Apply_makes_expected_calls_to_odbc_executor()
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
+    {
+        await _connection.CloseAsync();
+        await _container.StopAsync();
+        await _container.DisposeAsync();
+    }
+
+    private static IEnumerable Migrations_to_apply()
+    {
+        yield return new TestCaseData(
+            (object)new PendingMigration[]
+            {
+                new(
+                    "1",
+                    "description",
+                    MigrationType.Versioned,
+                    "CREATE TABLE dbo.Dummy (Id INT)",
+                    "filename.sql")
+            }).SetName("Single versioned migration");
+
+        yield return new TestCaseData(
+            (object)new[]
+            {
+                new PendingMigration(
+                    "1",
+                    "description",
+                    MigrationType.Versioned,
+                    "CREATE TABLE dbo.Dummy (Id INT)",
+                    "filename.sql"),
+                new PendingMigration(
+                    "2",
+                    "someDescription",
+                    MigrationType.Versioned,
+                    "CREATE TABLE dbo.Dummy2 (Id INT)",
+                    "filename2.sql"),
+            }).SetName("Multiple versioned migrations");
+
+        yield return new TestCaseData(
+            (object)new []
+        {
+            new PendingMigration(
+                null,
+                "description",
+                MigrationType.Repeatable,
+                "CREATE TABLE dbo.Dummy (Id INT)",
+                "filename.sql")
+        }).SetName("Single repeatable migration");
+    }
+
+    [TestCaseSource(nameof(Migrations_to_apply))]
+    public void Apply_makes_expected_database_calls(PendingMigration[] pendingMigrations)
     {
         var configuration = Substitute.For<IConfiguration>();
 
@@ -43,53 +94,51 @@ internal sealed class MigrationApplicatorTests
             .Connection
             .Returns(_connection);
 
-        const string migrationSql = "CREATE TABLE dbo.Dummy (Id INT)";
+        var executionTime = TimeSpan.FromSeconds(1);
 
-        var migrationApplicator = new MigrationApplicator(database, configuration);
+        database
+            .ExecuteMigration(Arg.Any<string>(), Arg.Any<OdbcTransaction>())
+            .Returns(executionTime);
 
-        var pendingMigrations = new[]
+        var sut = new MigrationApplicator(database, configuration);
+
+        var (appliedCount, totalExecutionTime) = sut.Apply(
+            pendingMigrations,
+            Array.Empty<AppliedMigration>()
+        );
+
+        var installedRank = 1;
+        foreach (var pendingMigration in pendingMigrations)
         {
-            new PendingMigration(
-                "1",
-                "description",
-                MigrationType.Versioned,
-                migrationSql,
-                "filename.sql")
-        };
+            database
+                .Received()
+                .ExecuteMigration(pendingMigration.Sql, Arg.Any<OdbcTransaction>());
 
-        var appliedMigrations = Array.Empty<AppliedMigration>();
+            database
+                .Received()
+                .InsertSchemaHistory(Arg.Is<AppliedMigration>(
+                        // ReSharper disable once AccessToModifiedClosure
+                        // ReSharper disable once CompareOfFloatsByEqualityOperator
+                        m => m.InstalledRank == installedRank &&
+                             m.Version == pendingMigration.Version &&
+                             m.Description == pendingMigration.Description &&
+                             m.Type == "SQL" &&
+                             m.Script == pendingMigration.FileName &&
+                             m.Checksum == pendingMigration.Checksum &&
+                             m.ExecutionTime == executionTime.TotalMilliseconds &&
+                             m.Success == true
+                    ),
+                    Arg.Any<OdbcTransaction>());
 
-        AppliedMigration appliedMigration = null!;
+            installedRank++;
+        }
 
-        database
-            .WhenForAnyArgs(d => d.InsertSchemaHistory(null!, null!))
-            .Do(info => appliedMigration = info.Arg<AppliedMigration>());
-
-        var (appliedCount, executionTime) = migrationApplicator.Apply
-            (pendingMigrations, appliedMigrations);
-
-        database
-            .Received(1)
-            .ExecuteMigration(migrationSql, Arg.Any<OdbcTransaction>());
-
-        database
-            .ReceivedWithAnyArgs(1)
-            .InsertSchemaHistory(default!, default!);
-
-        appliedMigration.InstalledRank.Should().Be(1);
-        appliedMigration.Description.Should().Be("description");
-        appliedMigration.Type.Should().Be("SQL");
-        appliedMigration.Script.Should().Be("filename.sql");
-        appliedMigration.Checksum.Should().Be("02a983b498212d3f65c244f14de9572c");
-        appliedMigration.InstalledOn.Should().BeWithin(TimeSpan.FromSeconds(1));
-        appliedMigration.ExecutionTime.Should().Be(executionTime.TotalMilliseconds);
-        appliedMigration.Success.Should().BeTrue();
-
-        appliedCount.Should().Be(1);
+        appliedCount.Should().Be(pendingMigrations.Length);
+        totalExecutionTime.Should().Be(TimeSpan.FromSeconds(pendingMigrations.Length));
     }
 
     [Test]
-    public void Apply_skips_migration_when_checksum_matches()
+    public void Apply_skips_repeatable_migration_when_checksum_matches()
     {
         var configuration = Substitute.For<IConfiguration>();
 
@@ -105,7 +154,7 @@ internal sealed class MigrationApplicatorTests
 
         const string migrationSql = "CREATE TABLE dbo.Dummy (Id INT)";
 
-        var migrationApplicator = new MigrationApplicator(database, configuration);
+        var sut = new MigrationApplicator(database, configuration);
 
         var pendingMigrations = new[]
         {
@@ -125,23 +174,85 @@ internal sealed class MigrationApplicatorTests
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                "02a983b498212d3f65c244f14de9572c",
+                migrationSql.Checksum(),
                 string.Empty,
                 DateTime.UtcNow,
                 TimeSpan.Zero.TotalMilliseconds,
                 true)
         };
 
-        var (appliedCount, executionTime) = migrationApplicator.Apply
-            (pendingMigrations, appliedMigrations);
+        var (appliedCount, _) = sut.Apply(pendingMigrations, appliedMigrations);
 
         database
             .DidNotReceiveWithAnyArgs()
-            .ExecuteMigration(null!, null!);
+            .ExecuteMigration(default!);
 
         database
             .DidNotReceiveWithAnyArgs()
-            .InsertSchemaHistory(null!, null!);
+            .InsertSchemaHistory(default!);
+
+        appliedCount.Should().Be(0);
+    }
+
+    [Test]
+    public void Apply_updates_repeatable_migration_when_script_has_changed()
+    {
+        var configuration = Substitute.For<IConfiguration>();
+
+        configuration
+            .DefaultSchema
+            .Returns("dbo");
+
+        var database = Substitute.For<IDatabase>();
+
+        database
+            .Connection
+            .Returns(_connection);
+
+        const string migrationSql = "CREATE TABLE dbo.Dummy (Id INT)";
+
+        var sut = new MigrationApplicator(database, configuration);
+
+        var pendingMigrations = new[]
+        {
+            new PendingMigration(
+                null,
+                "description",
+                MigrationType.Repeatable,
+                migrationSql,
+                "filename.sql")
+        };
+
+        var appliedMigrations = new[]
+        {
+            new AppliedMigration(
+                1,
+                null,
+                string.Empty,
+                string.Empty,
+                "filename.sql",
+                "someOtherChecksum",
+                string.Empty,
+                DateTime.UtcNow,
+                TimeSpan.Zero.TotalMilliseconds,
+                true)
+        };
+
+        var (appliedCount, _) = sut.Apply(pendingMigrations, appliedMigrations);
+
+        database
+            .Received(1)
+            .UpdateSchemaHistory(
+                Arg.Is<AppliedMigration>(
+                    m => m.Checksum == migrationSql.Checksum() &&
+                         m.Script == "filename.sql"
+                ),
+                Arg.Any<OdbcTransaction>()
+            );
+
+        database
+            .Received(1)
+            .ExecuteMigration(migrationSql, Arg.Any<OdbcTransaction>());
 
         appliedCount.Should().Be(0);
     }

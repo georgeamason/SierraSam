@@ -1,11 +1,12 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
+using System.Data.Odbc;
 using Microsoft.Extensions.Logging;
 
 namespace SierraSam.Core.Factories;
 
 public static class OdbcConnectionFactory
 {
-    public static OdbcConnection Create(ILogger logger, IConfiguration configuration)
+    public static IDbConnection Create(ILogger logger, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));

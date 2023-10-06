@@ -44,12 +44,10 @@ internal sealed class Migrate : ICapability
 
         if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
 
-        _logger.LogInformation("Driver: {Driver}", _database.Connection.Driver);
         _logger.LogInformation("Database: {Database}", _database.Connection.Database);
 
-        Console.WriteLine($"Database: {_database.Connection.Driver}:" +
-                          $"{_database.Connection.Database}:" +
-                          $"{_database.Connection.ServerVersion}");
+        // TODO: Add server version
+        Console.WriteLine($"{_database.Connection.Database}");
 
         if (!_database.HasMigrationTable)
         {

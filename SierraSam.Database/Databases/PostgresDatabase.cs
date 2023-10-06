@@ -1,4 +1,5 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
+using System.Data.Odbc;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
@@ -9,7 +10,7 @@ public class PostgresDatabase : DefaultDatabase
 
     private readonly OdbcExecutor _odbcExecutor;
 
-    public PostgresDatabase(OdbcConnection connection, IConfiguration configuration)
+    public PostgresDatabase(IDbConnection connection, IConfiguration configuration)
         : base(connection, configuration)
     {
         _configuration = configuration
@@ -23,7 +24,7 @@ public class PostgresDatabase : DefaultDatabase
     public override void CreateSchemaHistory(
         string? schema = null,
         string? table = null,
-        OdbcTransaction? transaction = null)
+        IDbTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
@@ -44,7 +45,7 @@ public class PostgresDatabase : DefaultDatabase
         _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override void InsertSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null)
+    public override void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +

@@ -1,4 +1,5 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
+using System.Data.Odbc;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,7 +50,7 @@ public static class Program
             {
                 services.AddSingleton<App>();
 
-                services.AddSingleton<OdbcConnection>
+                services.AddSingleton<IDbConnection>
                     (s => OdbcConnectionFactory.Create
                         (s.GetRequiredService<ILogger<App>>(),
                          s.GetRequiredService<IConfiguration>()));

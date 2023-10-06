@@ -11,7 +11,7 @@ public abstract class DefaultDatabase : IDatabase
     private readonly IConfiguration _configuration;
     private readonly OdbcExecutor _odbcExecutor;
 
-    protected DefaultDatabase(OdbcConnection connection, IConfiguration configuration)
+    protected DefaultDatabase(IDbConnection connection, IConfiguration configuration)
     {
         Connection = connection
             ?? throw new ArgumentNullException(nameof(connection));
@@ -23,29 +23,28 @@ public abstract class DefaultDatabase : IDatabase
     }
 
     public abstract string Name { get; }
-    public OdbcConnection Connection { get; }
+    public IDbConnection Connection { get; }
 
     public virtual bool HasMigrationTable => HasTable(_configuration.SchemaTable);
 
     public virtual bool HasTable(string tableName)
     {
-        var dataTable = Connection.GetSchema("Tables");
+        var sql = $"SELECT \"TABLE_NAME\" " +
+                  $"FROM INFORMATION_SCHEMA.TABLES " +
+                  $"WHERE \"TABLE_NAME\" = \"{tableName}\"";
 
-        foreach (DataRow row in dataTable.Rows)
-        {
-            // https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/odbc-schema-collections
-            var dbTableName = row["TABLE_NAME"] as string;
+        var result = _odbcExecutor.ExecuteReader<string>(
+            sql,
+            reader => reader.GetString(0)
+        );
 
-            if (dbTableName == tableName) return true;
-        }
-
-        return false;
+        return result.Any();
     }
 
     public virtual void CreateSchemaHistory(
         string? schema = null,
         string? table = null,
-        OdbcTransaction? transaction = null)
+        IDbTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
@@ -95,23 +94,23 @@ public abstract class DefaultDatabase : IDatabase
         return _odbcExecutor.ExecuteReader<AppliedMigration>(
             sql,
             reader => new AppliedMigration(
-                reader.GetInt32("installed_rank"),
-                reader["version"] as string,
-                reader.GetString("description"),
-                reader.GetString("type"),
-                reader.GetString("script"),
-                reader.GetString("checksum"),
-                reader.GetString("installed_by"),
+                reader.GetInt32(0),
+                !reader.IsDBNull(1) ? reader.GetString(1) : null,
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetString(5),
+                reader.GetString(6),
                 new DateTime(
-                    reader.GetDateTime("installed_on").Ticks,
+                    reader.GetDateTime(7).Ticks,
                     DateTimeKind.Utc
                 ),
-                reader.GetDouble("execution_time"),
-                reader.GetBoolean("success"))
+                reader.GetDouble(8),
+                reader.GetBoolean(9))
         );
     }
 
-    public virtual void InsertSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null)
+    public virtual void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
@@ -140,7 +139,7 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null)
+    public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
@@ -158,7 +157,7 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual TimeSpan ExecuteMigration(string sql, OdbcTransaction? transaction = null)
+    public virtual TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null)
     {
         var stopwatch = new Stopwatch();
 
@@ -171,30 +170,29 @@ public abstract class DefaultDatabase : IDatabase
 
     public virtual IReadOnlyCollection<DatabaseObject> GetSchemaObjects(
         string? schema = null,
-        OdbcTransaction? transaction = null)
+        IDbTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema;
 
         //  TODO: How about Triggers - they are not in sys.objects
-        var sql = "SELECT o.name, o.type, t.name AS parent" + Environment.NewLine +
-                  "FROM sys.objects o" + Environment.NewLine +
-                  "INNER JOIN sys.schemas s ON s.[schema_id] = o.[schema_id]" + Environment.NewLine +
-                  "LEFT JOIN sys.tables t ON t.[object_id] = o.parent_object_id" + Environment.NewLine +
-                  $"WHERE s.name = '{schema}'" + Environment.NewLine +
-                  "AND o.is_ms_shipped = 0" + Environment.NewLine +
-                  "ORDER BY o.parent_object_id DESC, o.[object_id] DESC";
+        var sql = $"SELECT o.name, o.type, t.name AS parent " +
+                  $"FROM sys.objects o " +
+                  $"INNER JOIN sys.schemas s ON s.[schema_id] = o.[schema_id] " +
+                  $"LEFT JOIN sys.tables t ON t.[object_id] = o.parent_object_id " +
+                  $"WHERE s.name = '{schema}' AND o.is_ms_shipped = 0 " +
+                  $"ORDER BY o.parent_object_id DESC, o.[object_id] DESC";
 
-        return _odbcExecutor.ExecuteReader(
+        return _odbcExecutor.ExecuteReader<DatabaseObject>(
             sql,
             reader => new DatabaseObject(
                 schema,
-                reader.GetString("name").Trim(),
-                reader.GetString("type").Trim(),
-                reader["parent"] as string),
+                reader.GetString(0).Trim(),
+                !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
+                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
             transaction);
     }
 
-    public virtual void DropSchemaObject(DatabaseObject obj, OdbcTransaction? transaction = null)
+    public virtual void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null)
     {
         var objectType = obj.Type switch
         {

@@ -4,7 +4,9 @@ namespace SierraSam.Core;
 
 public interface IDatabase
 {
-    string Name { get; }
+    string Provider { get; }
+
+    string ServerVersion { get; }
 
     IDbConnection Connection { get; }
 

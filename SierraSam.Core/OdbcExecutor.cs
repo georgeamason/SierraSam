@@ -62,4 +62,23 @@ public sealed class OdbcExecutor
                 exception);
         }
     }
+
+    public T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null) where T : class?
+    {
+        try
+        {
+            using var command = _connection.CreateCommand();
+            command.CommandText = sql;
+
+            if (transaction is not null) command.Transaction = transaction;
+
+            return command.ExecuteScalar() as T;
+        }
+        catch (OdbcException exception)
+        {
+            throw new OdbcExecutorException(
+                $"Failed to execute SQL statement: '{sql}'",
+                exception);
+        }
+    }
 }

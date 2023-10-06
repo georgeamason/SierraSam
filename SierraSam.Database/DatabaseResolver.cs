@@ -1,4 +1,4 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
 using SierraSam.Core;
 using SierraSam.Database.Databases;
 
@@ -6,15 +6,16 @@ namespace SierraSam.Database;
 
 public static class DatabaseResolver
 {
-    public static IDatabase Create(OdbcConnection odbcConnection, IConfiguration configuration)
+    // TODO: Make use of a proper connection string parser
+    public static IDatabase Create(IDbConnection connection, IConfiguration configuration)
     {
-        var connectionString = odbcConnection.ConnectionString;
+        var connectionString = connection.ConnectionString;
 
         if (connectionString.Contains("postgres", StringComparison.InvariantCultureIgnoreCase))
         {
-            return new PostgresDatabase(odbcConnection, configuration);
+            return new PostgresDatabase(connection, configuration);
         }
 
-        return new MssqlDatabase(odbcConnection, configuration);
+        return new MssqlDatabase(connection, configuration);
     }
 }

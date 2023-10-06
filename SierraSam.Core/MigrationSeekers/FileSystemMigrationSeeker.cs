@@ -63,6 +63,7 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                 }
                 catch (DirectoryNotFoundException exception)
                 {
+                    // TODO: Should just skip through if not found?
                     throw new MigrationSeekerException
                         ($"The directory '{locationPath}' does not exist", exception);
                 }

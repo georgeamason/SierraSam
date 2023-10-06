@@ -2,10 +2,10 @@
 
 public sealed class DatabaseObject
 {
-    public DatabaseObject(string schema, string name, string type, string? parent = null)
+    public DatabaseObject(string schema, string name, string? type, string? parent = null)
     {
-        Schema = schema;
-        Name = name;
+        Schema = schema ?? throw new ArgumentNullException(nameof(schema));
+        Name = name ?? throw new ArgumentNullException(nameof(name));
         Type = type;
         Parent = parent;
     }
@@ -14,7 +14,7 @@ public sealed class DatabaseObject
 
     public string Name { get; }
 
-    public string Type { get; }
+    public string? Type { get; }
 
     public string? Parent { get; }
 }

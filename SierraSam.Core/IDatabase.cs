@@ -1,4 +1,4 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
 
 namespace SierraSam.Core;
 
@@ -6,14 +6,13 @@ public interface IDatabase
 {
     string Name { get; }
 
-    // TODO: IDbConnection?
-    OdbcConnection Connection { get; }
+    IDbConnection Connection { get; }
 
     bool HasMigrationTable { get; }
 
     bool HasTable(string tableName);
 
-    void CreateSchemaHistory(string? schema = null, string? table = null, OdbcTransaction? transaction = null);
+    void CreateSchemaHistory(string? schema = null, string? table = null, IDbTransaction? transaction = null);
 
     /// <summary>
     /// Get the schema history for the given schema and table.
@@ -24,13 +23,13 @@ public interface IDatabase
     /// <returns>A collection of applied migrations</returns>
     IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null);
 
-    void InsertSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null);
+    void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
-    void UpdateSchemaHistory(AppliedMigration appliedMigration, OdbcTransaction? transaction = null);
+    void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
-    TimeSpan ExecuteMigration(string sql, OdbcTransaction? transaction = null);
+    TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null);
 
-    IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, OdbcTransaction? transaction = null);
+    IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, IDbTransaction? transaction = null);
 
-    void DropSchemaObject(DatabaseObject obj, OdbcTransaction? transaction = null);
+    void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null);
 }

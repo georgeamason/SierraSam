@@ -1,13 +1,14 @@
-﻿using System.Data.Odbc;
+﻿using System.Data;
+using System.Data.Odbc;
 using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core;
 
 public sealed class OdbcExecutor
 {
-    private readonly OdbcConnection _connection;
+    private readonly IDbConnection _connection;
 
-    public OdbcExecutor(OdbcConnection connection)
+    public OdbcExecutor(IDbConnection connection)
     {
         _connection = connection
             ?? throw new ArgumentNullException(nameof(connection));
@@ -15,19 +16,17 @@ public sealed class OdbcExecutor
 
     public IReadOnlyCollection<T> ExecuteReader<T>(
         string sql,
-        Func<OdbcDataReader, T> rowMapper,
-        OdbcTransaction? transaction = null)
+        Func<IDataReader, T> rowMapper,
+        IDbTransaction? transaction = null)
     {
         try
         {
-            using var command = new OdbcCommand(sql, _connection);
+            using var command = _connection.CreateCommand();
+            command.CommandText = sql;
 
-            if (transaction is not null)
-                command.Transaction = transaction;
+            if (transaction is not null) command.Transaction = transaction;
 
             using var dataReader = command.ExecuteReader();
-
-            if (!dataReader.HasRows) return Array.Empty<T>();
 
             var rows = new List<T>();
             while (dataReader.Read())
@@ -45,14 +44,14 @@ public sealed class OdbcExecutor
         }
     }
 
-    public void ExecuteNonQuery(string sql, OdbcTransaction? transaction = null)
+    public void ExecuteNonQuery(string sql, IDbTransaction? transaction = null)
     {
         try
         {
-            using var command = new OdbcCommand(sql, _connection);
+            using var command = _connection.CreateCommand();
+            command.CommandText = sql;
 
-            if (transaction is not null)
-                command.Transaction = transaction;
+            if (transaction is not null) command.Transaction = transaction;
 
             command.ExecuteNonQuery();
         }

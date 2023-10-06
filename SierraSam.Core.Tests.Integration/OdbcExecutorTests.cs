@@ -9,16 +9,9 @@ internal sealed class OdbcExecutorTests
 {
     private const string Password = "yourStrong(!)Password";
 
-    private readonly IContainer _container;
+    private readonly IContainer _container = DbContainerFactory.CreateMsSqlContainer(Password);
 
-    private readonly OdbcConnection _connection;
-
-    public OdbcExecutorTests()
-    {
-        _container = DbContainerFactory.CreateMsSqlContainer(Password);
-
-        _connection = new OdbcConnection();
-    }
+    private readonly OdbcConnection _connection = new();
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -50,9 +43,9 @@ internal sealed class OdbcExecutorTests
         odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
 
         odbcExecutor
-            .ExecuteReader<string>("SELECT Id FROM dbo.Dummy", reader => reader.GetString(0))
+            .ExecuteReader("SELECT Id FROM dbo.Dummy", reader => reader.GetInt32(0))
             .Should()
-            .BeSameAs(Array.Empty<string>());
+            .BeEquivalentTo(Array.Empty<string>());
     }
 
     [Test]
@@ -67,9 +60,9 @@ internal sealed class OdbcExecutorTests
         odbcExecutor.ExecuteNonQuery("INSERT INTO dbo.Dummy VALUES (3)");
 
         odbcExecutor
-            .ExecuteReader<string>("SELECT Id FROM dbo.Dummy", reader => reader.GetString(0))
+            .ExecuteReader("SELECT Id FROM dbo.Dummy", reader => reader.GetInt32(0))
             .Should()
-            .BeEquivalentTo("1", "2", "3");
+            .BeEquivalentTo(new [] {1, 2, 3});
     }
 
     [Test]
@@ -78,7 +71,7 @@ internal sealed class OdbcExecutorTests
         var odbcExecutor = new OdbcExecutor(_connection);
 
         odbcExecutor
-            .Invoking(x => x.ExecuteReader<string>("SELECT Id FROM dbo.Dummy", reader => reader.GetString(0)))
+            .Invoking(x => x.ExecuteReader("SELECT Id FROM dbo.Dummy", reader => reader.GetInt32(0)))
             .Should()
             .Throw<OdbcExecutorException>()
             .WithMessage("Failed to execute SQL statement: 'SELECT Id FROM dbo.Dummy'");
@@ -92,9 +85,9 @@ internal sealed class OdbcExecutorTests
         odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
 
         odbcExecutor
-            .ExecuteReader<string>("SELECT Id FROM dbo.Dummy", reader => reader.GetString(0))
+            .ExecuteReader("SELECT Id FROM dbo.Dummy", reader => reader.GetInt32(0))
             .Should()
-            .BeSameAs(Array.Empty<string>());
+            .BeEquivalentTo(Array.Empty<int>());
     }
 
     [Test]

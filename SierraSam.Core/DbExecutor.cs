@@ -4,11 +4,11 @@ using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core;
 
-public sealed class OdbcExecutor
+public sealed class DbExecutor
 {
     private readonly IDbConnection _connection;
 
-    public OdbcExecutor(IDbConnection connection)
+    public DbExecutor(IDbConnection connection)
     {
         _connection = connection
             ?? throw new ArgumentNullException(nameof(connection));

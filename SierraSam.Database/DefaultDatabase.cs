@@ -9,7 +9,7 @@ namespace SierraSam.Database;
 public abstract class DefaultDatabase : IDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly OdbcExecutor _odbcExecutor;
+    private readonly DbExecutor _dbExecutor;
 
     protected DefaultDatabase(IDbConnection connection, IConfiguration configuration)
     {
@@ -19,7 +19,7 @@ public abstract class DefaultDatabase : IDatabase
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
-        _odbcExecutor = new OdbcExecutor(connection);
+        _dbExecutor = new DbExecutor(connection);
     }
 
     public abstract string Provider { get; }
@@ -38,7 +38,7 @@ public abstract class DefaultDatabase : IDatabase
                   $"FROM \"INFORMATION_SCHEMA\".\"TABLES\" " +
                   $"WHERE \"TABLE_NAME\" = '{tableName}'";
 
-        var result = _odbcExecutor.ExecuteReader<string>(
+        var result = _dbExecutor.ExecuteReader<string>(
             sql,
             reader => reader.GetString(0)
         );
@@ -67,7 +67,7 @@ public abstract class DefaultDatabase : IDatabase
              "\"execution_time\" FLOAT NOT NULL," +
              "\"success\" BIT NOT NULL)";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null)
@@ -96,7 +96,7 @@ public abstract class DefaultDatabase : IDatabase
         }
 
         // TODO: These mappings can throw...
-        return _odbcExecutor.ExecuteReader<AppliedMigration>(
+        return _dbExecutor.ExecuteReader<AppliedMigration>(
             sql,
             reader => new AppliedMigration(
                 reader.GetInt32(0),
@@ -141,7 +141,7 @@ public abstract class DefaultDatabase : IDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{(appliedMigration.Success ? 1 : 0)})";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
@@ -159,7 +159,7 @@ public abstract class DefaultDatabase : IDatabase
                 // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
             $"WHERE installed_rank = {appliedMigration.InstalledRank};";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null)
@@ -167,7 +167,7 @@ public abstract class DefaultDatabase : IDatabase
         var stopwatch = new Stopwatch();
 
         stopwatch.Start();
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
         stopwatch.Stop();
 
         return stopwatch.Elapsed;
@@ -187,7 +187,7 @@ public abstract class DefaultDatabase : IDatabase
                   $"WHERE s.name = '{schema}' AND o.is_ms_shipped = 0 " +
                   $"ORDER BY o.parent_object_id DESC, o.[object_id] DESC";
 
-        return _odbcExecutor.ExecuteReader<DatabaseObject>(
+        return _dbExecutor.ExecuteReader<DatabaseObject>(
             sql,
             reader => new DatabaseObject(
                 schema,
@@ -217,6 +217,6 @@ public abstract class DefaultDatabase : IDatabase
 
         sb.Append($"DROP {objectType} \"{obj.Name}\"");
 
-        _odbcExecutor.ExecuteNonQuery(sb.ToString(), transaction);
+        _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
     }
 }

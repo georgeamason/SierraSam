@@ -6,7 +6,7 @@ namespace SierraSam.Database.Databases;
 public class MssqlDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly OdbcExecutor _odbcExecutor;
+    private readonly DbExecutor _dbExecutor;
 
     public MssqlDatabase(IDbConnection connection, IConfiguration configuration)
         : base(connection, configuration)
@@ -14,14 +14,14 @@ public class MssqlDatabase : DefaultDatabase
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
-        _odbcExecutor = new OdbcExecutor(connection);
+        _dbExecutor = new DbExecutor(connection);
     }
 
     public override string Provider => "MSSQL";
 
     public override string ServerVersion =>
-        _odbcExecutor.ExecuteScalar<string>("SELECT SERVERPROPERTY('productversion')")!;
+        _dbExecutor.ExecuteScalar<string>("SELECT SERVERPROPERTY('productversion')")!;
 
     public override string DefaultSchema =>
-        _odbcExecutor.ExecuteScalar<string>("SELECT SCHEMA_NAME()")!;
+        _dbExecutor.ExecuteScalar<string>("SELECT SCHEMA_NAME()")!;
 }

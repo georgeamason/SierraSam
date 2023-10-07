@@ -7,7 +7,7 @@ namespace SierraSam.Database.Databases;
 public class PostgresDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly OdbcExecutor _odbcExecutor;
+    private readonly DbExecutor _dbExecutor;
 
     public PostgresDatabase(IDbConnection connection, IConfiguration configuration)
         : base(connection, configuration)
@@ -15,7 +15,7 @@ public class PostgresDatabase : DefaultDatabase
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
-        _odbcExecutor = new OdbcExecutor(connection);
+        _dbExecutor = new DbExecutor(connection);
     }
 
     public override string Provider => "PostgreSQL";
@@ -41,7 +41,7 @@ public class PostgresDatabase : DefaultDatabase
             $"\"execution_time\" REAL NOT NULL," +
             $"\"success\" BOOLEAN NOT NULL)";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public override void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
@@ -70,10 +70,10 @@ public class PostgresDatabase : DefaultDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{appliedMigration.Success})";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override string ServerVersion => _odbcExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
+    public override string ServerVersion => _dbExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
 
-    public override string DefaultSchema => _odbcExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
+    public override string DefaultSchema => _dbExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
 }

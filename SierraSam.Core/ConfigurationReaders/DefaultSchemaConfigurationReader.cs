@@ -8,8 +8,7 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
     public DefaultSchemaConfigurationReader(IConfigurationReader configurationReader)
     {
-        _configurationReader = configurationReader
-            ?? throw new ArgumentNullException(nameof(configurationReader));
+        _configurationReader = configurationReader ?? throw new ArgumentNullException(nameof(configurationReader));
     }
 
     public IConfiguration Read()
@@ -27,7 +26,7 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
             connection.Open();
 
-            var executor = new OdbcExecutor(connection);
+            var executor = new DbExecutor(connection);
 
             // TODO: Will this work for all databases?
             var defaultSchema = executor.ExecuteReader<string>

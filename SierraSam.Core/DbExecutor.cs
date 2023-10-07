@@ -4,7 +4,7 @@ using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core;
 
-public sealed class DbExecutor
+public sealed class DbExecutor : IDbExecutor
 {
     private readonly IDbConnection _connection;
 

@@ -51,7 +51,7 @@ public class Configuration : IConfiguration
         User = user ?? string.Empty;
         ConnectionTimeout = connectionTimeout ?? 15;
         ConnectionRetries = connectionRetries ?? 1;
-        DefaultSchema = defaultSchema ?? string.Empty;
+        DefaultSchema = defaultSchema;
         InitialiseSql = initialiseSql ?? string.Empty;
         SchemaTable = schemaTable ?? "flyway_schema_history";
         Locations = locations ?? new[] { $"filesystem:{Path.Combine("db", "migration")}" };

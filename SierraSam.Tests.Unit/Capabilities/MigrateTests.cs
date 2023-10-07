@@ -20,7 +20,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (null!,
-                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
@@ -33,12 +33,12 @@ internal sealed class MigrateTests
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
-            .SetName("Null ODBC connection");
+            .SetName("Null database");
 
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IDatabase>(),
                  null!,
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationApplicator>())))
@@ -47,7 +47,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  null!,
                  Substitute.For<IMigrationApplicator>())))
@@ -56,7 +56,7 @@ internal sealed class MigrateTests
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
-                 DatabaseResolver.Create(new OdbcConnection(), Substitute.For<IConfiguration>()),
+                 Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
                  null!)))

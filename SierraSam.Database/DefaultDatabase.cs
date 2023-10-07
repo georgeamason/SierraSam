@@ -9,17 +9,22 @@ namespace SierraSam.Database;
 public abstract class DefaultDatabase : IDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly DbExecutor _dbExecutor;
+    private readonly IDbExecutor _dbExecutor;
 
-    protected DefaultDatabase(IDbConnection connection, IConfiguration configuration)
+    protected DefaultDatabase(
+        IDbConnection connection,
+        IDbExecutor executor,
+        IConfiguration configuration)
     {
         Connection = connection
             ?? throw new ArgumentNullException(nameof(connection));
 
+        _dbExecutor = executor
+            ?? throw new ArgumentNullException(nameof(executor));
+
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
-        _dbExecutor = new DbExecutor(connection);
     }
 
     public abstract string Provider { get; }

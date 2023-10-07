@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Data.Odbc;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
@@ -7,15 +6,19 @@ namespace SierraSam.Database.Databases;
 public class PostgresDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly DbExecutor _dbExecutor;
+    private readonly IDbExecutor _dbExecutor;
 
-    public PostgresDatabase(IDbConnection connection, IConfiguration configuration)
-        : base(connection, configuration)
+    public PostgresDatabase(
+        IDbConnection connection,
+        IDbExecutor executor,
+        IConfiguration configuration)
+        : base(connection, executor, configuration)
     {
         _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
+                         ?? throw new ArgumentNullException(nameof(configuration));
 
-        _dbExecutor = new DbExecutor(connection);
+        _dbExecutor = executor
+            ?? throw new ArgumentNullException(nameof(executor));
     }
 
     public override string Provider => "PostgreSQL";

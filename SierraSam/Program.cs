@@ -50,37 +50,45 @@ public static class Program
             {
                 services.AddSingleton<App>();
 
-                services.AddSingleton<IDbConnection>
-                    (s => OdbcConnectionFactory.Create
-                        (s.GetRequiredService<ILogger<App>>(),
-                         s.GetRequiredService<IConfiguration>()));
+                services.AddSingleton<IDbConnection>(
+                    s => OdbcConnectionFactory.Create(
+                        s.GetRequiredService<ILogger<App>>(),
+                        s.GetRequiredService<IConfiguration>())
+                );
 
-                services.AddSingleton<IConfiguration>
-                    (s => ConfigurationFactory.Create
-                        (s.GetRequiredService<ILoggerFactory>(),
-                         s.GetRequiredService<IFileSystem>(),
-                         ConfigPaths(),
-                         args));
+                services.AddSingleton<IConfiguration>(
+                    s => ConfigurationFactory.Create(
+                        s.GetRequiredService<ILoggerFactory>(),
+                        s.GetRequiredService<IFileSystem>(),
+                        ConfigPaths(),
+                        args)
+                );
 
-                services.AddSingleton<IDatabase>
-                    (s => DatabaseResolver.Create
-                        (s.GetRequiredService<IDbConnection>(),
-                         s.GetRequiredService<IConfiguration>()));
+                services.AddSingleton<IDbExecutor, DbExecutor>();
+
+                services.AddSingleton<IDatabase>(
+                    s => DatabaseResolver.Create(
+                        s.GetRequiredService<IDbConnection>(),
+                        s.GetRequiredService<IDbExecutor>(),
+                        s.GetRequiredService<IConfiguration>())
+                );
 
                 services.AddSingleton<IFileSystem, FileSystem>();
 
-                services.AddSingleton<IMigrationSeeker>
-                    (s => MigrationSeekerFactory.Create
-                        (s.GetRequiredService<IConfiguration>(),
-                         s.GetRequiredService<IFileSystem>()));
+                services.AddSingleton<IMigrationSeeker>(
+                    s => MigrationSeekerFactory.Create(
+                        s.GetRequiredService<IConfiguration>(),
+                        s.GetRequiredService<IFileSystem>())
+                );
 
                 services.AddSingleton<IMigrationApplicator, MigrationApplicator>();
 
-                services.AddSingleton<IMigrationValidator>
-                    (s => MigrationValidatorFactory.Create
-                        (s.GetRequiredService<IMigrationSeeker>(),
-                         s.GetRequiredService<IDatabase>(),
-                         s.GetRequiredService<IIgnoredMigrationsFactory>()));
+                services.AddSingleton<IMigrationValidator>(
+                    s => MigrationValidatorFactory.Create(
+                        s.GetRequiredService<IMigrationSeeker>(),
+                        s.GetRequiredService<IDatabase>(),
+                        s.GetRequiredService<IIgnoredMigrationsFactory>())
+                );
 
                 services.AddSingleton<IMigrationMerger, MigrationMerger>();
                 services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();

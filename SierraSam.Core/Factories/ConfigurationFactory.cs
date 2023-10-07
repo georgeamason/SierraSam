@@ -9,7 +9,6 @@ public static class ConfigurationFactory
 
     public static IConfiguration Create(ILoggerFactory loggerFactory,
                                        IFileSystem fileSystem,
-                                       IEnumerable<string> defaultConfigPaths,
                                        string[] args)
     {
         // Ordering is important here
@@ -17,11 +16,22 @@ public static class ConfigurationFactory
             (new DefaultSchemaConfigurationReader
                 (new ArgsConfigurationReader
                     (loggerFactory, args, new JsonConfigurationReader
-                        (fileSystem, defaultConfigPaths)
+                        (fileSystem, ConfigPaths())
                     )
                 )
             );
 
         return reader.Read();
+    }
+
+    private static IEnumerable<string> ConfigPaths(string fileName = "flyway.json")
+    {
+        var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        return new []
+        {
+            Path.Combine(userFolderPath, fileName),
+            Path.Combine(Environment.CurrentDirectory, fileName)
+        };
     }
 }

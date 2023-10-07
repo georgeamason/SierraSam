@@ -5,6 +5,6 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void Cannot_construct_with_null_connection()
     {
-        Assert.That(() => new OdbcExecutor(null!), Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => new DbExecutor(null!), Throws.TypeOf<ArgumentNullException>());
     }
 }

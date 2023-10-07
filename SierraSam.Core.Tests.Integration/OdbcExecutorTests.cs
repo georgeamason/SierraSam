@@ -38,7 +38,7 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void ExecuteReader_returns_empty_collection_when_no_rows()
     {
-        var odbcExecutor = new OdbcExecutor(_connection);
+        var odbcExecutor = new DbExecutor(_connection);
 
         odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
 
@@ -51,7 +51,7 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void ExecuteReader_returns_collection_of_rows()
     {
-        var odbcExecutor = new OdbcExecutor(_connection);
+        var odbcExecutor = new DbExecutor(_connection);
 
         odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
 
@@ -68,7 +68,7 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void ExecuteReader_throws_when_sql_is_invalid()
     {
-        var odbcExecutor = new OdbcExecutor(_connection);
+        var odbcExecutor = new DbExecutor(_connection);
 
         odbcExecutor
             .Invoking(x => x.ExecuteReader("SELECT Id FROM dbo.Dummy", reader => reader.GetInt32(0)))
@@ -80,7 +80,7 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void ExecuteNonQuery_executes_sql_statement()
     {
-        var odbcExecutor = new OdbcExecutor(_connection);
+        var odbcExecutor = new DbExecutor(_connection);
 
         odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
 
@@ -93,7 +93,7 @@ internal sealed class OdbcExecutorTests
     [Test]
     public void ExecuteNonQuery_throws_when_sql_is_invalid()
     {
-        var odbcExecutor = new OdbcExecutor(_connection);
+        var odbcExecutor = new DbExecutor(_connection);
 
         odbcExecutor
             .Invoking(x => x.ExecuteNonQuery("SELECT Id FROM dbo.Dummy"))

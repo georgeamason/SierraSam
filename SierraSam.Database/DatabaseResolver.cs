@@ -7,15 +7,18 @@ namespace SierraSam.Database;
 public static class DatabaseResolver
 {
     // TODO: Make use of a proper connection string parser
-    public static IDatabase Create(IDbConnection connection, IConfiguration configuration)
+    public static IDatabase Create(
+        IDbConnection connection,
+        IDbExecutor executor,
+        IConfiguration configuration)
     {
-        var connectionString = connection.ConnectionString;
+        var connectionString = configuration.Url;
 
         if (connectionString.Contains("postgres", StringComparison.InvariantCultureIgnoreCase))
         {
-            return new PostgresDatabase(connection, configuration);
+            return new PostgresDatabase(connection, executor, configuration);
         }
 
-        return new MssqlDatabase(connection, configuration);
+        return new MssqlDatabase(connection, executor, configuration);
     }
 }

@@ -1,21 +1,26 @@
 ﻿using System.Data;
-using System.Data.Odbc;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
-public class PostgresDatabase : DefaultDatabase
+public sealed class PostgresDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
-    private readonly OdbcExecutor _odbcExecutor;
+    private readonly IDbExecutor _dbExecutor;
 
-    public PostgresDatabase(IDbConnection connection, IConfiguration configuration)
-        : base(connection, configuration)
+    public PostgresDatabase(
+        IDbConnection connection,
+        IDbExecutor executor,
+        IConfiguration configuration)
+        : base(connection, executor, configuration)
     {
         _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
+                         ?? throw new ArgumentNullException(nameof(configuration));
 
-        _odbcExecutor = new OdbcExecutor(connection);
+        _dbExecutor = executor
+            ?? throw new ArgumentNullException(nameof(executor));
+
+        _configuration.DefaultSchema ??= this.DefaultSchema;
     }
 
     public override string Provider => "PostgreSQL";
@@ -41,7 +46,7 @@ public class PostgresDatabase : DefaultDatabase
             $"\"execution_time\" REAL NOT NULL," +
             $"\"success\" BOOLEAN NOT NULL)";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public override void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
@@ -70,8 +75,12 @@ public class PostgresDatabase : DefaultDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{appliedMigration.Success})";
 
-        _odbcExecutor.ExecuteNonQuery(sql, transaction);
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override string ServerVersion => _odbcExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
+    public override string ServerVersion =>
+        _dbExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
+
+    public override string DefaultSchema =>
+        _dbExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
 }

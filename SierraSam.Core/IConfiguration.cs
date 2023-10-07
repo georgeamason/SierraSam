@@ -6,7 +6,7 @@ public interface IConfiguration
     string User { get; }
     int ConnectionTimeout { get; set; }
     int ConnectionRetries { get; set; }
-    string DefaultSchema { get; set; }
+    string? DefaultSchema { get; set; }
     string InitialiseSql { get; set; }
     string SchemaTable { get; set; }
     IEnumerable<string> Locations { get; set; }

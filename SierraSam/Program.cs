@@ -60,7 +60,6 @@ public static class Program
                     s => ConfigurationFactory.Create(
                         s.GetRequiredService<ILoggerFactory>(),
                         s.GetRequiredService<IFileSystem>(),
-                        ConfigPaths(),
                         args)
                 );
 
@@ -120,16 +119,5 @@ public static class Program
                 // logger.LogError(exception, exception.Message);
                 AnsiConsole.MarkupLine($"[red]{exception.Message}[/]");
             }
-    }
-
-    private static IEnumerable<string> ConfigPaths(string fileName = "flyway.json")
-    {
-        var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        return new []
-        {
-            Path.Combine(userFolderPath, fileName),
-            Path.Combine(Environment.CurrentDirectory, fileName)
-        };
     }
 }

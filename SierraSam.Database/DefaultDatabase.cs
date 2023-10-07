@@ -182,7 +182,7 @@ public abstract class DefaultDatabase : IDatabase
         string? schema = null,
         IDbTransaction? transaction = null)
     {
-        schema ??= _configuration.DefaultSchema;
+        schema ??= _configuration.DefaultSchema!;
 
         //  TODO: How about Triggers - they are not in sys.objects
         var sql = $"SELECT o.name, o.type, t.name AS parent " +

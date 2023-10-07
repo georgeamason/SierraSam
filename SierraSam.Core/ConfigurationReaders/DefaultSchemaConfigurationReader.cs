@@ -19,29 +19,8 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
         if (configuration.Schemas.Any()) configuration.DefaultSchema = configuration.Schemas.First();
 
-        try
-        {
-            // TODO: No sure if this is the best way to do this?
-            using var connection = new OdbcConnection(configuration.Url);
-
-            connection.Open();
-
-            var executor = new DbExecutor(connection);
-
-            // TODO: Will this work for all databases?
-            var defaultSchema = executor.ExecuteReader<string>
-                ("SELECT SCHEMA_NAME()",
-                 dataReader => dataReader.GetString(0));
-
-            configuration.DefaultSchema = defaultSchema.Single();
-        }
-        catch (Exception exception)
-        {
-            throw new Exception
-                ("Unable to determine schema for the schema history table. " +
-                 "Set a default schema for the connection or specify one " +
-                 "using the 'defaultSchema' property", exception);
-        }
+        // Getting the default schema inside each IDatabase implementation
+        // with property 'DefaultSchema'.
 
         return configuration;
     }

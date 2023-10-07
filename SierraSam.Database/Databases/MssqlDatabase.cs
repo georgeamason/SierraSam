@@ -3,7 +3,7 @@ using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
-public class MssqlDatabase : DefaultDatabase
+public sealed class MssqlDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
     private readonly IDbExecutor _dbExecutor;
@@ -19,6 +19,8 @@ public class MssqlDatabase : DefaultDatabase
 
         _dbExecutor = executor
             ?? throw new ArgumentNullException(nameof(executor));
+
+        _configuration.DefaultSchema ??= this.DefaultSchema;
     }
 
     public override string Provider => "MSSQL";

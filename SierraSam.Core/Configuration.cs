@@ -13,7 +13,7 @@ public class Configuration : IConfiguration
         User = string.Empty;
         ConnectionTimeout = 15;
         ConnectionRetries = 1;
-        DefaultSchema = string.Empty;
+        DefaultSchema = null;
         InitialiseSql = string.Empty;
         SchemaTable = "flyway_schema_history";
         Locations = new[] { $"filesystem:{Path.Combine("db", "migration")}" };
@@ -79,7 +79,7 @@ public class Configuration : IConfiguration
     public int ConnectionRetries { get; set; }
 
     [JsonPropertyName("defaultSchema"), JsonInclude]
-    public string DefaultSchema { get; set; }
+    public string? DefaultSchema { get; set; }
 
     [JsonPropertyName("initialiseSql"), JsonInclude]
     public string InitialiseSql { get; set; }

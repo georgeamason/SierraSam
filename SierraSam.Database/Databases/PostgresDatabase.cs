@@ -3,7 +3,7 @@ using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
-public class PostgresDatabase : DefaultDatabase
+public sealed class PostgresDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
     private readonly IDbExecutor _dbExecutor;
@@ -19,6 +19,8 @@ public class PostgresDatabase : DefaultDatabase
 
         _dbExecutor = executor
             ?? throw new ArgumentNullException(nameof(executor));
+
+        _configuration.DefaultSchema ??= this.DefaultSchema;
     }
 
     public override string Provider => "PostgreSQL";
@@ -76,7 +78,9 @@ public class PostgresDatabase : DefaultDatabase
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override string ServerVersion => _dbExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
+    public override string ServerVersion =>
+        _dbExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
 
-    public override string DefaultSchema => _dbExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
+    public override string DefaultSchema =>
+        _dbExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
 }

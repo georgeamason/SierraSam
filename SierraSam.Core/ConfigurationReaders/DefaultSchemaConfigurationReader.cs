@@ -22,6 +22,7 @@ internal sealed class DefaultSchemaConfigurationReader : IConfigurationReader
 
         try
         {
+            // TODO: No sure if this is the best way to do this?
             using var connection = new OdbcConnection(configuration.Url);
 
             connection.Open();

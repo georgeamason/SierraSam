@@ -22,7 +22,10 @@ public abstract class DefaultDatabase : IDatabase
         _odbcExecutor = new OdbcExecutor(connection);
     }
 
-    public abstract string Name { get; }
+    public abstract string Provider { get; }
+
+    public abstract string ServerVersion { get; }
+
     public IDbConnection Connection { get; }
 
     public virtual bool HasMigrationTable => HasTable(_configuration.SchemaTable);
@@ -30,8 +33,8 @@ public abstract class DefaultDatabase : IDatabase
     public virtual bool HasTable(string tableName)
     {
         var sql = $"SELECT \"TABLE_NAME\" " +
-                  $"FROM INFORMATION_SCHEMA.TABLES " +
-                  $"WHERE \"TABLE_NAME\" = \"{tableName}\"";
+                  $"FROM \"INFORMATION_SCHEMA\".\"TABLES\" " +
+                  $"WHERE \"TABLE_NAME\" = '{tableName}'";
 
         var result = _odbcExecutor.ExecuteReader<string>(
             sql,

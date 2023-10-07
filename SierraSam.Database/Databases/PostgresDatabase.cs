@@ -7,7 +7,6 @@ namespace SierraSam.Database.Databases;
 public class PostgresDatabase : DefaultDatabase
 {
     private readonly IConfiguration _configuration;
-
     private readonly OdbcExecutor _odbcExecutor;
 
     public PostgresDatabase(IDbConnection connection, IConfiguration configuration)
@@ -19,7 +18,7 @@ public class PostgresDatabase : DefaultDatabase
         _odbcExecutor = new OdbcExecutor(connection);
     }
 
-    public override string Name => "PostgreSQL";
+    public override string Provider => "PostgreSQL";
 
     public override void CreateSchemaHistory(
         string? schema = null,
@@ -73,4 +72,6 @@ public class PostgresDatabase : DefaultDatabase
 
         _odbcExecutor.ExecuteNonQuery(sql, transaction);
     }
+
+    public override string ServerVersion => _odbcExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
 }

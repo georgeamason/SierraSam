@@ -64,7 +64,7 @@ public static class Program
 
                 services.AddSingleton<IDatabase>
                     (s => DatabaseResolver.Create
-                        (s.GetRequiredService<OdbcConnection>(),
+                        (s.GetRequiredService<IDbConnection>(),
                          s.GetRequiredService<IConfiguration>()));
 
                 services.AddSingleton<IFileSystem, FileSystem>();

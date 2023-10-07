@@ -26,6 +26,8 @@ public abstract class DefaultDatabase : IDatabase
 
     public abstract string ServerVersion { get; }
 
+    public abstract string DefaultSchema { get; }
+
     public IDbConnection Connection { get; }
 
     public virtual bool HasMigrationTable => HasTable(_configuration.SchemaTable);

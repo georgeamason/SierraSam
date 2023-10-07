@@ -74,4 +74,6 @@ public class PostgresDatabase : DefaultDatabase
     }
 
     public override string ServerVersion => _odbcExecutor.ExecuteScalar<string>("SHOW SERVER_VERSION")!;
+
+    public override string DefaultSchema => _odbcExecutor.ExecuteScalar<string>("SELECT CURRENT_SCHEMA()")!;
 }

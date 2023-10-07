@@ -8,6 +8,8 @@ public interface IDatabase
 
     string ServerVersion { get; }
 
+    string? DefaultSchema { get; }
+
     IDbConnection Connection { get; }
 
     bool HasMigrationTable { get; }

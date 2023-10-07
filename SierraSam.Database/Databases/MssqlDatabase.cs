@@ -21,4 +21,7 @@ public class MssqlDatabase : DefaultDatabase
 
     public override string ServerVersion =>
         _odbcExecutor.ExecuteScalar<string>("SELECT SERVERPROPERTY('productversion')")!;
+
+    public override string DefaultSchema =>
+        _odbcExecutor.ExecuteScalar<string>("SELECT SCHEMA_NAME()")!;
 }

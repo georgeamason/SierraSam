@@ -19,4 +19,5 @@ public interface IConfiguration
     string UndoMigrationPrefix { get; set; }
     IEnumerable<string> IgnoredMigrations { get; set; }
     string InitialiseVersion { get; set; }
+    public string Output { get; set; }
 }

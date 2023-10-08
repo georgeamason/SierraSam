@@ -52,6 +52,11 @@ internal sealed class ArgsConfigurationBuilderTests
                 new[] { "verb", "--ignoredMigrations=*:*" },
                 new Configuration(ignoredMigrations: new[] {"*:*"}))
             .SetName("ignored migrations is set correctly");
+
+        yield return new TestCaseData(
+                new[] { "verb", "--output=none" },
+                new Configuration(output: "none"))
+            .SetName("output is set correctly");
     }
 
     [TestCaseSource(nameof(Get_config_overrides))]
@@ -65,8 +70,10 @@ internal sealed class ArgsConfigurationBuilderTests
 
         var loggerFactory = Substitute.For<ILoggerFactory>();
 
-        var argsConfigurationBuilder = new ArgsConfigurationReader
-            (loggerFactory, args, configurationBuilder);
+        var argsConfigurationBuilder = new ArgsConfigurationReader(
+            loggerFactory,
+            args,
+            configurationBuilder);
 
         argsConfigurationBuilder.Read().Should().BeEquivalentTo(expected);
     }

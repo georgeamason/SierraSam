@@ -106,6 +106,9 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
                 case "--initialiseVersion":
                     configuration.InitialiseVersion = kvp.Value;
                     break;
+                case "--output":
+                    configuration.Output = kvp.Value;
+                    break;
                 default:
                     throw new Exception($"Invalid argument '{kvp.Key}'");
             }

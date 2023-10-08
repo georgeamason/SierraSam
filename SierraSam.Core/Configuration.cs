@@ -26,6 +26,7 @@ public class Configuration : IConfiguration
         UndoMigrationPrefix = "U";
         IgnoredMigrations = new[] { "*:pending" };
         InitialiseVersion = string.Empty;
+        Output = "json";
     }
 
     public Configuration(
@@ -45,7 +46,8 @@ public class Configuration : IConfiguration
         string? repeatableMigrationPrefix = null,
         string? undoMigrationPrefix = null,
         IEnumerable<string>? ignoredMigrations = null,
-        string? initialiseVersion = null)
+        string? initialiseVersion = null,
+        string? output = null)
     {
         Url = url ?? string.Empty;
         User = user ?? string.Empty;
@@ -64,6 +66,7 @@ public class Configuration : IConfiguration
         UndoMigrationPrefix = undoMigrationPrefix ?? "U";
         IgnoredMigrations = ignoredMigrations ?? new[] { "*:pending" };
         InitialiseVersion = initialiseVersion ?? string.Empty;
+        Output = output ?? "json";
     }
 
     [JsonPropertyName("url"), JsonInclude]
@@ -122,4 +125,7 @@ public class Configuration : IConfiguration
 
     [JsonPropertyName("initialiseVersion"), JsonInclude]
     public string InitialiseVersion { get; set; }
+
+    [JsonPropertyName("output"), JsonInclude]
+    public string Output { get; set; }
 }

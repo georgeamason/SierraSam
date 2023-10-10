@@ -1,22 +1,28 @@
 ﻿using Microsoft.Extensions.Logging;
 using SierraSam.Core;
-using SierraSam.Core.Enums;
+using SierraSam.Core.Serializers;
 using Spectre.Console;
-
 namespace SierraSam.Capabilities;
 
 internal sealed class Information : ICapability
 {
     private readonly ILogger<Information> _logger;
     private readonly IMigrationMerger _migrationMerger;
+    private readonly ISerializer _serializer;
 
-    public Information(ILogger<Information> logger, IMigrationMerger migrationMerger)
+    public Information(
+        ILogger<Information> logger,
+        IMigrationMerger migrationMerger,
+        ISerializer serializer)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
         _migrationMerger = migrationMerger
             ?? throw new ArgumentNullException(nameof(migrationMerger));
+
+        _serializer = serializer
+            ?? throw new ArgumentNullException(nameof(serializer));
     }
 
     public void Run(string[] args)
@@ -25,30 +31,15 @@ internal sealed class Information : ICapability
 
         var migrations = _migrationMerger.Merge();
 
-        var table = new Table { Border = TableBorder.Ascii2 };
-
-        var columns = new[] { "Category", "Version", "Description", "Type", "Installed On", "State" };
-
-        foreach (var col in columns) table.AddColumn($"[{Color.Default}]{col}[/]");
-
-        foreach (var migration in migrations)
+        if (!migrations.Any())
         {
-            var rowColor = migration.State switch
-            {
-                MigrationState.Missing => Color.Red,
-                MigrationState.Pending => Color.Yellow,
-                _ => Color.Default
-            };
+            AnsiConsole.WriteLine("No migrations found");
 
-            table.AddRow
-                ($"[{rowColor}]{migration.MigrationType}[/]",
-                 $"[{rowColor}]{migration.Version ?? string.Empty}[/]",
-                 $"[{rowColor}]{migration.Description}[/]",
-                 $"[{rowColor}]{migration.Type}[/]",
-                 $"[{rowColor}]{migration.InstalledOn?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty}[/]",
-                 $"[{rowColor}]{migration.State}[/]");
+            return;
         }
 
-        AnsiConsole.Write(table);
+        var content = _serializer.Serialize(migrations);
+
+        AnsiConsole.Write(content);
     }
 }

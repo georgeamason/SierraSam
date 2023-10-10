@@ -337,12 +337,18 @@
           "TestableIO.System.IO.Abstractions": "19.2.69"
         }
       },
+      "YamlDotNet": {
+        "type": "Transitive",
+        "resolved": "13.5.2",
+        "contentHash": "HN+06WB25/yRiQYNansO5sHsNFYIHDaiquvfYOw5DQ4XWArlDtZxxsvll7eS7W3jzXZXeo/crfOnLpD0tXZkGw=="
+      },
       "sierrasam.core": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "[7.0.1, )",
           "System.Data.Odbc": "[7.0.0, )",
-          "System.IO.Abstractions": "[19.2.69, )"
+          "System.IO.Abstractions": "[19.2.69, )",
+          "YamlDotNet": "[13.5.2, )"
         }
       },
       "sierrasam.database": {

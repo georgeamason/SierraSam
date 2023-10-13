@@ -291,6 +291,14 @@
         "resolved": "7.0.0",
         "contentHash": "um1KU5kxcRp3CNuI8o/GrZtD4AIOXDk+RLsytjZ9QPok3ttLUelLKpilVPuaFT3TFjOhSibUAso0odbOaCDj3Q=="
       },
+      "Spectre.Console.Json": {
+        "type": "Transitive",
+        "resolved": "0.47.0",
+        "contentHash": "6nq5sCmYViulDjdMsTUpc5xD++aEsAHy9s9LKc1geif8slK9zJtze1PCjRHj2sRVN/alwBbL9/IyELDK4wTkeQ==",
+        "dependencies": {
+          "Spectre.Console": "0.47.0"
+        }
+      },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
         "resolved": "7.0.1",
@@ -337,12 +345,19 @@
           "TestableIO.System.IO.Abstractions": "19.2.69"
         }
       },
+      "YamlDotNet": {
+        "type": "Transitive",
+        "resolved": "13.5.2",
+        "contentHash": "HN+06WB25/yRiQYNansO5sHsNFYIHDaiquvfYOw5DQ4XWArlDtZxxsvll7eS7W3jzXZXeo/crfOnLpD0tXZkGw=="
+      },
       "sierrasam.core": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "[7.0.1, )",
+          "Spectre.Console.Json": "[0.47.0, )",
           "System.Data.Odbc": "[7.0.0, )",
-          "System.IO.Abstractions": "[19.2.69, )"
+          "System.IO.Abstractions": "[19.2.69, )",
+          "YamlDotNet": "[13.5.2, )"
         }
       },
       "sierrasam.database": {

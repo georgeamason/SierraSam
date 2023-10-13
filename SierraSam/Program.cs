@@ -10,6 +10,7 @@ using SierraSam.Core;
 using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Core.MigrationValidators;
+using SierraSam.Core.Serializers;
 using SierraSam.Database;
 using Spectre.Console;
 using Version = SierraSam.Capabilities.Version;
@@ -102,6 +103,11 @@ public static class Program
                 services.AddSingleton<ICapability, Migrate>();
                 services.AddSingleton<ICapability, Validate>();
                 services.AddSingleton<ICapability, Version>();
+
+                services.AddSingleton<ISerializer>(
+                    s => SerializerFactory.Create(
+                        s.GetRequiredService<IConfiguration>())
+                );
             })
             .Build();
 

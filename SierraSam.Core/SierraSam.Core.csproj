@@ -11,7 +11,7 @@
       <PackageReference Include="Spectre.Console.Json" Version="0.47.0" />
       <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
       <PackageReference Include="System.IO.Abstractions" Version="19.2.69" />
-      <PackageReference Include="YamlDotNet" Version="13.5.2" />
+      <PackageReference Include="YamlDotNet" Version="13.7.0" />
     </ItemGroup>
     
     <ItemGroup>

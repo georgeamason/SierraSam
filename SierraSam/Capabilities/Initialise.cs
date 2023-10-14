@@ -14,17 +14,20 @@ internal sealed class Initialise : ICapability
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
     private readonly IMigrationSeeker _migrationSeeker;
+    private readonly IAnsiConsole _console;
 
     public Initialise(
         ILogger<Initialise> logger,
         IDatabase database,
         IConfiguration configuration,
-        IMigrationSeeker migrationSeeker)
+        IMigrationSeeker migrationSeeker,
+        IAnsiConsole console)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
+        _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -33,7 +36,7 @@ internal sealed class Initialise : ICapability
 
         if (_database.HasMigrationTable)
         {
-            AnsiConsole.MarkupLine(
+            _console.MarkupLine(
                 $"[yellow]Schema history table " +
                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
                 $"already exists[/]"
@@ -88,7 +91,7 @@ internal sealed class Initialise : ICapability
 
             transaction.Commit();
 
-            AnsiConsole.MarkupLine($"[green]{sb}[/]");
+            _console.MarkupLine($"[green]{sb}[/]");
         }
         catch (OdbcException exception)
         {

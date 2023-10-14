@@ -9,11 +9,13 @@ internal sealed class Information : ICapability
     private readonly ILogger<Information> _logger;
     private readonly IMigrationMerger _migrationMerger;
     private readonly ISerializer _serializer;
+    private readonly IAnsiConsole _console;
 
     public Information(
         ILogger<Information> logger,
         IMigrationMerger migrationMerger,
-        ISerializer serializer)
+        ISerializer serializer,
+        IAnsiConsole console)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -23,6 +25,9 @@ internal sealed class Information : ICapability
 
         _serializer = serializer
             ?? throw new ArgumentNullException(nameof(serializer));
+
+        _console = console
+            ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -33,13 +38,13 @@ internal sealed class Information : ICapability
 
         if (!migrations.Any())
         {
-            AnsiConsole.WriteLine("No migrations found");
+            _console.WriteLine("No migrations found");
 
             return;
         }
 
         var content = _serializer.Serialize(migrations);
 
-        AnsiConsole.Write(content);
+        _console.Write(content);
     }
 }

@@ -6,6 +6,7 @@ using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationSeekers;
+using Spectre.Console;
 
 namespace SierraSam.Tests.Integration.Capabilities;
 
@@ -110,12 +111,15 @@ internal sealed class MigrateTests
                 arg2 = info.Arg<IReadOnlyCollection<AppliedMigration>>();
             });
 
+        var console = Substitute.For<IAnsiConsole>();
+
         var sut = new Migrate(
             _logger,
             database,
             configuration,
             migrationSeeker,
-            migrationApplicator);
+            migrationApplicator,
+            console);
 
         sut.Run(Array.Empty<string>());
 

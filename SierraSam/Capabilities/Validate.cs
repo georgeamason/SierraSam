@@ -9,16 +9,21 @@ public sealed class Validate : ICapability
 {
     private readonly ILogger<Validate> _logger;
     private readonly IMigrationValidator _migrationValidator;
+    private readonly IAnsiConsole _console;
 
     public Validate(
         ILogger<Validate> logger,
-        IMigrationValidator migrationValidator)
+        IMigrationValidator migrationValidator,
+        IAnsiConsole console)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
         _migrationValidator = migrationValidator
             ?? throw new ArgumentNullException(nameof(migrationValidator));
+
+        _console = console
+            ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -31,7 +36,7 @@ public sealed class Validate : ICapability
         var validated = _migrationValidator.Validate();
         stopwatch.Stop();
 
-        AnsiConsole.MarkupLine(
+        _console.MarkupLine(
             $"[green]Successfully validated {validated} migrations " +
             $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)[/]"
         );

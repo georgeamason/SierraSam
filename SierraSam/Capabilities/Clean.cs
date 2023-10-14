@@ -11,12 +11,18 @@ internal sealed class Clean : ICapability
     private readonly ILogger<Clean> _logger;
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
+    private readonly IAnsiConsole _console;
 
-    public Clean(ILogger<Clean> logger, IDatabase database, IConfiguration configuration)
+    public Clean(
+        ILogger<Clean> logger,
+        IDatabase database,
+        IConfiguration configuration,
+        IAnsiConsole console)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -43,7 +49,7 @@ internal sealed class Clean : ICapability
 
             transaction.Commit();
 
-            AnsiConsole.MarkupLine(
+            _console.MarkupLine(
                 $"[green]Cleaned schema(s) \"{string.Join(", ", schemas)}\"[/]"
             );
         }

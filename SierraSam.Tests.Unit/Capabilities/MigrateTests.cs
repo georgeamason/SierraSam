@@ -8,6 +8,7 @@ using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
+using Spectre.Console;
 
 namespace SierraSam.Tests.Unit.Capabilities;
 
@@ -23,7 +24,8 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>())))
+                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IAnsiConsole>())))
             .SetName("Null logger");
 
         yield return new TestCaseData
@@ -32,7 +34,8 @@ internal sealed class MigrateTests
                  null!, 
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>())))
+                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IAnsiConsole>())))
             .SetName("Null database");
 
         yield return new TestCaseData
@@ -41,7 +44,8 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  null!,
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>())))
+                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IAnsiConsole>())))
             .SetName("Null configuration");
 
         yield return new TestCaseData
@@ -50,7 +54,8 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  null!,
-                 Substitute.For<IMigrationApplicator>())))
+                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IAnsiConsole>())))
             .SetName("Null migration seeker");
 
         yield return new TestCaseData
@@ -59,8 +64,19 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
-                 null!)))
+                 null!,
+                 Substitute.For<IAnsiConsole>())))
             .SetName("Null migration applicator");
+
+        yield return new TestCaseData
+            (new TestDelegate(() => new Migrate
+                (Substitute.For<ILogger<Migrate>>(),
+                Substitute.For<IDatabase>(),
+                Substitute.For<IConfiguration>(),
+                Substitute.For<IMigrationSeeker>(),
+                Substitute.For<IMigrationApplicator>(),
+                null!)))
+            .SetName("Null console");
         // ReSharper restore ObjectCreationAsStatement
     }
 

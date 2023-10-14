@@ -15,12 +15,14 @@ internal sealed class Migrate : ICapability
     private readonly IConfiguration _configuration;
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IMigrationApplicator _migrationApplicator;
+    private readonly IAnsiConsole _console;
 
     public Migrate(ILogger<Migrate> logger,
                    IDatabase database,
                    IConfiguration configuration,
                    IMigrationSeeker migrationSeeker,
-                   IMigrationApplicator migrationApplicator)
+                   IMigrationApplicator migrationApplicator,
+                   IAnsiConsole console)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
@@ -36,6 +38,9 @@ internal sealed class Migrate : ICapability
 
         _migrationApplicator = migrationApplicator
             ?? throw new ArgumentNullException(nameof(migrationApplicator));
+
+        _console = console
+            ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -48,11 +53,11 @@ internal sealed class Migrate : ICapability
         _logger.LogInformation("Version: {ServerVersion}", _database.ServerVersion);
         _logger.LogInformation("Database: {Database}", _database.Connection.Database);
 
-        Console.WriteLine($"{_database.Provider}::{_database.ServerVersion}::{_database.Connection.Database}");
+        _console.WriteLine($"{_database.Provider}::{_database.ServerVersion}::{_database.Connection.Database}");
 
         if (!_database.HasMigrationTable)
         {
-            Console.WriteLine
+            _console.WriteLine
                 ("Creating schema history table: " +
                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
 
@@ -66,8 +71,8 @@ internal sealed class Migrate : ICapability
         var appliedMigrations = _database.GetSchemaHistory
             (_configuration.DefaultSchema, _configuration.SchemaTable);
 
-        Console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
-                          $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
+        _console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
+                           $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
 
         // TODO: There maybe something here about baselines? Need to check what we fetch..
         var pendingMigrations = discoveredMigrations
@@ -87,14 +92,14 @@ internal sealed class Migrate : ICapability
 
         if (appliedMigrationCount == 0)
         {
-            AnsiConsole.MarkupLine(
+            _console.MarkupLine(
                 $"[green]Schema \"{_configuration.DefaultSchema}\" is up to date[/]"
             );
 
             return;
         }
 
-        AnsiConsole.MarkupLine(
+        _console.MarkupLine(
             $"[green]Successfully applied {appliedMigrationCount} migration(s) " +
             $"to schema \"{_configuration.DefaultSchema}\" " +
             $@"(execution time {executionTime:mm\:ss\.fff}s)[/]"

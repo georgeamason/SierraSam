@@ -1,21 +1,26 @@
 ﻿using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace SierraSam.Capabilities;
 
 public sealed class Help : ICapability
 {
-    public Help(ILogger<Help> logger)
+    private readonly ILogger _logger;
+    private readonly IAnsiConsole _console;
+
+    public Help(ILogger<Help> logger, IAnsiConsole console)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Help)} running");
-        
+
         if (!args.Any())
         {
-            Console.WriteLine("usage: ss [-v | --version] [--help] [--auth]");
+            _console.WriteLine("usage: ss [-v | --version] [--help] [--auth]");
 
             return;
         }
@@ -23,10 +28,8 @@ public sealed class Help : ICapability
         switch (args[0])
         {
             case "auth":
-                Console.WriteLine("This gives me some extra help");
+                _console.WriteLine("This gives me some extra help");
                 break;
         }
     }
-
-    private readonly ILogger _logger;
 }

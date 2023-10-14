@@ -1,5 +1,6 @@
 using System.Collections;
 using SierraSam.Capabilities;
+using Spectre.Console;
 using Version = SierraSam.Capabilities.Version;
 
 namespace SierraSam.Tests.Integration;
@@ -7,16 +8,9 @@ namespace SierraSam.Tests.Integration;
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 internal sealed class AppTests
 {
-    private readonly ILogger<App> _logger;
-
-    private readonly ICapabilityResolver _capabilityResolver;
-
-    public AppTests()
-    {
-        _logger = Substitute.For<ILogger<App>>();
-
-        _capabilityResolver = Substitute.For<ICapabilityResolver>();
-    }
+    private readonly ILogger<App> _logger = Substitute.For<ILogger<App>>();
+    private readonly ICapabilityResolver _capabilityResolver = Substitute.For<ICapabilityResolver>();
+    private readonly IAnsiConsole _console = Substitute.For<IAnsiConsole>();
 
     private static IEnumerable Get_args()
     {
@@ -30,7 +24,7 @@ internal sealed class AppTests
     [TestCaseSource(nameof(Get_args))]
     public void Args_call_correct_path(string[] args, Type type)
     {
-        var app = new App(_logger, _capabilityResolver);
+        var app = new App(_logger, _capabilityResolver, _console);
 
         app.Start(args);
 

@@ -1,25 +1,28 @@
-﻿
-using System.Reflection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SierraSam.Capabilities;
+using Spectre.Console;
 
 namespace SierraSam;
 
 public sealed class App
 {
     private readonly ILogger _logger;
-
     private readonly ICapabilityResolver _capabilityResolver;
+    private readonly IAnsiConsole _console;
 
     public App
         (ILogger<App> logger,
-         ICapabilityResolver capabilityResolver)
+         ICapabilityResolver capabilityResolver,
+         IAnsiConsole console)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
         _capabilityResolver = capabilityResolver
             ?? throw new ArgumentNullException(nameof(capabilityResolver));
+
+        _console = console
+            ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Start(string[] args)
@@ -32,13 +35,6 @@ public sealed class App
 
             return;
         };
-
-        var version = Assembly.GetExecutingAssembly().GetName().Version
-            ?? throw new ApplicationException("No assembly version specified");
-
-        Console.Write(Environment.NewLine);
-        Console.WriteLine($"SierraSam {version.Major}.{version.Minor}.{version.Build}.{version.Revision} by George Mason");
-        Console.Write(Environment.NewLine);
 
         switch (args[0])
         {

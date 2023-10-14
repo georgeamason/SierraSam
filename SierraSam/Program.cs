@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Data.Odbc;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,11 +107,14 @@ public static class Program
                     s => SerializerFactory.Create(
                         s.GetRequiredService<IConfiguration>())
                 );
+
+                services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
             })
             .Build();
 
             var logger = host.Services.GetRequiredService<ILogger<App>>();
             var app = host.Services.GetRequiredService<App>();
+            var console = host.Services.GetRequiredService<IAnsiConsole>();
 
             try
             {
@@ -123,7 +125,7 @@ public static class Program
             catch (Exception exception)
             {
                 // logger.LogError(exception, exception.Message);
-                AnsiConsole.MarkupLine($"[red]{exception.Message}[/]");
+                console.MarkupLine($"[red]{exception.Message}[/]");
             }
     }
 }

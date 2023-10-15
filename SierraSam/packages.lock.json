@@ -347,8 +347,8 @@
       },
       "YamlDotNet": {
         "type": "Transitive",
-        "resolved": "13.7.0",
-        "contentHash": "RKkoQSCyk/94N20SL3U15hWAqBVXHu+59upcPi8R2uhrcAalyVa4Y/vYdXQ7MXQ71Lut//DH0tLcYByAkGmXhA=="
+        "resolved": "13.7.1",
+        "contentHash": "X4m1PnFcJwvAj1sCDMntg/eZcX96CJLrWMiYnq41KqhFVZPuw63ZTSxIGqgdCwHWHvCAyTxheELC/VDf1HsU2A=="
       },
       "sierrasam.core": {
         "type": "Project",
@@ -357,7 +357,7 @@
           "Spectre.Console.Json": "[0.47.0, )",
           "System.Data.Odbc": "[7.0.0, )",
           "System.IO.Abstractions": "[19.2.69, )",
-          "YamlDotNet": "[13.7.0, )"
+          "YamlDotNet": "[13.7.1, )"
         }
       },
       "sierrasam.database": {

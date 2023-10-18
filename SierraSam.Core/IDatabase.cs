@@ -27,7 +27,7 @@ public interface IDatabase
     /// <returns>A collection of applied migrations</returns>
     IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null);
 
-    void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
+    int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
     void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
@@ -36,4 +36,6 @@ public interface IDatabase
     IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, IDbTransaction? transaction = null);
 
     void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null);
+
+    int GetInstalledRank(string? schema = null, string? table = null, IDbTransaction? transaction = null);
 }

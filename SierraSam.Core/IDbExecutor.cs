@@ -10,7 +10,7 @@ public interface IDbExecutor
         IDbTransaction? transaction = null
     );
 
-    void ExecuteNonQuery(string sql, IDbTransaction? transaction = null);
+    int ExecuteNonQuery(string sql, IDbTransaction? transaction = null);
 
-    T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null) where T : class?;
+    T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null);
 }

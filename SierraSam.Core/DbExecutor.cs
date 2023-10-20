@@ -44,7 +44,7 @@ public sealed class DbExecutor : IDbExecutor
         }
     }
 
-    public void ExecuteNonQuery(string sql, IDbTransaction? transaction = null)
+    public int ExecuteNonQuery(string sql, IDbTransaction? transaction = null)
     {
         try
         {
@@ -53,7 +53,7 @@ public sealed class DbExecutor : IDbExecutor
 
             if (transaction is not null) command.Transaction = transaction;
 
-            command.ExecuteNonQuery();
+            return command.ExecuteNonQuery();
         }
         catch (OdbcException exception)
         {
@@ -63,7 +63,7 @@ public sealed class DbExecutor : IDbExecutor
         }
     }
 
-    public T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null) where T : class?
+    public T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null)
     {
         try
         {
@@ -72,7 +72,8 @@ public sealed class DbExecutor : IDbExecutor
 
             if (transaction is not null) command.Transaction = transaction;
 
-            return command.ExecuteScalar() as T;
+            // TODO: Test this
+            return command.ExecuteScalar() is T result ? result : default;
         }
         catch (OdbcException exception)
         {

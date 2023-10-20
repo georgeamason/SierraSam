@@ -75,6 +75,7 @@ public abstract class DefaultDatabase : IDatabase
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
+    // TODO: Can I have a caching layer around this? to prevent multiple calls to the database
     public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null)
     {
         schema ??= _configuration.DefaultSchema;
@@ -120,7 +121,7 @@ public abstract class DefaultDatabase : IDatabase
         );
     }
 
-    public virtual void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    public virtual int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
@@ -146,10 +147,10 @@ public abstract class DefaultDatabase : IDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{(appliedMigration.Success ? 1 : 0)})";
 
-        _dbExecutor.ExecuteNonQuery(sql, transaction);
+        return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    public virtual int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
@@ -164,14 +165,12 @@ public abstract class DefaultDatabase : IDatabase
                 // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
             $"WHERE installed_rank = {appliedMigration.InstalledRank};";
 
-        _dbExecutor.ExecuteNonQuery(sql, transaction);
+        return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null)
     {
-        var stopwatch = new Stopwatch();
-
-        stopwatch.Start();
+        var stopwatch = Stopwatch.StartNew();
         _dbExecutor.ExecuteNonQuery(sql, transaction);
         stopwatch.Stop();
 
@@ -223,5 +222,15 @@ public abstract class DefaultDatabase : IDatabase
         sb.Append($"DROP {objectType} \"{obj.Name}\"");
 
         _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
+    }
+
+    public int GetInstalledRank(string? schema = null, string? table = null, IDbTransaction? transaction = null)
+    {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
+        var sql = $"SELECT MAX(\"installed_rank\") FROM \"{schema}\".\"{table}\"";
+
+        return _dbExecutor.ExecuteScalar<int?>(sql, transaction) ?? 0;
     }
 }

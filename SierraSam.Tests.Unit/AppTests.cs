@@ -1,9 +1,12 @@
 using System.Collections;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using NUnit.Framework;
 using SierraSam.Capabilities;
 using Spectre.Console;
 using Version = SierraSam.Capabilities.Version;
 
-namespace SierraSam.Tests.Integration;
+namespace SierraSam.Tests.Unit;
 
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 internal sealed class AppTests

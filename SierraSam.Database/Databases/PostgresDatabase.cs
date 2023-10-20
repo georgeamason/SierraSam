@@ -49,7 +49,7 @@ public sealed class PostgresDatabase : DefaultDatabase
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override void InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    public override int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +
@@ -75,7 +75,7 @@ public sealed class PostgresDatabase : DefaultDatabase
                 $"{appliedMigration.ExecutionTime}," +
                 $"{appliedMigration.Success})";
 
-        _dbExecutor.ExecuteNonQuery(sql, transaction);
+        return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public override string ServerVersion =>

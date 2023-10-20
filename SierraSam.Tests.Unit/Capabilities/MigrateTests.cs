@@ -1,13 +1,10 @@
 ﻿using System.Collections;
-using System.Data.Odbc;
-using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.MigrationSeekers;
-using SierraSam.Database;
 using Spectre.Console;
 
 namespace SierraSam.Tests.Unit.Capabilities;
@@ -24,7 +21,7 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
             .SetName("Null logger");
 
@@ -34,7 +31,7 @@ internal sealed class MigrateTests
                  null!, 
                  Substitute.For<IConfiguration>(),
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
             .SetName("Null database");
 
@@ -44,7 +41,7 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  null!,
                  Substitute.For<IMigrationSeeker>(),
-                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
             .SetName("Null configuration");
 
@@ -54,7 +51,7 @@ internal sealed class MigrateTests
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
                  null!,
-                 Substitute.For<IMigrationApplicator>(),
+                 Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
             .SetName("Null migration seeker");
 
@@ -74,7 +71,7 @@ internal sealed class MigrateTests
                 Substitute.For<IDatabase>(),
                 Substitute.For<IConfiguration>(),
                 Substitute.For<IMigrationSeeker>(),
-                Substitute.For<IMigrationApplicator>(),
+                Substitute.For<IMigrationsApplicator>(),
                 null!)))
             .SetName("Null console");
         // ReSharper restore ObjectCreationAsStatement

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Factories;
+using SierraSam.Core.MigrationApplicators;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Core.MigrationValidators;
 using SierraSam.Core.Serializers;
@@ -80,7 +81,11 @@ public static class Program
                         s.GetRequiredService<IFileSystem>())
                 );
 
-                services.AddSingleton<IMigrationApplicator, MigrationApplicator>();
+                services.AddSingleton<IMigrationsApplicator, MigrationsApplicator>();
+
+                services.AddSingleton<IMigrationApplicatorResolver, MigrationApplicatorResolver>();
+                services.AddSingleton<IMigrationApplicator, VersionedMigrationApplicator>();
+                services.AddSingleton<IMigrationApplicator, RepeatableMigrationApplicator>();
 
                 services.AddSingleton<IMigrationValidator>(
                     s => MigrationValidatorFactory.Create(
@@ -125,7 +130,7 @@ public static class Program
             catch (Exception exception)
             {
                 // logger.LogError(exception, exception.Message);
-                console.MarkupLine($"[red]{exception.Message}[/]");
+                console.MarkupLineInterpolated($"[red]{exception.Message}[/]");
             }
     }
 }

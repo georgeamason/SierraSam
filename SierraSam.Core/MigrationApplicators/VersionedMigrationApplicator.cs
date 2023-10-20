@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using SierraSam.Core.Enums;
 using SierraSam.Core.Exceptions;
 using Spectre.Console;
 
@@ -23,6 +24,14 @@ public sealed class VersionedMigrationApplicator : IMigrationApplicator
 
     public int Apply(PendingMigration pendingMigration, IDbTransaction transaction)
     {
+        if (pendingMigration.MigrationType is not MigrationType.Versioned)
+        {
+            throw new ArgumentException(
+                $"Migration type \"{pendingMigration.MigrationType}\" is not supported by this applicator.",
+                nameof(pendingMigration)
+            );
+        }
+
         try
         {
             _console.WriteLine($"Migrating schema \"{_configuration.DefaultSchema}\" " +

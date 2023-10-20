@@ -12,6 +12,6 @@ public sealed class MigrationApplicatorResolver : IMigrationApplicatorResolver
     public IMigrationApplicator Resolve(Type type)
     {
         return _applicators.FirstOrDefault(a => a.GetType() == type)
-               ?? throw new NullReferenceException($"{type.Name} is not a registered migration applicator");
+               ?? throw new ArgumentException($"{type.Name} is not a registered migration applicator");
     }
 }

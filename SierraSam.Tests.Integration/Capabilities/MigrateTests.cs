@@ -98,17 +98,15 @@ internal sealed class MigrateTests
             .Find()
             .Returns(pendingMigrations);
 
-        var migrationApplicator = Substitute.For<IMigrationApplicator>();
+        var migrationApplicator = Substitute.For<IMigrationsApplicator>();
 
         IReadOnlyCollection<PendingMigration> arg1 = null!;
-        IReadOnlyCollection<AppliedMigration> arg2 = null!;
 
         migrationApplicator
-            .WhenForAnyArgs(applicator => applicator.Apply(null!, null!))
+            .WhenForAnyArgs(applicator => applicator.Apply(null!))
             .Do(info =>
             {
                 arg1 = info.Arg<IReadOnlyCollection<PendingMigration>>();
-                arg2 = info.Arg<IReadOnlyCollection<AppliedMigration>>();
             });
 
         var console = Substitute.For<IAnsiConsole>();
@@ -124,7 +122,6 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         arg1.Should().BeEquivalentTo(pendingMigrations);
-        arg2.Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
 
         await container.StopAsync();
     }

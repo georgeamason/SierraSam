@@ -5,7 +5,7 @@ using SierraSam.Core.Exceptions;
 
 namespace SierraSam.Core.Tests.Integration;
 
-internal sealed class OdbcExecutorTests
+internal sealed class DbExecutorTests
 {
     private const string Password = "yourStrong(!)Password";
 

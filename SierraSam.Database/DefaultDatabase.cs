@@ -150,7 +150,7 @@ public abstract class DefaultDatabase : IDatabase
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    public virtual int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
             $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
@@ -165,7 +165,7 @@ public abstract class DefaultDatabase : IDatabase
                 // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
             $"WHERE installed_rank = {appliedMigration.InstalledRank};";
 
-        _dbExecutor.ExecuteNonQuery(sql, transaction);
+        return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
     public virtual TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null)

@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using SierraSam.Core.Enums;
 using SierraSam.Core.Exceptions;
 using SierraSam.Core.Extensions;
 using Spectre.Console;
@@ -22,46 +23,41 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
         _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public int Apply(PendingMigration pendingMigration, IDbTransaction transaction
-    )
+    public int Apply(PendingMigration pendingMigration, IDbTransaction transaction)
     {
-        var appliedMigrations = _database.GetSchemaHistory();
-
-        if (appliedMigrations.Any(m => m.Checksum == pendingMigration.Checksum)) return 0;
-
-        _console.WriteLine($"Applying repeatable migration - {pendingMigration.Description}");
-
-        var appliedMigration = appliedMigrations.SingleOrDefault(
-            m => m.Script == pendingMigration.FileName
-        );
-
-        if (appliedMigration is not null)
+        if (pendingMigration.MigrationType is not MigrationType.Repeatable)
         {
-            var updatedMigration = appliedMigration
-                .WithChecksum(pendingMigration.Checksum)
-                .WithInstalledOn(DateTime.UtcNow);
-
-            try
-            {
-                // TODO: Is this correct behaviour? Not sure we should be rewriting history
-                _database.UpdateSchemaHistory(updatedMigration, transaction);
-                _database.ExecuteMigration(pendingMigration.Sql, transaction);
-
-                return 0;
-            }
-            catch (OdbcExecutorException exception)
-            {
-                transaction.Rollback();
-
-                throw new MigrationApplicatorException(
-                    $"Failed to apply migration \"{pendingMigration.FileName}\"; rolled back the transaction.",
-                    exception
-                );
-            }
+            throw new ArgumentException(
+                $"Migration type \"{pendingMigration.MigrationType}\" is not supported by this applicator.",
+                nameof(pendingMigration)
+            );
         }
 
         try
         {
+            var appliedMigrations = _database.GetSchemaHistory();
+
+            if (appliedMigrations.Any(m => m.Checksum == pendingMigration.Checksum)) return 0;
+
+            _console.WriteLine($"Applying repeatable migration - {pendingMigration.Description}");
+
+            var appliedMigration = appliedMigrations.SingleOrDefault(
+                m => m.Script == pendingMigration.FileName
+            );
+
+            if (appliedMigration is not null)
+            {
+                var updatedMigration = appliedMigration
+                    .WithChecksum(pendingMigration.Checksum)
+                    .WithInstalledOn(DateTime.UtcNow);
+
+                // https://stackoverflow.com/questions/63091283/flyway-always-execute-repeatable-migrations
+                // https://stackoverflow.com/questions/42930738/flyway-and-initialization-of-repeatable-migrations
+                _database.ExecuteMigration(pendingMigration.Sql, transaction);
+
+                return _database.UpdateSchemaHistory(updatedMigration, transaction);
+            }
+
             var installRank = _database.GetInstalledRank(transaction: transaction);
 
             var executionTime = _database.ExecuteMigration(pendingMigration.Sql, transaction);

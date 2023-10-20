@@ -15,7 +15,7 @@ public sealed class MigrationsApplicator : IMigrationsApplicator
         _applicatorResolver = applicatorResolver ?? throw new ArgumentNullException(nameof(applicatorResolver));
     }
 
-    public int Apply(IReadOnlyCollection<PendingMigration> pendingMigrations)
+    public int Apply(IEnumerable<PendingMigration> pendingMigrations)
     {
         using var transaction = _database.Connection.BeginTransaction();
         var appliedCount = 0;

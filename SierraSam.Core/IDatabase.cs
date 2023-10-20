@@ -29,7 +29,7 @@ public interface IDatabase
 
     int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
-    void UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
+    int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 
     TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null);
 

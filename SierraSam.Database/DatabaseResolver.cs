@@ -1,4 +1,6 @@
 ﻿using System.Data;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Database.Databases;
 
@@ -8,17 +10,31 @@ public static class DatabaseResolver
 {
     // TODO: Make use of a proper connection string parser
     public static IDatabase Create(
+        ILoggerFactory loggerFactory,
         IDbConnection connection,
         IDbExecutor executor,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache cache)
     {
         var connectionString = configuration.Url;
 
         if (connectionString.Contains("postgres", StringComparison.InvariantCultureIgnoreCase))
         {
-            return new PostgresDatabase(connection, executor, configuration);
+            return new PostgresDatabase(
+                loggerFactory.CreateLogger<PostgresDatabase>(),
+                connection,
+                executor,
+                configuration,
+                cache
+            );
         }
 
-        return new MssqlDatabase(connection, executor, configuration);
+        return new MssqlDatabase(
+            loggerFactory.CreateLogger<MssqlDatabase>(),
+            connection,
+            executor,
+            configuration,
+            cache
+        );
     }
 }

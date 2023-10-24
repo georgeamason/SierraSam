@@ -24,8 +24,13 @@ public interface IDatabase
     /// </summary>
     /// <param name="schema">The database schema</param>
     /// <param name="table">The database table</param>
+    /// <param name="transaction">Optional database transaction</param>
     /// <returns>A collection of applied migrations</returns>
-    IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null);
+    IReadOnlyCollection<AppliedMigration> GetSchemaHistory(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    );
 
     int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null);
 

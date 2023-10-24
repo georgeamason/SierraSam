@@ -1,23 +1,31 @@
 ﻿using System.Data;
-using System.Data.Odbc;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 
 namespace SierraSam.Database;
 
 public abstract class DefaultDatabase : IDatabase
 {
+    private readonly ILogger<DefaultDatabase> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
     private readonly IDbExecutor _dbExecutor;
 
     protected DefaultDatabase(
+        ILogger<DefaultDatabase> logger,
         IDbConnection connection,
         IDbExecutor executor,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache cache)
     {
         Connection = connection
             ?? throw new ArgumentNullException(nameof(connection));
+
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
 
         _dbExecutor = executor
             ?? throw new ArgumentNullException(nameof(executor));
@@ -25,6 +33,8 @@ public abstract class DefaultDatabase : IDatabase
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 
+        _cache = cache
+            ?? throw new ArgumentNullException(nameof(cache));
     }
 
     public abstract string Provider { get; }
@@ -75,9 +85,19 @@ public abstract class DefaultDatabase : IDatabase
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    // TODO: Can I have a caching layer around this? to prevent multiple calls to the database
-    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(string? schema = null, string? table = null)
+    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null)
     {
+        const string cacheKey = "schema_history";
+
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyCollection<AppliedMigration>? appliedMigrations))
+        {
+            _logger.LogDebug("Using cached schema history");
+            return appliedMigrations ?? Array.Empty<AppliedMigration>();
+        }
+
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
 
@@ -101,24 +121,33 @@ public abstract class DefaultDatabase : IDatabase
                                                 $"does not exist");
         }
 
-        // TODO: These mappings can throw...
-        return _dbExecutor.ExecuteReader<AppliedMigration>(
-            sql,
-            reader => new AppliedMigration(
-                reader.GetInt32(0),
-                !reader.IsDBNull(1) ? reader.GetString(1) : null,
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.GetString(4),
-                reader.GetString(5),
-                reader.GetString(6),
-                new DateTime(
-                    reader.GetDateTime(7).Ticks,
-                    DateTimeKind.Utc
+        _logger.LogDebug("Fetching schema history from database");
+
+        return _cache.Set(
+            cacheKey,
+            _dbExecutor.ExecuteReader<AppliedMigration>(
+                sql,
+                reader => new AppliedMigration(
+                    reader.GetInt32(0),
+                    !reader.IsDBNull(1) ? reader.GetString(1) : null,
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetString(4),
+                    reader.GetString(5),
+                    reader.GetString(6),
+                    new DateTime(
+                        reader.GetDateTime(7).Ticks,
+                        DateTimeKind.Utc
+                    ),
+                    reader.GetDouble(8),
+                    reader.GetBoolean(9)
                 ),
-                reader.GetDouble(8),
-                reader.GetBoolean(9))
-        );
+                transaction
+            ),
+            new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMilliseconds(750)
+            });
     }
 
     public virtual int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)

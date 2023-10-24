@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.IO.Abstractions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,19 +34,16 @@ public static class Program
             {
                 builder.ClearProviders();
 
+                builder.SetMinimumLevel(
+                    ctx.HostingEnvironment.IsDevelopment() ? LogLevel.Trace : LogLevel.Information
+                );
+
                 builder.AddSimpleConsole(options =>
                 {
                     options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] => ";
                     options.UseUtcTimestamp = true;
                     options.SingleLine      = true;
                 });
-
-                if (ctx.HostingEnvironment.IsDevelopment())
-                {
-                    builder.SetMinimumLevel(LogLevel.Trace);
-                }
-
-                builder.AddDebug();
             })
             .ConfigureServices((_, services) =>
             {
@@ -66,11 +64,15 @@ public static class Program
 
                 services.AddSingleton<IDbExecutor, DbExecutor>();
 
+                services.AddMemoryCache();
+
                 services.AddSingleton<IDatabase>(
                     s => DatabaseResolver.Create(
+                        s.GetRequiredService<ILoggerFactory>(),
                         s.GetRequiredService<IDbConnection>(),
                         s.GetRequiredService<IDbExecutor>(),
-                        s.GetRequiredService<IConfiguration>())
+                        s.GetRequiredService<IConfiguration>(),
+                        s.GetRequiredService<IMemoryCache>())
                 );
 
                 services.AddSingleton<IFileSystem, FileSystem>();

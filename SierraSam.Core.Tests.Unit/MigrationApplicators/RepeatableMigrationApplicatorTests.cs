@@ -78,7 +78,19 @@ internal sealed class RepeatableMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         var console = Substitute.For<IAnsiConsole>();
 
-        database.GetSchemaHistory().Returns(new[]
+        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+
+        var pendingMigration = new PendingMigration(
+            "someVersion",
+            "someDescription",
+            MigrationType.Repeatable,
+            sql: string.Empty,
+            string.Empty
+        );
+
+        var transaction = Substitute.For<IDbTransaction>();
+
+        database.GetSchemaHistory(transaction: transaction).Returns(new[]
         {
             new AppliedMigration(
                 1,
@@ -93,22 +105,11 @@ internal sealed class RepeatableMigrationApplicatorTests
                 true)
         });
 
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
-
-        var pendingMigration = new PendingMigration(
-            "someVersion",
-            "someDescription",
-            MigrationType.Repeatable,
-            sql: string.Empty,
-            string.Empty
-        );
-
-        var transaction = Substitute.For<IDbTransaction>();
-
         var appliedCount = sut.Apply(pendingMigration, transaction);
 
-        database.DidNotReceiveWithAnyArgs().ExecuteMigration(default!);
-        database.DidNotReceiveWithAnyArgs().UpdateSchemaHistory(default!);
+        database.DidNotReceiveWithAnyArgs().ExecuteMigration(Arg.Any<string>());
+        database.DidNotReceiveWithAnyArgs().UpdateSchemaHistory(Arg.Any<AppliedMigration>());
+        database.DidNotReceiveWithAnyArgs().InsertSchemaHistory(Arg.Any<AppliedMigration>());
 
         appliedCount.Should().Be(0);
     }
@@ -122,7 +123,19 @@ internal sealed class RepeatableMigrationApplicatorTests
 
         const string filename = "someFilename";
 
-        database.GetSchemaHistory().Returns(new[]
+        var pendingMigration = new PendingMigration(
+            "someVersion",
+            "someDescription",
+            MigrationType.Repeatable,
+            sql: "SELECT 1",
+            filename
+        );
+
+        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+
+        var transaction = Substitute.For<IDbTransaction>();
+
+        database.GetSchemaHistory(transaction: transaction).Returns(new[]
         {
             new AppliedMigration(
                 1,
@@ -136,18 +149,6 @@ internal sealed class RepeatableMigrationApplicatorTests
                 double.MinValue,
                 true)
         });
-
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
-
-        var pendingMigration = new PendingMigration(
-            "someVersion",
-            "someDescription",
-            MigrationType.Repeatable,
-            sql: "SELECT 1",
-            filename
-        );
-
-        var transaction = Substitute.For<IDbTransaction>();
 
         var appliedCount = sut.Apply(pendingMigration, transaction);
 

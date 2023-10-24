@@ -1,19 +1,27 @@
 ﻿using System.Data;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
 
 public sealed class MssqlDatabase : DefaultDatabase
 {
+    private readonly ILogger<MssqlDatabase> _logger;
     private readonly IConfiguration _configuration;
     private readonly IDbExecutor _dbExecutor;
 
     public MssqlDatabase(
+        ILogger<MssqlDatabase> logger,
         IDbConnection connection,
         IDbExecutor executor,
-        IConfiguration configuration)
-        : base(connection, executor, configuration)
+        IConfiguration configuration,
+        IMemoryCache cache)
+        : base(logger, connection, executor, configuration, cache)
     {
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
+
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
 

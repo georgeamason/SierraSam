@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Data;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.MigrationSeekers;
@@ -48,8 +46,6 @@ internal sealed class Migrate : ICapability
     {
         _logger.LogTrace($"{nameof(Migrate)} running");
 
-        if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
-
         _logger.LogInformation("Provider: {Provider}", _database.Provider);
         _logger.LogInformation("Version: {ServerVersion}", _database.ServerVersion);
         _logger.LogInformation("Database: {Database}", _database.Connection.Database);
@@ -58,24 +54,23 @@ internal sealed class Migrate : ICapability
 
         if (!_database.HasMigrationTable)
         {
-            _console.WriteLine
-                ("Creating schema history table: " +
-                $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"");
+            _console.WriteLine(
+                "Creating schema history table: " +
+                $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\""
+            );
 
             // TODO: How about if the default schema has not been created?
-            _database.CreateSchemaHistory(
-                _configuration.DefaultSchema,
-                _configuration.SchemaTable
-            );
+            _database.CreateSchemaHistory();
         }
 
         var discoveredMigrations = _migrationSeeker.Find();
 
-        var appliedMigrations = _database.GetSchemaHistory
-            (_configuration.DefaultSchema, _configuration.SchemaTable);
+        var appliedMigrations = _database.GetSchemaHistory();
 
-        _console.WriteLine($"Current version of schema \"{_configuration.DefaultSchema}\":" +
-                           $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}");
+        _console.WriteLine(
+            $"Current version of schema \"{_configuration.DefaultSchema}\":" +
+            $" {appliedMigrations.Max(x => x.Version) ?? "<< Empty Schema >>"}"
+        );
 
         // TODO: There maybe something here about baselines? Need to check what we fetch..
         var pendingMigrations = discoveredMigrations
@@ -87,8 +82,7 @@ internal sealed class Migrate : ICapability
             })
             .OrderBy(pendingMigration => pendingMigration.MigrationType)
             .ThenBy(pendingMigration => pendingMigration.Version)
-            .ThenBy(pendingMigration => pendingMigration.Description)
-            .ToImmutableArray();
+            .ThenBy(pendingMigration => pendingMigration.Description);
 
         var executionTime = Stopwatch.StartNew();
         var appliedCount = _migrationsApplicator.Apply(pendingMigrations);

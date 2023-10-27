@@ -33,6 +33,20 @@ public sealed class PostgresDatabase : DefaultDatabase
 
     public override string Provider => "PostgreSQL";
 
+    public override bool HasTable(string tableName)
+    {
+        var sql = $"SELECT \"table_name\" " +
+                  $"FROM \"information_schema\".\"tables\" " +
+                  $"WHERE \"table_name\" = '{tableName}'";
+
+        var result = _dbExecutor.ExecuteReader<string>(
+            sql,
+            reader => reader.GetString(0)
+        );
+
+        return result.Any();
+    }
+
     public override void CreateSchemaHistory(
         string? schema = null,
         string? table = null,

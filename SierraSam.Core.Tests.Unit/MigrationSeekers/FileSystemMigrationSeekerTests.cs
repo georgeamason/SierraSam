@@ -159,15 +159,16 @@ internal sealed class FileSystemMigrationSeekerTests
         var configuration = Substitute.For<IConfiguration>();
 
         configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
-        configuration.RepeatableMigrationPrefix.Returns("R");
-        configuration.MigrationPrefix.Returns("V");
-        configuration.MigrationSeparator.Returns("__");
-        configuration.MigrationSuffixes.Returns(new []{ ".sql" });
 
         var fileSystem = Substitute.For<IFileSystem>();
+        fileSystem.Directory.Exists(searchPath).Returns(true);
 
         fileSystem.Directory
-            .When(d => d.GetFiles(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<SearchOption>()))
+            .When(d => d.GetFiles(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<SearchOption>())
+            )
             .Do(_ => throw new UnauthorizedAccessException());
 
         var migrationSeeker = new FileSystemMigrationSeeker
@@ -181,48 +182,52 @@ internal sealed class FileSystemMigrationSeekerTests
     }
 
     [Test]
-    public void Find_throws_MigrationSeekerException_for_missing_directory()
-    {
-        var searchPath = Path.Combine("db", "migrations");
-
-        var configuration = Substitute.For<IConfiguration>();
-
-        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
-
-        var fileSystem = new MockFileSystem();
-
-        var migrationSeeker = new FileSystemMigrationSeeker
-            (configuration, fileSystem);
-
-        migrationSeeker
-            .Invoking(s => s.Find())
-            .Should()
-            .Throw<MigrationSeekerException>()
-            .WithMessage($"The directory '{searchPath}' does not exist");
-    }
-
-    [Test]
     public void Find_throws_MigrationSeekerException_for_path_too_long()
     {
         const string searchPath = "";
 
         var configuration = Substitute.For<IConfiguration>();
-
         configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
 
         var fileSystem = Substitute.For<IFileSystem>();
 
+        fileSystem.Directory.Exists(searchPath).Returns(true);
+
         fileSystem.Directory
-            .When(d => d.GetFiles(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<SearchOption>()))
+            .When(d => d.GetFiles(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<SearchOption>())
+            )
             .Do(_ => throw new PathTooLongException());
 
-        var migrationSeeker = new FileSystemMigrationSeeker
-            (configuration, fileSystem);
+        var migrationSeeker = new FileSystemMigrationSeeker(configuration, fileSystem);
 
         migrationSeeker
             .Invoking(s => s.Find())
             .Should()
             .Throw<MigrationSeekerException>()
             .WithMessage($"The location path '{searchPath}' is too long");
+    }
+
+    [Test]
+    public void Find_returns_empty_array_when_location_does_not_exist()
+    {
+        var searchPath = Path.Combine("db", "migrations");
+
+        var configuration = Substitute.For<IConfiguration>();
+        configuration.Locations.Returns(new []{ $"filesystem:{searchPath}" });
+
+        var fileSystem = Substitute.For<IFileSystem>();
+        fileSystem.Directory.Exists(searchPath).Returns(false);
+
+        var sut = new FileSystemMigrationSeeker(configuration, fileSystem);
+        var migrations = sut.Find();
+
+        fileSystem.Directory.Received().Exists(searchPath);
+
+        migrations
+            .Should()
+            .BeEquivalentTo(Array.Empty<PendingMigration>());
     }
 }

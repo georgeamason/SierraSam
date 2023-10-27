@@ -28,6 +28,8 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
             {
                 try
                 {
+                    if (!_fileSystem.Directory.Exists(locationPath)) return Array.Empty<string>();
+
                     return _fileSystem.Directory
                         .GetFiles(locationPath, "*", SearchOption.AllDirectories)
                         .Where(filePath =>
@@ -60,12 +62,6 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
                     throw new MigrationSeekerException
                     ($"The application does not have permission to access location '{locationPath}'",
                         exception);
-                }
-                catch (DirectoryNotFoundException exception)
-                {
-                    // TODO: Should just skip through if not found?
-                    throw new MigrationSeekerException
-                        ($"The directory '{locationPath}' does not exist", exception);
                 }
                 catch (PathTooLongException exception)
                 {

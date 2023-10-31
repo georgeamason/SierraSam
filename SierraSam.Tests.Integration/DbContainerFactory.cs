@@ -39,6 +39,19 @@ internal static class DbContainerFactory
             .Build();
     }
 
+    public static IContainer CreateMysqlContainer(string password)
+    {
+        return new ContainerBuilder()
+            .WithImage("mysql:latest")
+            .WithPortBinding(3306, true)
+            .WithEnvironment("MYSQL_ROOT_PASSWORD", password)
+            .WithEnvironment("MYSQL_DATABASE", "test")
+            .WithWaitStrategy(Wait
+                .ForUnixContainer()
+                .UntilPortIsAvailable(3306))
+            .Build();
+    }
+
     /// <summary>
     /// Let the OS assign the next available port. Unless we cycle through all ports
     /// on a test run, the OS will always increment the port number when making these calls.

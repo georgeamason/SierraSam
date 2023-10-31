@@ -34,6 +34,13 @@ internal sealed class MigrateTests
                 5432
             )
             .SetName("PostgreSQL");
+
+        yield return new TestCaseData(
+                DbContainerFactory.CreateMysqlContainer(Password),
+                $"Driver={{{{MySQL ODBC 8.2 UNICODE Driver}}}};Server=127.0.0.1;Port={{0}};Database=test;User=root;Password={Password};",
+                3306
+            )
+            .SetName("MySQL");
     }
     [TestCaseSource(nameof(Database_containers))]
     public async Task Migrate_creates_schema_history_when_not_initialized(

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.IO.Abstractions.TestingHelpers;
-using DotNet.Testcontainers.Containers;
+﻿using System.IO.Abstractions.TestingHelpers;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using SierraSam.Capabilities;
@@ -9,6 +7,7 @@ using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationApplicators;
 using SierraSam.Database;
 using Spectre.Console.Testing;
+using static SierraSam.Tests.Integration.DbContainerFactory;
 
 namespace SierraSam.Tests.Integration.Capabilities;
 
@@ -17,43 +16,23 @@ internal sealed class MigrateTests
     private readonly ILogger<Migrate> _logger = Substitute.For<ILogger<Migrate>>();
     private readonly TestConsole _console = new ();
 
-    private const string Password = "yourStrong(!)Password";
-
-    private static IEnumerable Database_containers()
+    private static readonly IEnumerable<IDbContainer> Containers = new IDbContainer[]
     {
-        yield return new TestCaseData(
-                DbContainerFactory.CreateMsSqlContainer(Password),
-                $"Driver={{{{ODBC Driver 17 for SQL Server}}}};Server=127.0.0.1,{{0}};UID=sa;PWD={Password};",
-                1433
-            )
-            .SetName("SQL Server");
+        new SqlServer(),
+        new Postgres(),
+        new MySql()
+    };
 
-        yield return new TestCaseData(
-                DbContainerFactory.CreatePostgresContainer(Password),
-                $"Driver={{{{PostgreSQL UNICODE}}}};Server=127.0.0.1;Port={{0}};Uid=sa;Pwd={Password};",
-                5432
-            )
-            .SetName("PostgreSQL");
-
-        yield return new TestCaseData(
-                DbContainerFactory.CreateMysqlContainer(Password),
-                $"Driver={{{{MySQL ODBC 8.2 UNICODE Driver}}}};Server=127.0.0.1;Port={{0}};Database=test;User=root;Password={Password};",
-                3306
-            )
-            .SetName("MySQL");
+    [OneTimeSetUp]
+    public async Task OneTimeSetUp()
+    {
+        foreach (var container in Containers) await container.StartAsync();
     }
-    [TestCaseSource(nameof(Database_containers))]
-    public async Task Migrate_creates_schema_history_when_not_initialized(
-        IContainer container,
-        string connectionString,
-        int containerPort
-    )
-    {
-        await container.StartAsync();
 
-        var configuration = new Configuration(
-            url: string.Format(connectionString, container.GetMappedPublicPort(containerPort))
-        );
+    [TestCaseSource(nameof(Containers))]
+    public void Migrate_creates_schema_history_when_not_initialized(IDbContainer dbContainer)
+    {
+        var configuration = new Configuration(url: dbContainer.ConnectionString);
 
         using var odbcConnection = OdbcConnectionFactory.Create(_logger, configuration);
 
@@ -100,7 +79,11 @@ internal sealed class MigrateTests
 
         database.HasMigrationTable.Should().BeTrue();
         database.GetSchemaHistory().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
+    }
 
-        await container.StopAsync();
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
+    {
+        foreach (var container in Containers) await container.StopAsync();
     }
 }

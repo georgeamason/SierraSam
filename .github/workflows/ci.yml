@@ -7,7 +7,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       runtimes: ${{ steps.runtimes.outputs.runtimes }}
     steps:
@@ -23,7 +23,7 @@ jobs:
 
   build:
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         runtime: ${{ fromJson(needs.setup.outputs.runtimes) }}
@@ -55,7 +55,7 @@ jobs:
 
   test:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -72,6 +72,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y odbc-postgresql
+      - name: Install MySQL ODBC Driver
+        if: success()
+        run: |
+          wget https://dev.mysql.com/get/Downloads/Connector-ODBC/8.2/mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
+          wget https://dev.mysql.com/get/Downloads/MySQL-8.2/mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb
+          sudo dpkg -i mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
       - name: Run Tests
         if: success()
         run: dotnet test --configuration Release --verbosity normal
@@ -79,7 +85,7 @@ jobs:
   publish:
     if: ${{ github.ref_name == 'main' }}
     needs: [setup, test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         runtime: ${{ fromJson(needs.setup.outputs.runtimes) }}

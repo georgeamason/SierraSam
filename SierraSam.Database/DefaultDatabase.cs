@@ -143,17 +143,16 @@ public abstract class DefaultDatabase : IDatabase
                     reader.GetBoolean(9)
                 ),
                 transaction
-            ),
-            new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMilliseconds(750)
-            });
+            )
+        );
     }
 
     public virtual int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
+        const string cacheKey = "schema_history";
+
         var sql =
-            $"INSERT INTO {_configuration.DefaultSchema}.{_configuration.SchemaTable}(" +
+            $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +
                 "\"installed_rank\"," +
                 "\"version\"," +
                 "\"description\"," +
@@ -175,6 +174,8 @@ public abstract class DefaultDatabase : IDatabase
                  "DEFAULT," +
                 $"{appliedMigration.ExecutionTime}," +
                 $"{(appliedMigration.Success ? 1 : 0)})";
+
+        _cache.Remove(cacheKey);
 
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
@@ -253,13 +254,17 @@ public abstract class DefaultDatabase : IDatabase
         _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
     }
 
-    public int GetInstalledRank(string? schema = null, string? table = null, IDbTransaction? transaction = null)
+    public virtual int GetInstalledRank(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    )
     {
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
 
         var sql = $"SELECT MAX(\"installed_rank\") FROM \"{schema}\".\"{table}\"";
 
-        return _dbExecutor.ExecuteScalar<int?>(sql, transaction) ?? 0;
+        return _dbExecutor.ExecuteScalar<int>(sql, transaction);
     }
 }

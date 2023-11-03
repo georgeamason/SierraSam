@@ -1,5 +1,8 @@
-﻿using DotNet.Testcontainers.Builders;
+﻿using System.Data.Common;
+using System.Data.Odbc;
+using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using Respawn;
 
 namespace SierraSam.Tests.Integration;
 
@@ -9,21 +12,21 @@ internal static class DbContainerFactory
 
     public interface IDbContainer
     {
-        public string ConnectionString { get; }
-
+        public DbConnection DbConnection { get; }
+        public TestcontainersStates State { get; }
+        public IDbAdapter Adapter { get; }
         public Task StartAsync();
-
         public Task StopAsync();
     }
 
     internal sealed class SqlServer : IDbContainer
     {
-        private readonly IContainer _container = Create();
+        private readonly IContainer _container;
 
-        private static IContainer Create()
+        public SqlServer(string tag = "latest")
         {
-            return new ContainerBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            _container = new ContainerBuilder()
+                .WithImage($"mcr.microsoft.com/mssql/server:{tag}")
                 .WithPortBinding(1433, true)
                 .WithEnvironment("ACCEPT_EULA", "Y")
                 .WithEnvironment("MSSQL_SA_PASSWORD", Password)
@@ -39,9 +42,26 @@ internal static class DbContainerFactory
                 .Build();
         }
 
-        public string ConnectionString => $"Driver={{ODBC Driver 17 for SQL Server}};" +
-                                          $"Server=127.0.0.1,{_container.GetMappedPublicPort(1433)};" +
-                                          $"UID=sa;PWD={Password};";
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                return new OdbcConnection(
+                    $"Driver={{ODBC Driver 17 for SQL Server}};" +
+                    $"Server=127.0.0.1,{_container.GetMappedPublicPort(1433)};" +
+                    $"UID=sa;PWD={Password};"
+                );
+            }
+        }
+
+        public TestcontainersStates State => _container.State;
+
+        public IDbAdapter Adapter => DbAdapter.SqlServer;
 
         public Task StartAsync() => _container.StartAsync();
 
@@ -50,12 +70,12 @@ internal static class DbContainerFactory
 
     internal sealed class Postgres : IDbContainer
     {
-        private readonly IContainer _container = Create();
+        private readonly IContainer _container;
 
-        private static IContainer Create()
+        public Postgres(string tag = "latest")
         {
-            return new ContainerBuilder()
-                .WithImage("postgres:latest")
+            _container = new ContainerBuilder()
+                .WithImage($"postgres:{tag}")
                 .WithPortBinding(5432, true)
                 .WithEnvironment("POSTGRES_USER", "sa")
                 .WithEnvironment("POSTGRES_PASSWORD", Password)
@@ -65,9 +85,26 @@ internal static class DbContainerFactory
                 .Build();
         }
 
-        public string ConnectionString => $"Driver={{PostgreSQL UNICODE}};" +
-                                          $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(5432)};" +
-                                          $"Uid=sa;Pwd={Password};";
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                return new OdbcConnection(
+                    $"Driver={{PostgreSQL UNICODE}};" +
+                    $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(5432)};" +
+                    $"Uid=sa;Pwd={Password};"
+                );
+            }
+        }
+
+        public TestcontainersStates State => _container.State;
+
+        public IDbAdapter Adapter => DbAdapter.Postgres;
 
         public Task StartAsync() => _container.StartAsync();
 
@@ -76,12 +113,12 @@ internal static class DbContainerFactory
 
     internal sealed class MySql : IDbContainer
     {
-        private readonly IContainer _container = Create();
+        private readonly IContainer _container;
 
-        private static IContainer Create()
+        public MySql(string tag = "latest")
         {
-            return new ContainerBuilder()
-                .WithImage("mysql:latest")
+            _container = new ContainerBuilder()
+                .WithImage($"mysql:{tag}")
                 .WithPortBinding(3306, true)
                 .WithEnvironment("MYSQL_ROOT_PASSWORD", Password)
                 .WithEnvironment("MYSQL_DATABASE", "test")
@@ -91,10 +128,28 @@ internal static class DbContainerFactory
                 .Build();
         }
 
-        public string ConnectionString => $"Driver={{MySQL ODBC 8.2 UNICODE Driver}};" +
-                                          $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(3306)};" +
-                                          $"Database=test;" +
-                                          $"User=root;Password={Password};";
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                return new OdbcConnection(
+                    $"Driver={{MySQL ODBC 8.2 UNICODE Driver}};" +
+                    $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(3306)};" +
+                    $"Database=test;" +
+                    $"User=root;Password={Password};" +
+                    $"MULTI_STATEMENTS=1;"
+                );
+            }
+        }
+
+        public TestcontainersStates State => _container.State;
+
+        public IDbAdapter Adapter => DbAdapter.MySql;
 
         public Task StartAsync() => _container.StartAsync();
 

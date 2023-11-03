@@ -63,7 +63,7 @@ public sealed class DbExecutor : IDbExecutor
         }
     }
 
-    public T ExecuteScalar<T>(string sql, IDbTransaction? transaction = null)
+    public T? ExecuteScalar<T>(string sql, IDbTransaction? transaction = null)
     {
         try
         {
@@ -72,9 +72,12 @@ public sealed class DbExecutor : IDbExecutor
 
             if (transaction is not null) command.Transaction = transaction;
 
-            return command.ExecuteScalar() is T result
-                ? result
-                : throw new ArgumentException($"Database return was not of type '{typeof(T)}'", nameof(T));
+            return command.ExecuteScalar() switch
+            {
+                T result => result,
+                DBNull => default,
+                _ => throw new ArgumentException($"Database return was not of type '{typeof(T)}'", nameof(T))
+            };
         }
         catch (OdbcException exception)
         {

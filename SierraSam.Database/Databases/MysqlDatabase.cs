@@ -136,11 +136,57 @@ internal sealed class MysqlDatabase : DefaultDatabase
                     reader.GetBoolean(9)
                 ),
                 transaction
-            ),
-            new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMilliseconds(750)
-            });
+            ));
+    }
+
+    public override int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    {
+        const string cacheKey = "schema_history";
+
+        var sql =
+            $"""
+             INSERT INTO `{_configuration.DefaultSchema}`.`{_configuration.SchemaTable}`(
+               `installed_rank`,
+                  `version`,
+                  `description`,
+                  `type`,
+                  `script`,
+                  `checksum`,
+                  `installed_by`,
+                  `installed_on`,
+                  `execution_time`,
+                  `success`
+               ) VALUES(
+                  {appliedMigration.InstalledRank},
+                  {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                  N'{appliedMigration.Description}',
+                  N'{appliedMigration.Type}',
+                  N'{appliedMigration.Script}',
+                  N'{appliedMigration.Checksum}',
+                  N'{appliedMigration.InstalledBy}',
+                  DEFAULT,
+                  {appliedMigration.ExecutionTime},
+                  {appliedMigration.Success}
+               )
+             """;
+
+        _cache.Remove(cacheKey);
+
+        return _executor.ExecuteNonQuery(sql, transaction);
+    }
+
+    public override int GetInstalledRank(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    )
+    {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
+        var sql = $"SELECT MAX(`installed_rank`) FROM `{schema}`.`{table}`";
+
+        return _executor.ExecuteScalar<int>(sql, transaction);
     }
 
     public override string ServerVersion =>

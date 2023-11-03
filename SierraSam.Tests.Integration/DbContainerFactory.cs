@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -10,16 +11,25 @@ internal static class DbContainerFactory
 {
     private const string Password = "yourStrong(!)Password";
 
+    public static readonly IEnumerable<IDbContainer> ContainerTestCases = new IDbContainer[]
+    {
+        new SqlServer("2022-latest"),
+        new SqlServer("2017-latest"),
+        new Postgres("16"),
+        new Postgres("15"),
+        new MySql("8.2"),
+        new MySql("5.7")
+    };
+
     public interface IDbContainer
     {
         public DbConnection DbConnection { get; }
-        public TestcontainersStates State { get; }
-        public IDbAdapter Adapter { get; }
         public Task StartAsync();
         public Task StopAsync();
+        public Task Clean();
     }
 
-    internal sealed class SqlServer : IDbContainer
+    private sealed class SqlServer : IDbContainer
     {
         private readonly IContainer _container;
 
@@ -51,24 +61,42 @@ internal static class DbContainerFactory
                     throw new Exception("Container must be running to get connection string");
                 }
 
-                return new OdbcConnection(
+                var connection = new OdbcConnection(
                     $"Driver={{ODBC Driver 17 for SQL Server}};" +
                     $"Server=127.0.0.1,{_container.GetMappedPublicPort(1433)};" +
                     $"UID=sa;PWD={Password};"
                 );
+
+                connection.Open();
+
+                return connection;
             }
         }
-
-        public TestcontainersStates State => _container.State;
-
-        public IDbAdapter Adapter => DbAdapter.SqlServer;
 
         public Task StartAsync() => _container.StartAsync();
 
         public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.SqlServer
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 
-    internal sealed class Postgres : IDbContainer
+    private sealed class Postgres : IDbContainer
     {
         private readonly IContainer _container;
 
@@ -94,24 +122,42 @@ internal static class DbContainerFactory
                     throw new Exception("Container must be running to get connection string");
                 }
 
-                return new OdbcConnection(
+                var connection = new OdbcConnection(
                     $"Driver={{PostgreSQL UNICODE}};" +
                     $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(5432)};" +
                     $"Uid=sa;Pwd={Password};"
                 );
+
+                connection.Open();
+
+                return connection;
             }
         }
-
-        public TestcontainersStates State => _container.State;
-
-        public IDbAdapter Adapter => DbAdapter.Postgres;
 
         public Task StartAsync() => _container.StartAsync();
 
         public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.Postgres
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 
-    internal sealed class MySql : IDbContainer
+    private sealed class MySql : IDbContainer
     {
         private readonly IContainer _container;
 
@@ -137,22 +183,40 @@ internal static class DbContainerFactory
                     throw new Exception("Container must be running to get connection string");
                 }
 
-                return new OdbcConnection(
+                var connection = new OdbcConnection(
                     $"Driver={{MySQL ODBC 8.2 UNICODE Driver}};" +
                     $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(3306)};" +
                     $"Database=test;" +
                     $"User=root;Password={Password};" +
                     $"MULTI_STATEMENTS=1;"
                 );
+
+                connection.Open();
+
+                return connection;
             }
         }
-
-        public TestcontainersStates State => _container.State;
-
-        public IDbAdapter Adapter => DbAdapter.MySql;
 
         public Task StartAsync() => _container.StartAsync();
 
         public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.MySql
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 }

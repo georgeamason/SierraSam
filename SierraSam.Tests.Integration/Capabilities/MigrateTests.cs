@@ -1,15 +1,10 @@
-﻿using System.Data.Odbc;
-using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using Respawn;
-using Respawn.Graph;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Enums;
 using SierraSam.Core.Extensions;
-using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationApplicators;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
@@ -18,48 +13,35 @@ using static SierraSam.Tests.Integration.DbContainerFactory;
 
 namespace SierraSam.Tests.Integration.Capabilities;
 
-[TestFixture]
+[TestFixtureSource(typeof(DbContainerFactory), nameof(ContainerTestCases))]
 internal sealed class MigrateTests
 {
+    private readonly IDbContainer _container;
     private readonly ILogger<Migrate> _logger = Substitute.For<ILogger<Migrate>>();
     private readonly TestConsole _console = new ();
 
-    private static readonly IEnumerable<TestCaseData> ContainerTestCases = new[]
+    public MigrateTests(IDbContainer container) => _container = container;
+
+    [OneTimeSetUp]
+    public async Task OneTimeSetUp() => await _container.StartAsync();
+
+    [Test]
+    public void Migrate_creates_schema_history_when_not_initialized()
     {
-        new TestCaseData(new SqlServer("2022-latest")).SetName("SqlServer-2022"),
-        new TestCaseData(new SqlServer("2017-latest")).SetName("SqlServer-2017"),
-        new TestCaseData(new Postgres("16")).SetName("Postgres-16"),
-        new TestCaseData(new Postgres("15")).SetName("Postgres-15"),
-        new TestCaseData(new MySql("8.2")).SetName("MySql-8.2"),
-        new TestCaseData(new MySql("5.7")).SetName("MySql-5.7")
-    };
+        var connection = _container.DbConnection;
 
-    [SetUp]
-    public async Task SetUp()
-    {
-        var container = TestContext.CurrentContext.Test.Arguments[0].As<IDbContainer>();
+        var configuration = new Configuration(url: connection.ConnectionString);
 
-        await container.StartAsync();
-    }
-
-    [TestCaseSource(nameof(ContainerTestCases))]
-    public void Migrate_creates_schema_history_when_not_initialized(IDbContainer container)
-    {
-        var configuration = new Configuration(url: container.DbConnection.ConnectionString);
-
-        using var odbcConnection = OdbcConnectionFactory.Create(_logger, configuration);
+        var migrationSeeker = Substitute.For<IMigrationSeeker>();
+        var migrationApplicator = Substitute.For<IMigrationsApplicator>();
 
         var database = DatabaseResolver.Create(
             new NullLoggerFactory(),
-            odbcConnection,
-            new DbExecutor(odbcConnection),
+            connection,
+            new DbExecutor(connection),
             configuration,
             new MemoryCache(new MemoryCacheOptions())
         );
-
-        var migrationSeeker = Substitute.For<IMigrationSeeker>();
-
-        var migrationApplicator = Substitute.For<IMigrationsApplicator>();
 
         var sut = new Migrate(
             _logger,
@@ -76,20 +58,17 @@ internal sealed class MigrateTests
         database.GetSchemaHistory().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
     }
 
-    [TestCaseSource(nameof(ContainerTestCases))]
-    public void Migrate_applies_pending_migrations(IDbContainer container)
+    [Test]
+    public void Migrate_applies_pending_migrations()
     {
-        var configuration = new Configuration(
-            url: container.DbConnection.ConnectionString,
-            installedBy: "SierraSam"
-        );
+        var connection = _container.DbConnection;
 
-        using var odbcConnection = OdbcConnectionFactory.Create(_logger, configuration);
+        var configuration = new Configuration(url: connection.ConnectionString);
 
         var database = DatabaseResolver.Create(
             new NullLoggerFactory(),
-            odbcConnection,
-            new DbExecutor(odbcConnection),
+            connection,
+            new DbExecutor(connection),
             configuration,
             new MemoryCache(new MemoryCacheOptions())
         );
@@ -131,7 +110,6 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         database.HasMigrationTable.Should().BeTrue();
-
         database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
@@ -140,7 +118,7 @@ internal sealed class MigrateTests
                     "SQL",
                     string.Empty,
                     "CREATE TABLE foo (id INT);".Checksum(),
-                    "SierraSam",
+                    string.Empty,
                     DateTime.UtcNow,
                     default,
                     true)
@@ -152,34 +130,12 @@ internal sealed class MigrateTests
     }
 
     [TearDown]
-    public async Task CleanDatabase()
-    {
-        var container = TestContext.CurrentContext.Test.Arguments[0].As<IDbContainer>();
-
-        await using var connection = new OdbcConnection(
-            container.DbConnection.ConnectionString
-        );
-
-        await connection.OpenAsync();
-
-        var respawner = await Respawner.CreateAsync(
-            connection,
-            new RespawnerOptions
-            {
-                DbAdapter = container.Adapter
-            }
-        );
-
-        await respawner.ResetAsync(connection);
-    }
+    public async Task ResetDatabase() => await _container.Clean();
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        var containers = ContainerTestCases.Select(data => data.Arguments[0].As<IDbContainer>());
-        foreach (var container in containers.Where(container => container.State is TestcontainersStates.Running))
-        {
-            await container.StopAsync();
-        }
+        await _container.DbConnection.DisposeAsync();
+        await _container.StopAsync();
     }
 }

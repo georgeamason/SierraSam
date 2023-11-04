@@ -63,17 +63,18 @@ public sealed class PostgresDatabase : DefaultDatabase
 
         var sql =
             $"""
-             CREATE TABLE "{schema}"."{table}"(
-             "installed_rank" INT PRIMARY KEY NOT NULL,
-             "version" VARCHAR(50) NULL,
-             "description" VARCHAR(200) NOT NULL,
-             "type" VARCHAR(20) NOT NULL,
-             "script" VARCHAR(1000) NOT NULL,
-             "checksum" VARCHAR(32) NOT NULL,
-             "installed_by" VARCHAR(100) NOT NULL,
-             "installed_on" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'),
-             "execution_time" REAL NOT NULL,
-             "success" BOOLEAN NOT NULL)
+             CREATE TABLE "{schema}"."{table}" (
+                "installed_rank" INT PRIMARY KEY NOT NULL,
+                "version" VARCHAR(50) NULL,
+                "description" VARCHAR(200) NOT NULL,
+                "type" VARCHAR(20) NOT NULL,
+                "script" VARCHAR(1000) NOT NULL,
+                "checksum" VARCHAR(32) NOT NULL,
+                "installed_by" VARCHAR(100) NOT NULL,
+                "installed_on" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'),
+                "execution_time" REAL NOT NULL,
+                "success" BOOLEAN NOT NULL
+             )
              """;
 
         _dbExecutor.ExecuteNonQuery(sql, transaction);

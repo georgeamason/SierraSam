@@ -58,7 +58,7 @@ internal sealed class MysqlDatabase : DefaultDatabase
 
         var sql =
             $"""
-             CREATE TABLE `{schema}`.`{table}`(
+             CREATE TABLE `{schema}`.`{table}` (
                 `installed_rank` INT PRIMARY KEY NOT NULL,
                 `version` VARCHAR(50) NULL,
                 `description` VARCHAR(200) NOT NULL,

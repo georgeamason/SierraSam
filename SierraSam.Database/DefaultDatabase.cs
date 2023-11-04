@@ -74,16 +74,17 @@ public abstract class DefaultDatabase : IDatabase
         var sql =
             $"""
              CREATE TABLE "{schema}"."{table}" (
-             "installed_rank" INT PRIMARY KEY NOT NULL,
-             "version" NVARCHAR(50) NULL,
-             "description" NVARCHAR(200) NOT NULL,
-             "type" NVARCHAR(20) NOT NULL,
-             "script" NVARCHAR(1000) NOT NULL,
-             "checksum" NVARCHAR(32) NOT NULL,
-             "installed_by" NVARCHAR(100) NOT NULL,
-             "installed_on" DATETIME NOT NULL DEFAULT (GETUTCDATE()),
-             "execution_time" FLOAT NOT NULL,
-             "success" BIT NOT NULL)
+                "installed_rank" INT PRIMARY KEY NOT NULL,
+                "version" NVARCHAR(50) NULL,
+                "description" NVARCHAR(200) NOT NULL,
+                "type" NVARCHAR(20) NOT NULL,
+                "script" NVARCHAR(1000) NOT NULL,
+                "checksum" NVARCHAR(32) NOT NULL,
+                "installed_by" NVARCHAR(100) NOT NULL,
+                "installed_on" DATETIME NOT NULL DEFAULT (GETUTCDATE()),
+                "execution_time" FLOAT NOT NULL,
+                "success" BIT NOT NULL
+             )
              """;
 
         _dbExecutor.ExecuteNonQuery(sql, transaction);

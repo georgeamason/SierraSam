@@ -30,14 +30,12 @@ public sealed class Validate : ICapability
     {
         _logger.LogTrace($"{nameof(Validate)} running");
 
-        // if (_database.Connection.State is not ConnectionState.Open) _database.Connection.Open();
-
         var stopwatch = Stopwatch.StartNew();
         var validated = _migrationValidator.Validate();
         stopwatch.Stop();
 
         _console.MarkupLine(
-            $"[green]Successfully validated {validated} migrations " +
+            $"[green]Successfully validated {validated} migration(s) " +
             $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)[/]"
         );
     }

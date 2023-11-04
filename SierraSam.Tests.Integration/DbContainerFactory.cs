@@ -1,56 +1,222 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using System.Data;
+using System.Data.Common;
+using System.Data.Odbc;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using Respawn;
 
 namespace SierraSam.Tests.Integration;
 
 internal static class DbContainerFactory
 {
-    public static IContainer CreateMsSqlContainer(string password)
+    private const string Password = "yourStrong(!)Password";
+
+    public static readonly IEnumerable<IDbContainer> ContainerTestCases = new IDbContainer[]
     {
-        return new ContainerBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPortBinding(1433, true)
-            .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("MSSQL_SA_PASSWORD", password)
-            .WithWaitStrategy
-            (Wait
-                .ForUnixContainer()
-                .UntilCommandIsCompleted
-                ("/opt/mssql-tools/bin/sqlcmd",
-                    "-S", $"127.0.0.1,{1433}",
-                    "-U", "sa",
-                    "-P", password)
-            )
-            .Build();
+        new SqlServer("2022-latest"),
+        new SqlServer("2017-latest"),
+        new Postgres("16"),
+        new Postgres("15"),
+        new MySql("8.2"),
+        new MySql("5.7")
+    };
+
+    public interface IDbContainer
+    {
+        public DbConnection DbConnection { get; }
+        public Task StartAsync();
+        public Task StopAsync();
+        public Task Clean();
     }
 
-    public static IContainer CreatePostgresContainer(string password)
+    private sealed class SqlServer : IDbContainer
     {
-        return new ContainerBuilder()
-            .WithImage("postgres:latest")
-            .WithPortBinding(5432, true)
-            .WithEnvironment("POSTGRES_USER", "sa")
-            .WithEnvironment("POSTGRES_PASSWORD", password)
-            .WithWaitStrategy(Wait
-                .ForUnixContainer()
-                .UntilPortIsAvailable(5432))
-            .Build();
+        private readonly IContainer _container;
+
+        public SqlServer(string tag = "latest")
+        {
+            _container = new ContainerBuilder()
+                .WithImage($"mcr.microsoft.com/mssql/server:{tag}")
+                .WithPortBinding(1433, true)
+                .WithEnvironment("ACCEPT_EULA", "Y")
+                .WithEnvironment("MSSQL_SA_PASSWORD", Password)
+                .WithWaitStrategy(
+                    Wait
+                        .ForUnixContainer()
+                        .UntilCommandIsCompleted
+                        ("/opt/mssql-tools/bin/sqlcmd",
+                            "-S", $"127.0.0.1,{1433}",
+                            "-U", "sa",
+                            "-P", Password)
+                )
+                .Build();
+        }
+
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                var connection = new OdbcConnection(
+                    $"Driver={{ODBC Driver 17 for SQL Server}};" +
+                    $"Server=127.0.0.1,{_container.GetMappedPublicPort(1433)};" +
+                    $"UID=sa;PWD={Password};"
+                );
+
+                connection.Open();
+
+                return connection;
+            }
+        }
+
+        public Task StartAsync() => _container.StartAsync();
+
+        public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.SqlServer
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 
-    /// <summary>
-    /// Let the OS assign the next available port. Unless we cycle through all ports
-    /// on a test run, the OS will always increment the port number when making these calls.
-    /// This prevents races in parallel test runs where a test is already bound to
-    /// a given port, and a new test is able to bind to the same port due to port
-    /// reuse being enabled by default by the OS.
-    /// </summary>
-    /// <see cref="https://github.com/dotnet/tye/blob/main/src/Microsoft.Tye.Core/NextPortFinder.cs"/>
-    private static int GetPort()
+    private sealed class Postgres : IDbContainer
     {
-        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
-        return ((IPEndPoint)socket.LocalEndPoint!).Port;
+        private readonly IContainer _container;
+
+        public Postgres(string tag = "latest")
+        {
+            _container = new ContainerBuilder()
+                .WithImage($"postgres:{tag}")
+                .WithPortBinding(5432, true)
+                .WithEnvironment("POSTGRES_USER", "sa")
+                .WithEnvironment("POSTGRES_PASSWORD", Password)
+                .WithWaitStrategy(Wait
+                    .ForUnixContainer()
+                    .UntilPortIsAvailable(5432))
+                .Build();
+        }
+
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                var connection = new OdbcConnection(
+                    $"Driver={{PostgreSQL UNICODE}};" +
+                    $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(5432)};" +
+                    $"Uid=sa;Pwd={Password};"
+                );
+
+                connection.Open();
+
+                return connection;
+            }
+        }
+
+        public Task StartAsync() => _container.StartAsync();
+
+        public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.Postgres
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
+    }
+
+    private sealed class MySql : IDbContainer
+    {
+        private readonly IContainer _container;
+
+        public MySql(string tag = "latest")
+        {
+            _container = new ContainerBuilder()
+                .WithImage($"mysql:{tag}")
+                .WithPortBinding(3306, true)
+                .WithEnvironment("MYSQL_ROOT_PASSWORD", Password)
+                .WithEnvironment("MYSQL_DATABASE", "test")
+                .WithWaitStrategy(Wait
+                    .ForUnixContainer()
+                    .UntilPortIsAvailable(3306))
+                .Build();
+        }
+
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                var connection = new OdbcConnection(
+                    $"Driver={{MySQL ODBC 8.2 UNICODE Driver}};" +
+                    $"Server=127.0.0.1;Port={_container.GetMappedPublicPort(3306)};" +
+                    $"Database=test;" +
+                    $"User=root;Password={Password};" +
+                    $"MULTI_STATEMENTS=1;"
+                );
+
+                connection.Open();
+
+                return connection;
+            }
+        }
+
+        public Task StartAsync() => _container.StartAsync();
+
+        public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.MySql
+                }
+            );
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 }

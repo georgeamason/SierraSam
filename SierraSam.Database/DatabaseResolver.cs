@@ -18,6 +18,17 @@ public static class DatabaseResolver
     {
         var connectionString = configuration.Url;
 
+        if (connectionString.Contains("mysql", StringComparison.InvariantCultureIgnoreCase))
+        {
+            return new MysqlDatabase(
+                loggerFactory.CreateLogger<MysqlDatabase>(),
+                connection,
+                executor,
+                configuration,
+                cache
+            );
+        }
+
         if (connectionString.Contains("postgres", StringComparison.InvariantCultureIgnoreCase))
         {
             return new PostgresDatabase(

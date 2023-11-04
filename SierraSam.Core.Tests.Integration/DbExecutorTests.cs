@@ -159,6 +159,19 @@ internal sealed class DbExecutorTests
     }
 
     [Test]
+    public void ExecuteScalar_returns_default_for_db_null()
+    {
+        var odbcExecutor = new DbExecutor(_connection);
+
+        odbcExecutor.ExecuteNonQuery("CREATE TABLE dbo.Dummy (Id INT)");
+
+        odbcExecutor
+            .ExecuteScalar<int>("SELECT COUNT(*) FROM dbo.Dummy")
+            .Should()
+            .Be(0);
+    }
+
+    [Test]
     public void ExecuteScalar_throws_when_sql_is_invalid()
     {
         var odbcExecutor = new DbExecutor(_connection);

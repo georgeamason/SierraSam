@@ -9,6 +9,7 @@ public sealed class PostgresDatabase : DefaultDatabase
 {
     private readonly ILogger<PostgresDatabase> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
     private readonly IDbExecutor _dbExecutor;
 
     public PostgresDatabase(
@@ -24,6 +25,9 @@ public sealed class PostgresDatabase : DefaultDatabase
 
         _configuration = configuration
             ?? throw new ArgumentNullException(nameof(configuration));
+
+        _cache = cache
+            ?? throw new ArgumentNullException(nameof(cache));
 
         _dbExecutor = executor
             ?? throw new ArgumentNullException(nameof(executor));
@@ -73,6 +77,8 @@ public sealed class PostgresDatabase : DefaultDatabase
 
     public override int InsertSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
+        const string cacheKey = "schema_history";
+
         var sql =
             $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +
                 "\"installed_rank\"," +
@@ -96,6 +102,8 @@ public sealed class PostgresDatabase : DefaultDatabase
                 "DEFAULT," +
                 $"{appliedMigration.ExecutionTime}," +
                 $"{appliedMigration.Success})";
+
+        _cache.Remove(cacheKey);
 
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }

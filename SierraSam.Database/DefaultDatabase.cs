@@ -49,9 +49,11 @@ public abstract class DefaultDatabase : IDatabase
 
     public virtual bool HasTable(string tableName)
     {
-        var sql = $"SELECT \"TABLE_NAME\" " +
-                  $"FROM \"INFORMATION_SCHEMA\".\"TABLES\" " +
-                  $"WHERE \"TABLE_NAME\" = '{tableName}'";
+        var sql = $"""
+                   SELECT "TABLE_NAME"
+                   FROM "INFORMATION_SCHEMA"."TABLES"
+                   WHERE "TABLE_NAME" = '{tableName}'
+                   """;
 
         var result = _dbExecutor.ExecuteReader<string>(
             sql,
@@ -70,17 +72,19 @@ public abstract class DefaultDatabase : IDatabase
         table ??= _configuration.SchemaTable;
 
         var sql =
-            $"CREATE TABLE {schema}.{table} (" +
-             "\"installed_rank\" INT PRIMARY KEY NOT NULL," +
-             "\"version\" NVARCHAR(50) NULL," +
-             "\"description\" NVARCHAR(200) NOT NULL," +
-             "\"type\" NVARCHAR(20) NOT NULL," +
-             "\"script\" NVARCHAR(1000) NOT NULL," +
-             "\"checksum\" NVARCHAR(32) NOT NULL," +
-             "\"installed_by\" NVARCHAR(100) NOT NULL," +
-             "\"installed_on\" DATETIME NOT NULL DEFAULT (GETUTCDATE())," +
-             "\"execution_time\" FLOAT NOT NULL," +
-             "\"success\" BIT NOT NULL)";
+            $"""
+             CREATE TABLE "{schema}"."{table}" (
+             "installed_rank" INT PRIMARY KEY NOT NULL,
+             "version" NVARCHAR(50) NULL,
+             "description" NVARCHAR(200) NOT NULL,
+             "type" NVARCHAR(20) NOT NULL,
+             "script" NVARCHAR(1000) NOT NULL,
+             "checksum" NVARCHAR(32) NOT NULL,
+             "installed_by" NVARCHAR(100) NOT NULL,
+             "installed_on" DATETIME NOT NULL DEFAULT (GETUTCDATE()),
+             "execution_time" FLOAT NOT NULL,
+             "success" BIT NOT NULL)
+             """;
 
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
@@ -101,18 +105,22 @@ public abstract class DefaultDatabase : IDatabase
         schema ??= _configuration.DefaultSchema;
         table ??= _configuration.SchemaTable;
 
-        var sql = "SELECT \"installed_rank\"," +
-                  "\"version\"," +
-                  "\"description\"," +
-                  "\"type\"," +
-                  "\"script\"," +
-                  "\"checksum\"," +
-                  "\"installed_by\"," +
-                  "\"installed_on\"," +
-                  "\"execution_time\"," +
-                  "\"success\" " +
-                  $"FROM \"{schema}\".\"{table}\" " +
-                  "ORDER BY \"installed_rank\"";
+        var sql =
+            $"""
+             SELECT 
+             "installed_rank",
+             "version",
+             "description",
+             "type",
+             "script",
+             "checksum",
+             "installed_by",
+             "installed_on",
+             "execution_time",
+             "success"
+              FROM "{schema}"."{table}"
+              ORDER BY "installed_rank"
+             """;
 
         if (HasMigrationTable is false)
         {
@@ -152,28 +160,32 @@ public abstract class DefaultDatabase : IDatabase
         const string cacheKey = "schema_history";
 
         var sql =
-            $"INSERT INTO \"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\"(" +
-                "\"installed_rank\"," +
-                "\"version\"," +
-                "\"description\"," +
-                "\"type\"," +
-                "\"script\"," +
-                "\"checksum\"," +
-                "\"installed_by\"," +
-                "\"installed_on\"," +
-                "\"execution_time\"," +
-                "\"success\")" +
-            " VALUES(" +
-                $"{appliedMigration.InstalledRank}," +
-                (appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : $"NULL,") +
-                $"N'{appliedMigration.Description}'," +
-                $"N'{appliedMigration.Type}'," +
-                $"N'{appliedMigration.Script}'," +
-                $"N'{appliedMigration.Checksum}'," +
-                $"N'{appliedMigration.InstalledBy}'," +
-                 "DEFAULT," +
-                $"{appliedMigration.ExecutionTime}," +
-                $"{(appliedMigration.Success ? 1 : 0)})";
+            $"""
+             INSERT INTO "{_configuration.DefaultSchema}"."{_configuration.SchemaTable}"
+             (
+                "installed_rank",
+                "version",
+                "description",
+                "type",
+                "script",
+                "checksum",
+                "installed_by",
+                "installed_on",
+                "execution_time",
+                "success"
+             ) VALUES (
+                {appliedMigration.InstalledRank},
+                {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                N'{appliedMigration.Description}',
+                N'{appliedMigration.Type}',
+                N'{appliedMigration.Script}',
+                N'{appliedMigration.Checksum}',
+                N'{appliedMigration.InstalledBy}',
+                DEFAULT,
+                {appliedMigration.ExecutionTime},
+                {(appliedMigration.Success ? 1 : 0)}
+             )
+             """;
 
         _cache.Remove(cacheKey);
 
@@ -183,17 +195,19 @@ public abstract class DefaultDatabase : IDatabase
     public virtual int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
         var sql =
-            $"UPDATE {_configuration.DefaultSchema}.{_configuration.SchemaTable}" + Environment.NewLine +
-            $"SET \"version\" = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}" + Environment.NewLine +
-                $"\"description\" = N'{appliedMigration.Description}'," + Environment.NewLine +
-                $"\"type\" = N'{appliedMigration.Type}'," + Environment.NewLine +
-                $"\"script\" = N'{appliedMigration.Script}'," + Environment.NewLine +
-                $"\"checksum\" = N'{appliedMigration.Checksum}'," + Environment.NewLine +
-                $"\"installed_by\"   = N'{appliedMigration.InstalledBy}'," + Environment.NewLine +
-                $"\"installed_on\"   = N'{appliedMigration.InstalledOn:yyyy-MM-dd HH:mm:ss}'," + Environment.NewLine +
-                $"\"execution_time\" = N'{appliedMigration.ExecutionTime}'" + Environment.NewLine +
-                // $"\"success\"        = N'{appliedMigration.Success}'" + Environment.NewLine +
-            $"WHERE installed_rank = {appliedMigration.InstalledRank};";
+            $"""
+             UPDATE "{_configuration.DefaultSchema}"."{_configuration.SchemaTable}"
+             SET "version" = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                 "description" = N'{appliedMigration.Description}',
+                 "type" = N'{appliedMigration.Type}',
+                 "script" = N'{appliedMigration.Script}',
+                 "checksum" = N'{appliedMigration.Checksum}',
+                 "installed_by"   = N'{appliedMigration.InstalledBy}',
+                 "installed_on"   = N'{appliedMigration.InstalledOn:yyyy-MM-dd HH:mm:ss}',
+                 "execution_time" = N'{appliedMigration.ExecutionTime}',
+                 "success"        = N'{appliedMigration.Success}'
+             WHERE "installed_rank" = {appliedMigration.InstalledRank}
+             """;
 
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
@@ -214,12 +228,17 @@ public abstract class DefaultDatabase : IDatabase
         schema ??= _configuration.DefaultSchema!;
 
         //  TODO: How about Triggers - they are not in sys.objects
-        var sql = $"SELECT o.name, o.type, t.name AS parent " +
-                  $"FROM sys.objects o " +
-                  $"INNER JOIN sys.schemas s ON s.[schema_id] = o.[schema_id] " +
-                  $"LEFT JOIN sys.tables t ON t.[object_id] = o.parent_object_id " +
-                  $"WHERE s.name = '{schema}' AND o.is_ms_shipped = 0 " +
-                  $"ORDER BY o.parent_object_id DESC, o.[object_id] DESC";
+        var sql = $"""
+                   SELECT 
+                       o.name, 
+                       o.type, 
+                       t.name AS parent
+                   FROM "sys"."objects" o
+                   INNER JOIN "sys"."schemas" s ON s.[schema_id] = o.[schema_id]
+                   LEFT JOIN "sys"."tables" t ON t.[object_id] = o.parent_object_id
+                   WHERE s.name = "{schema}" AND o.is_ms_shipped = 0
+                   ORDER BY o.parent_object_id DESC, o.[object_id] DESC
+                   """;
 
         return _dbExecutor.ExecuteReader<DatabaseObject>(
             sql,

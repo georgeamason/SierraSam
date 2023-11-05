@@ -25,39 +25,28 @@ internal sealed class Clean : ICapability
         _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Clean)} is running");
-
-        var schemas = _configuration.Schemas.Any()
-            ? _configuration.Schemas.ToArray()
-            : new[] { _configuration.DefaultSchema };
 
         using var transaction = _database.Connection.BeginTransaction();
         try
         {
-            foreach (var schema in schemas)
-            {
-                var i = 1;
-                foreach (var obj in _database.GetSchemaObjects(schema, transaction))
-                {
-                    _logger.LogInformation("{index}: {objectName}", i, obj.Name);
-                    _database.DropSchemaObject(obj, transaction);
-                    i++;
-                }
-            }
+            var cleanedSchema = _database.Clean(transaction);
 
             transaction.Commit();
 
             _console.MarkupLine(
-                $"[green]Cleaned schema(s) \"{string.Join(", ", schemas)}\"[/]"
+                $"[green]Cleaned schema(s) \"{string.Join(", ", cleanedSchema)}\"[/]"
             );
         }
-        catch (Exception exception)
-        when (exception is OdbcException or ArgumentOutOfRangeException)
+        catch (OdbcExecutorException exception)
         {
             transaction.Rollback();
-            throw new CleanException($"Failed to clean schema(s)", exception);
+
+            throw new CleanException("Failed to clean schema(s)", exception);
         }
+
+        return Task.CompletedTask;
     }
 }

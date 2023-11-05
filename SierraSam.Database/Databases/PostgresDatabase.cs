@@ -1,6 +1,8 @@
 ﻿using System.Data;
+using System.Data.Odbc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Respawn;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
@@ -11,6 +13,7 @@ public sealed class PostgresDatabase : DefaultDatabase
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _cache;
     private readonly IDbExecutor _dbExecutor;
+    private readonly Respawner _respawner;
 
     public PostgresDatabase(
         ILogger<PostgresDatabase> logger,
@@ -33,6 +36,17 @@ public sealed class PostgresDatabase : DefaultDatabase
             ?? throw new ArgumentNullException(nameof(executor));
 
         _configuration.DefaultSchema ??= this.DefaultSchema;
+
+        _respawner = Respawner.CreateAsync(
+            (OdbcConnection) connection,
+            new RespawnerOptions
+            {
+                DbAdapter = DbAdapter.Postgres,
+                SchemasToInclude = _configuration.Schemas.Any()
+                    ? _configuration.Schemas.ToArray()
+                    : new[] { _configuration.DefaultSchema }
+            }
+        ).Result;
     }
 
     public override string Provider => "PostgreSQL";
@@ -115,6 +129,15 @@ public sealed class PostgresDatabase : DefaultDatabase
         _cache.Remove(cacheKey);
 
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
+    }
+
+    public override IEnumerable<string> Clean(IDbTransaction? transaction = null)
+    {
+        if (string.IsNullOrEmpty(_respawner.DeleteSql)) return Array.Empty<string>();
+
+        _dbExecutor.ExecuteNonQuery(_respawner.DeleteSql, transaction);
+
+        return _respawner.Options.SchemasToInclude;
     }
 
     public override string ServerVersion =>

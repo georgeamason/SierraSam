@@ -2,5 +2,5 @@
 
 public interface ICapability
 {
-    void Run(string[] args);
+    Task Run(string[] args);
 }

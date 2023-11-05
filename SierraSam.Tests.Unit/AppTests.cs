@@ -25,14 +25,20 @@ internal sealed class AppTests
     }
     
     [TestCaseSource(nameof(Get_args))]
-    public void Args_call_correct_path(string[] args, Type type)
+    public async Task Args_call_correct_path(string[] args, Type type)
     {
         var app = new App(_logger, _capabilityResolver, _console);
 
-        app.Start(args);
+        await app.Start(args);
 
         _capabilityResolver.Received(1).Resolve(type);
 
-        _logger.Received(1).LogTrace($"App running");
+        _logger.Received().Log(
+            LogLevel.Trace,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(o => o.ToString() == "App running"),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>()
+        );
     }
 }

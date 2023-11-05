@@ -15,7 +15,7 @@ public sealed class Version : ICapability
         _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Version)} running");
 
@@ -25,5 +25,7 @@ public sealed class Version : ICapability
                       ?? throw new ApplicationException("No assembly version specified");
 
         _console.WriteLine($"Version: {version.Major}.{version.Minor}.{version.Build}.{version.Revision}");
+
+        return Task.CompletedTask;
     }
 }

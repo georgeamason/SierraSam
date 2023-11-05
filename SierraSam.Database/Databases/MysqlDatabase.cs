@@ -1,6 +1,8 @@
 ﻿using System.Data;
+using System.Data.Odbc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Respawn;
 using SierraSam.Core;
 
 namespace SierraSam.Database.Databases;
@@ -12,6 +14,7 @@ internal sealed class MysqlDatabase : DefaultDatabase
     private readonly IDbExecutor _executor;
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _cache;
+    private readonly Respawner _respawner;
 
     public MysqlDatabase(
         ILogger<DefaultDatabase> logger,
@@ -28,6 +31,17 @@ internal sealed class MysqlDatabase : DefaultDatabase
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
         _configuration.DefaultSchema ??= this.DefaultSchema;
+
+        _respawner = Respawner.CreateAsync(
+            (OdbcConnection) connection,
+            new RespawnerOptions
+            {
+                DbAdapter = DbAdapter.MySql,
+                SchemasToInclude = _configuration.Schemas.Any()
+                    ? _configuration.Schemas.ToArray()
+                    : new[] { _configuration.DefaultSchema }
+            }
+        ).Result;
     }
 
     public override string Provider => "MySQL";
@@ -176,6 +190,15 @@ internal sealed class MysqlDatabase : DefaultDatabase
         _cache.Remove(cacheKey);
 
         return _executor.ExecuteNonQuery(sql, transaction);
+    }
+
+    public override IEnumerable<string> Clean(IDbTransaction? transaction = null)
+    {
+        if (_respawner.DeleteSql is null) return Array.Empty<string>();
+
+        _executor.ExecuteNonQuery(_respawner.DeleteSql, transaction);
+
+        return _respawner.Options.SchemasToInclude;
     }
 
     public override int GetInstalledRank(

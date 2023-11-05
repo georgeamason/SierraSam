@@ -30,7 +30,7 @@ internal sealed class Information : ICapability
             ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Information)} running");
 
@@ -40,11 +40,13 @@ internal sealed class Information : ICapability
         {
             _console.WriteLine("No migrations found");
 
-            return;
+            return Task.CompletedTask;
         }
 
         var content = _serializer.Serialize(migrations);
 
         _console.Write(content);
+
+        return Task.CompletedTask;
     }
 }

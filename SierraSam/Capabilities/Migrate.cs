@@ -42,7 +42,7 @@ internal sealed class Migrate : ICapability
             ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Migrate)} running");
 
@@ -94,7 +94,7 @@ internal sealed class Migrate : ICapability
                 $"[green]Schema \"{_configuration.DefaultSchema}\" is up to date[/]"
             );
 
-            return;
+            return Task.CompletedTask;
         }
 
         _console.MarkupLine(
@@ -102,5 +102,7 @@ internal sealed class Migrate : ICapability
             $"to schema \"{_configuration.DefaultSchema}\" " +
             $@"(execution time {executionTime.Elapsed:mm\:ss\.fff}s)[/]"
         );
+
+        return Task.CompletedTask;
     }
 }

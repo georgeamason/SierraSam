@@ -14,7 +14,7 @@ public sealed class Help : ICapability
         _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Help)} running");
 
@@ -22,7 +22,7 @@ public sealed class Help : ICapability
         {
             _console.WriteLine("usage: ss [-v | --version] [--help] [--auth]");
 
-            return;
+            return Task.CompletedTask;
         }
 
         switch (args[0])
@@ -31,5 +31,7 @@ public sealed class Help : ICapability
                 _console.WriteLine("This gives me some extra help");
                 break;
         }
+
+        return Task.CompletedTask;
     }
 }

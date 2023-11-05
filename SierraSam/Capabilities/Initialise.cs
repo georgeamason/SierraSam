@@ -30,7 +30,7 @@ internal sealed class Initialise : ICapability
         _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Initialise)} running");
 
@@ -42,7 +42,7 @@ internal sealed class Initialise : ICapability
                 $"already exists[/]"
             );
 
-            return;
+            return Task.CompletedTask;
         }
 
         var transaction = _database.Connection.BeginTransaction();
@@ -92,6 +92,8 @@ internal sealed class Initialise : ICapability
             transaction.Commit();
 
             _console.MarkupLine($"[green]{sb}[/]");
+
+            return Task.CompletedTask;
         }
         catch (OdbcException exception)
         {

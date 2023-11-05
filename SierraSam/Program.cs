@@ -21,7 +21,7 @@ namespace SierraSam;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         using var host = Host
             .CreateDefaultBuilder(args)
@@ -126,7 +126,7 @@ public static class Program
             try
             {
                 logger.LogDebug("Starting app...");
-                app.Start(args);
+                await app.Start(args);
                 logger.LogDebug("Terminating app...");
             }
             catch (Exception exception)

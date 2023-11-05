@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -222,57 +221,7 @@ public abstract class DefaultDatabase : IDatabase
         return stopwatch.Elapsed;
     }
 
-    public virtual IReadOnlyCollection<DatabaseObject> GetSchemaObjects(
-        string? schema = null,
-        IDbTransaction? transaction = null)
-    {
-        schema ??= _configuration.DefaultSchema!;
-
-        //  TODO: How about Triggers - they are not in sys.objects
-        var sql = $"""
-                   SELECT 
-                       o.name, 
-                       o.type, 
-                       t.name AS parent
-                   FROM "sys"."objects" o
-                   INNER JOIN "sys"."schemas" s ON s.[schema_id] = o.[schema_id]
-                   LEFT JOIN "sys"."tables" t ON t.[object_id] = o.parent_object_id
-                   WHERE s.name = "{schema}" AND o.is_ms_shipped = 0
-                   ORDER BY o.parent_object_id DESC, o.[object_id] DESC
-                   """;
-
-        return _dbExecutor.ExecuteReader<DatabaseObject>(
-            sql,
-            reader => new DatabaseObject(
-                schema,
-                reader.GetString(0).Trim(),
-                !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
-                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
-            transaction);
-    }
-
-    public virtual void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null)
-    {
-        var objectType = obj.Type switch
-        {
-            "AF" => "AGGREGATE",
-            "C" or "D" or "F" or "PK" or "UQ" => "CONSTRAINT",
-            "FN" or "IF" or "TF" => "FUNCTION",
-            "P" => "PROCEDURE",
-            "U" => "TABLE",
-            "V" => "VIEW",
-            _   => throw new ArgumentOutOfRangeException(nameof(obj), $"Unknown database object type '{obj.Type}'")
-        };
-
-        var sb = new StringBuilder();
-
-        if (obj.Parent is not null)
-            sb.Append($"ALTER TABLE \"{obj.Schema}\".\"{obj.Parent}\"");
-
-        sb.Append($"DROP {objectType} \"{obj.Name}\"");
-
-        _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
-    }
+    public abstract IEnumerable<string> Clean(IDbTransaction? transaction = null);
 
     public virtual int GetInstalledRank(
         string? schema = null,

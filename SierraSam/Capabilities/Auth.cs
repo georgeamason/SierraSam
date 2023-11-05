@@ -9,9 +9,11 @@ public sealed class Auth : ICapability
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Auth)} is running");
+
+        return Task.CompletedTask;
     }
 
     private readonly ILogger<Auth> _logger;

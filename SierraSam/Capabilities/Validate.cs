@@ -26,7 +26,7 @@ public sealed class Validate : ICapability
             ?? throw new ArgumentNullException(nameof(console));
     }
 
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Validate)} running");
 
@@ -40,5 +40,7 @@ public sealed class Validate : ICapability
             $"[green]Successfully validated {validated} migrations " +
             $@"(execution time {stopwatch.Elapsed:mm\:ss\.fff}s)[/]"
         );
+
+        return Task.CompletedTask;
     }
 }

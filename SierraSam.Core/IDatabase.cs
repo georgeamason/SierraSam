@@ -38,9 +38,7 @@ public interface IDatabase
 
     TimeSpan ExecuteMigration(string sql, IDbTransaction? transaction = null);
 
-    IReadOnlyCollection<DatabaseObject> GetSchemaObjects(string? schema = null, IDbTransaction? transaction = null);
-
-    void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null);
+    IEnumerable<string> Clean(IDbTransaction? transaction = null);
 
     int GetInstalledRank(string? schema = null, string? table = null, IDbTransaction? transaction = null);
 }

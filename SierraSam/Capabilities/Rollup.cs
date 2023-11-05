@@ -19,10 +19,11 @@ internal sealed class Rollup : ICapability
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
-    public void Run(string[] args)
+    public Task Run(string[] args)
     {
         _logger.LogTrace($"{nameof(Rollup)} running");
 
         // TODO: Join all versioned migrations up into 1 single migration up to specified version
+        return Task.CompletedTask;
     }
 }

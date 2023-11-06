@@ -89,20 +89,6 @@ jobs:
           path: ./**/TestResults/*.trx
           retention-days: 30
 
-  report:
-    needs: test
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: test-results
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        with:
-          name: DotNET Tests
-          path: ./**/*.trx
-          reporter: dotnet-trx
-
   publish:
     if: ${{ github.ref_name == 'main' }}
     needs: [setup, test]

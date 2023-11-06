@@ -93,12 +93,14 @@ jobs:
     needs: test
     runs-on: ubuntu-22.04
     steps:
-      - name: Test Report
-        uses: dorny/test-reporter@v1.7.0
+      - uses: actions/download-artifact@v3
         with:
-          artifact: test-results
+          name: test-results
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        with:
           name: DotNET Tests
-          path: './**/*.trx'
+          path: ./**/*.trx
           reporter: dotnet-trx
 
   publish:

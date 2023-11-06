@@ -80,7 +80,14 @@ jobs:
           sudo dpkg -i mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
       - name: Run Tests
         if: success()
-        run: dotnet test --configuration Release --verbosity normal
+        run: dotnet test --configuration Release --verbosity normal --logger trx
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: test-results
+          path: ./**/TestResults/*.trx
+          retention-days: 30
 
   publish:
     if: ${{ github.ref_name == 'main' }}

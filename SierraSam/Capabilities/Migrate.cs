@@ -52,7 +52,7 @@ internal sealed class Migrate : ICapability
 
         _console.WriteLine($"{_database.Provider}::{_database.ServerVersion}::{_database.Connection.Database}");
 
-        if (!_database.HasMigrationTable)
+        if (!_database.HasMigrationTable())
         {
             _console.WriteLine(
                 "Creating schema history table: " +

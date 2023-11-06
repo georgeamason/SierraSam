@@ -21,20 +21,11 @@ public abstract class DefaultDatabase : IDatabase
         IConfiguration configuration,
         IMemoryCache cache)
     {
-        Connection = connection
-            ?? throw new ArgumentNullException(nameof(connection));
-
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
-        _dbExecutor = executor
-            ?? throw new ArgumentNullException(nameof(executor));
-
-        _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
-
-        _cache = cache
-            ?? throw new ArgumentNullException(nameof(cache));
+        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _dbExecutor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
     public abstract string Provider { get; }
@@ -45,19 +36,28 @@ public abstract class DefaultDatabase : IDatabase
 
     public IDbConnection Connection { get; }
 
-    public virtual bool HasMigrationTable => HasTable(_configuration.SchemaTable);
+    public virtual bool HasMigrationTable(IDbTransaction? transaction = null) => HasTable(transaction: transaction);
 
-    public virtual bool HasTable(string tableName)
+    public virtual bool HasTable(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    )
     {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
         var sql = $"""
                    SELECT "TABLE_NAME"
                    FROM "INFORMATION_SCHEMA"."TABLES"
-                   WHERE "TABLE_NAME" = '{tableName}'
+                   WHERE "TABLE_SCHEMA" = '{schema}' AND
+                         "TABLE_NAME" = '{table}'
                    """;
 
         var result = _dbExecutor.ExecuteReader<string>(
             sql,
-            reader => reader.GetString(0)
+            reader => reader.GetString(0),
+            transaction
         );
 
         return result.Any();
@@ -123,7 +123,7 @@ public abstract class DefaultDatabase : IDatabase
               ORDER BY "installed_rank"
              """;
 
-        if (HasMigrationTable is false)
+        if (HasMigrationTable(transaction) is false)
         {
             throw new InvalidOperationException($"Schema history table " +
                                                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
@@ -237,7 +237,7 @@ public abstract class DefaultDatabase : IDatabase
                    FROM "sys"."objects" o
                    INNER JOIN "sys"."schemas" s ON s.[schema_id] = o.[schema_id]
                    LEFT JOIN "sys"."tables" t ON t.[object_id] = o.parent_object_id
-                   WHERE s.name = "{schema}" AND o.is_ms_shipped = 0
+                   WHERE s.name = '{schema}' AND o.is_ms_shipped = 0
                    ORDER BY o.parent_object_id DESC, o.[object_id] DESC
                    """;
 

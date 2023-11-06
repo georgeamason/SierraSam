@@ -12,9 +12,13 @@ public interface IDatabase
 
     IDbConnection Connection { get; }
 
-    bool HasMigrationTable { get; }
+    bool HasMigrationTable(IDbTransaction? transaction = null);
 
-    bool HasTable(string tableName);
+    bool HasTable(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    );
 
     void CreateSchemaHistory(string? schema = null, string? table = null, IDbTransaction? transaction = null);
 

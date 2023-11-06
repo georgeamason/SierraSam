@@ -34,7 +34,7 @@ internal sealed class Initialise : ICapability
     {
         _logger.LogTrace($"{nameof(Initialise)} running");
 
-        if (_database.HasMigrationTable)
+        if (_database.HasMigrationTable())
         {
             _console.MarkupLine(
                 $"[yellow]Schema history table " +

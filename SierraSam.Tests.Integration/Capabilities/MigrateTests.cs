@@ -54,7 +54,7 @@ internal sealed class MigrateTests
 
         sut.Run(Array.Empty<string>());
 
-        database.HasMigrationTable.Should().BeTrue();
+        database.HasMigrationTable().Should().BeTrue();
         database.GetSchemaHistory().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
     }
 
@@ -109,7 +109,7 @@ internal sealed class MigrateTests
 
         sut.Run(Array.Empty<string>());
 
-        database.HasMigrationTable.Should().BeTrue();
+        database.HasMigrationTable().Should().BeTrue();
         database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,

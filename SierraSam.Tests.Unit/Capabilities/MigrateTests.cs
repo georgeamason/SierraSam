@@ -110,7 +110,7 @@ internal sealed class MigrateTests
     [Test]
     public void If_database_has_no_migration_table_then_it_is_created()
     {
-        _database.HasMigrationTable.Returns(false);
+        _database.HasMigrationTable().Returns(false);
 
         _sut.Run(Array.Empty<string>());
 
@@ -120,7 +120,7 @@ internal sealed class MigrateTests
     [Test]
     public void Applicator_is_called_with_expected_pending_migrations()
     {
-        _database.HasMigrationTable.Returns(true);
+        _database.HasMigrationTable().Returns(true);
 
         _migrationSeeker.Find().Returns(new PendingMigration[]
         {

@@ -32,17 +32,26 @@ internal sealed class MysqlDatabase : DefaultDatabase
 
     public override string Provider => "MySQL";
 
-    public override bool HasTable(string tableName)
+    public override bool HasTable(
+        string? schema = null,
+        string? table = null,
+        IDbTransaction? transaction = null
+    )
     {
+        schema ??= _configuration.DefaultSchema;
+        table ??= _configuration.SchemaTable;
+
         var sql = $"""
                    SELECT `table_name`
                    FROM `information_schema`.`tables`
-                   WHERE `table_name` = '{tableName}'
+                   WHERE `table_schema` = '{schema}' AND
+                         `table_name` = '{table}'
                    """;
 
         var result = _executor.ExecuteReader<string>(
             sql,
-            reader => reader.GetString(0)
+            reader => reader.GetString(0),
+            transaction
         );
 
         return result.Any();
@@ -109,7 +118,7 @@ internal sealed class MysqlDatabase : DefaultDatabase
               ORDER BY `installed_rank`
               """;
 
-        if (HasMigrationTable is false)
+        if (HasMigrationTable(transaction) is false)
         {
             throw new InvalidOperationException($"Schema history table " +
                                                 $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +

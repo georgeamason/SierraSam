@@ -119,8 +119,8 @@ public abstract class DefaultDatabase : IDatabase
              "installed_on",
              "execution_time",
              "success"
-              FROM "{schema}"."{table}"
-              ORDER BY "installed_rank"
+             FROM "{schema}"."{table}"
+             ORDER BY "installed_rank"
              """;
 
         if (HasMigrationTable(transaction) is false)
@@ -176,7 +176,7 @@ public abstract class DefaultDatabase : IDatabase
                 "success"
              ) VALUES (
                 {appliedMigration.InstalledRank},
-                {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'" : "NULL")},
                 N'{appliedMigration.Description}',
                 N'{appliedMigration.Type}',
                 N'{appliedMigration.Script}',

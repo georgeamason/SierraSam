@@ -43,7 +43,7 @@ internal sealed class MigrationMergerTests
             .Equal(new TerseMigration(
                     MigrationType.Versioned,
                     "1",
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "d41d8cd98f00b204e9800998ecf8427e",
                     installedOn,
@@ -74,7 +74,7 @@ internal sealed class MigrationMergerTests
             .Equal(new TerseMigration(
                 MigrationType.Versioned,
                 "1",
-                string.Empty,
+                "someDescription",
                 "SQL",
                 "abcd",
                 installedOn,
@@ -112,11 +112,11 @@ internal sealed class MigrationMergerTests
         new(
             1,
             "1",
-            string.Empty,
+            "someDescription",
             "SQL",
-            string.Empty,
+            "filename.sql",
             checksum,
-            string.Empty,
+            "someUser",
             installedOn,
             double.MinValue,
             true

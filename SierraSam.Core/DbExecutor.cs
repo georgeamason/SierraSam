@@ -76,7 +76,8 @@ public sealed class DbExecutor : IDbExecutor
             {
                 T result => result,
                 DBNull => default,
-                _ => throw new ArgumentException($"Database return was not of type '{typeof(T)}'", nameof(T))
+                { } result and not T => throw new ArgumentException($"Return type '{result.GetType()}' did not match '{typeof(T)}'", nameof(T)),
+                _ => throw new Exception("Unexpected error")
             };
         }
         catch (OdbcException exception)

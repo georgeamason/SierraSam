@@ -132,11 +132,11 @@ internal sealed class RemoteMigrationValidatorTests
                 new AppliedMigration(
                     1,
                     "1",
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "Filename.sql",
-                    string.Empty,
-                    string.Empty,
+                    "someChecksum",
+                    "someUser",
                     DateTime.UtcNow,
                     double.MinValue,
                     default)
@@ -173,11 +173,11 @@ internal sealed class RemoteMigrationValidatorTests
                 new AppliedMigration(
                     1,
                     null,
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "Filename.sql",
-                    string.Empty,
-                    string.Empty,
+                    "someChecksum",
+                    "someUser",
                     DateTime.UtcNow,
                     double.MinValue,
                     default)
@@ -219,11 +219,11 @@ internal sealed class RemoteMigrationValidatorTests
                 new AppliedMigration(
                     1,
                     "1",
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "Filename.sql",
                     "miss-matched-checksum",
-                    string.Empty,
+                    "someUser",
                     DateTime.UtcNow,
                     double.MinValue,
                     default)
@@ -258,11 +258,11 @@ internal sealed class RemoteMigrationValidatorTests
                 new AppliedMigration(
                     1,
                     null,
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "Filename.sql",
-                    string.Empty,
-                    string.Empty,
+                    "someChecksum",
+                    "someUser",
                     DateTime.UtcNow,
                     double.MinValue,
                     default)

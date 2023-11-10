@@ -3,12 +3,11 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
-using SierraSam.Core.Enums;
-using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationApplicators;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
 using Spectre.Console.Testing;
+using static SierraSam.Core.Enums.MigrationType;
 using static SierraSam.Tests.Integration.DbContainerFactory;
 
 namespace SierraSam.Tests.Integration.Capabilities;
@@ -63,7 +62,10 @@ internal sealed class MigrateTests
     {
         var connection = _container.DbConnection;
 
-        var configuration = new Configuration(url: connection.ConnectionString);
+        var configuration = new Configuration(
+            url: connection.ConnectionString,
+            installedBy: "Sierra Sam"
+        );
 
         var database = DatabaseResolver.Create(
             new NullLoggerFactory(),
@@ -75,11 +77,13 @@ internal sealed class MigrateTests
 
         var migrationSeeker = Substitute.For<IMigrationSeeker>();
 
-        migrationSeeker.Find().Returns(new PendingMigration[]
+        var pendingMigrations = new PendingMigration[]
         {
-            new ("1", "Add table foo", MigrationType.Versioned, "CREATE TABLE foo (id INT);", string.Empty),
-            // new (null, "Write into foo", MigrationType.Repeatable, "INSERT INTO foo VALUES (1);", string.Empty),
-        });
+            new("1", "Add table foo", Versioned, "CREATE TABLE foo (id INT);", "V1__Add_table_foo.sql"),
+            new(null, "Write into foo", Repeatable, "INSERT INTO foo VALUES (1);", "R1__Write_into_foo.sql"),
+        };
+
+        migrationSeeker.Find().Returns(pendingMigrations);
 
         var migrationApplicator = new MigrationsApplicator(
             database,
@@ -113,13 +117,23 @@ internal sealed class MigrateTests
         database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
-                    "1",
-                    "Add table foo",
+                    pendingMigrations[0].Version,
+                    pendingMigrations[0].Description,
                     "SQL",
-                    string.Empty,
-                    "CREATE TABLE foo (id INT);".Checksum(),
-                    string.Empty,
-                    DateTime.UtcNow,
+                    pendingMigrations[0].FileName,
+                    pendingMigrations[0].Checksum,
+                    "Sierra Sam",
+                    DateTime.MinValue.ToUniversalTime(),
+                    default,
+                    true),
+                new(2,
+                    pendingMigrations[1].Version,
+                    pendingMigrations[1].Description,
+                    "SQL",
+                    pendingMigrations[1].FileName,
+                    pendingMigrations[1].Checksum,
+                    "Sierra Sam",
+                    DateTime.MinValue.ToUniversalTime(),
                     default,
                     true)
             },
@@ -128,6 +142,8 @@ internal sealed class MigrateTests
                 .Excluding(migration => migration.InstalledOn)
         );
     }
+
+    // TODO: Write a test for updating schema history
 
     [TearDown]
     public async Task ResetDatabase() => await _container.Clean();

@@ -170,7 +170,7 @@ internal sealed class MysqlDatabase : DefaultDatabase
                  `success`
              ) VALUES (
                  {appliedMigration.InstalledRank},
-                 {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                 {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'" : "NULL")},
                  N'{appliedMigration.Description}',
                  N'{appliedMigration.Type}',
                  N'{appliedMigration.Script}',

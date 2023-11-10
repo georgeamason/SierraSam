@@ -77,6 +77,7 @@ internal sealed class VersionedMigrationApplicatorTests
     {
         var database = Substitute.For<IDatabase>();
         var configuration = Substitute.For<IConfiguration>();
+        configuration.InstalledBy.Returns("someUser");
         var console = new TestConsole();
 
         var sut = new VersionedMigrationApplicator(database, configuration, console);
@@ -86,7 +87,7 @@ internal sealed class VersionedMigrationApplicatorTests
             "someDescription",
             MigrationType.Versioned,
             string.Empty,
-            string.Empty
+            "filename.sql"
         );
 
         sut.Apply(pendingMigration, Substitute.For<IDbTransaction>());
@@ -104,6 +105,7 @@ internal sealed class VersionedMigrationApplicatorTests
     {
         var database = Substitute.For<IDatabase>();
         var configuration = Substitute.For<IConfiguration>();
+        configuration.InstalledBy.Returns("someUser");
         var console = Substitute.For<IAnsiConsole>();
 
         var sut = new VersionedMigrationApplicator(database, configuration, console);
@@ -113,7 +115,7 @@ internal sealed class VersionedMigrationApplicatorTests
             "someDescription",
             MigrationType.Versioned,
             string.Empty,
-            string.Empty
+            "filename.sql"
         );
 
         var transaction = Substitute.For<IDbTransaction>();
@@ -135,7 +137,7 @@ internal sealed class VersionedMigrationApplicatorTests
                     appliedMigration.Version == "1" &&
                     appliedMigration.Description == "someDescription" &&
                     appliedMigration.Type == "SQL" &&
-                    appliedMigration.Script == string.Empty &&
+                    appliedMigration.Script == "filename.sql" &&
                     appliedMigration.Checksum == string.Empty.Checksum() &&
                     appliedMigration.InstalledBy == configuration.InstalledBy &&
                     appliedMigration.InstalledOn.Kind == DateTimeKind.Utc &&

@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Data.Odbc;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Images;
 using Respawn;
 
 namespace SierraSam.Tests.Integration;
@@ -19,7 +20,9 @@ internal static class DbContainerFactory
         new Postgres("15"),
         new MySql("8.2"),
         new MySql("5.7"),
-        new Oracle("free", "23.3.0.0")
+        new Oracle("free", "23.3.0.0"),
+        new Oracle("enterprise", "21.3.0.0"),
+        new Oracle("enterprise", "19.3.0.0"),
     };
 
     public interface IDbContainer
@@ -85,9 +88,12 @@ internal static class DbContainerFactory
                 DbConnection,
                 new RespawnerOptions
                 {
-                    DbAdapter = DbAdapter.Oracle
+                    DbAdapter = DbAdapter.Oracle,
+                    SchemasToInclude = new []{"SYSTEM"}
                 }
             );
+
+            Console.WriteLine(respawner.DeleteSql);
 
             await respawner.ResetAsync(DbConnection);
         }

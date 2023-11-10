@@ -209,11 +209,11 @@ internal sealed class LocalMigrationValidatorTests
                 new AppliedMigration(
                     1,
                     "1",
-                    string.Empty,
+                    "someDescription",
                     "SQL",
                     "Filename.sql",
                     "miss-matched-checksum",
-                    string.Empty,
+                    "someUser",
                     DateTime.UtcNow,
                     double.MinValue,
                     default)

@@ -155,7 +155,7 @@ internal sealed class DbExecutorTests
             .Invoking(x => x.ExecuteScalar<Guid>("SELECT COUNT(*) FROM dbo.Dummy"))
             .Should()
             .Throw<ArgumentException>()
-            .WithMessage("Database return was not of type 'System.Guid' *");
+            .WithMessage("Return type 'System.Int32' did not match 'System.Guid' *");
     }
 
     [Test]

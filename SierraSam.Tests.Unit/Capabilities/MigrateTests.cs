@@ -136,9 +136,9 @@ internal sealed class MigrateTests
                 "1",
                 "description",
                 "SQL",
-                string.Empty,
+                "someScript",
                 string.Empty.Checksum(),
-                string.Empty,
+                "someUser",
                 DateTime.UtcNow,
                 double.MinValue,
                 true)

@@ -39,7 +39,7 @@ public static class DatabaseResolver
                     configuration,
                     cache
                 ),
-            { Driver: "{Oracle in instantclient_19_8}" or "{Oracle in instantclient_21_12}" } =>
+            { Driver: "{Oracle 21 ODBC driver}" } =>
                 new OracleDatabase(
                     loggerFactory.CreateLogger<OracleDatabase>(),
                     connection,

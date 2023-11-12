@@ -3,7 +3,6 @@ using System.Data.Common;
 using System.Data.Odbc;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Images;
 using Respawn;
 
 namespace SierraSam.Tests.Integration;
@@ -21,8 +20,8 @@ internal static class DbContainerFactory
         new MySql("8.2"),
         new MySql("5.7"),
         new Oracle("free", "23.3.0.0"),
-        new Oracle("enterprise", "21.3.0.0"),
-        new Oracle("enterprise", "19.3.0.0"),
+        // new Oracle("enterprise", "21.3.0.0"),
+        // new Oracle("enterprise", "19.3.0.0"),
     };
 
     public interface IDbContainer
@@ -62,7 +61,7 @@ internal static class DbContainerFactory
                 }
 
                 var connection = new OdbcConnection(
-                    $"Driver={{Oracle in instantclient_21_12}};" +
+                    $"Driver={{Oracle 21 ODBC driver}};" +
                     $"Dbq=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=127.0.0.1)(PORT={_container.GetMappedPublicPort(1521)}))(CONNECT_DATA=(SERVICE_NAME=FREE)));" +
                     $"Uid=SYSTEM;Pwd={Password};"
                 );

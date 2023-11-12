@@ -86,7 +86,7 @@ jobs:
           unzip instantclient-basiclite-linux.x64-21.11.0.0.0dbru.zip -d /opt/oracle
           unzip instantclient-odbc-linux.x64-21.11.0.0.0dbru.zip -d /opt/oracle
           sudo apt-get install -y glibc-source libaio1
-          sudo bash /opt/oracle/instantclient_21_11/odbc_update_ini.sh "/" "/opt/oracle/instantclient_21_11" "Oracle in instantclient_21_12" "OracleODBC-21" "/etc/odbc.ini"
+          sudo bash /opt/oracle/instantclient_21_11/odbc_update_ini.sh "/" "/opt/oracle/instantclient_21_11" "Oracle 21 ODBC driver" "OracleODBC-21" "/etc/odbc.ini"
       - name: Run Tests
         env:
           LD_LIBRARY_PATH: /opt/oracle/instantclient_21_11

@@ -20,8 +20,8 @@ internal static class DbContainerFactory
         new MySql("8.2"),
         new MySql("5.7"),
         new Oracle("free", "23.3.0.0"),
-        // new Oracle("enterprise", "21.3.0.0"),
-        // new Oracle("enterprise", "19.3.0.0"),
+        new Oracle("enterprise", "21.3.0.0"),
+        new Oracle("enterprise", "19.3.0.0"),
     };
 
     public interface IDbContainer

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
 using SierraSam.Core;
+using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationApplicators;
 using SierraSam.Core.MigrationSeekers;
 using SierraSam.Database;
@@ -64,7 +65,7 @@ internal sealed class MigrateTests
 
         var configuration = new Configuration(
             url: connection.ConnectionString,
-            installedBy: "Sierra Sam"
+            installedBy: "SierraSam"
         );
 
         var database = DatabaseResolver.Create(
@@ -122,7 +123,7 @@ internal sealed class MigrateTests
                     "SQL",
                     pendingMigrations[0].FileName,
                     pendingMigrations[0].Checksum,
-                    "Sierra Sam",
+                    "SierraSam",
                     DateTime.MinValue.ToUniversalTime(),
                     default,
                     true),
@@ -132,7 +133,7 @@ internal sealed class MigrateTests
                     "SQL",
                     pendingMigrations[1].FileName,
                     pendingMigrations[1].Checksum,
-                    "Sierra Sam",
+                    "SierraSam",
                     DateTime.MinValue.ToUniversalTime(),
                     default,
                     true)
@@ -143,7 +144,95 @@ internal sealed class MigrateTests
         );
     }
 
-    // TODO: Write a test for updating schema history
+    [Test]
+    public void Migrate_updates_schema_history_for_altered_repeatable_migration()
+    {
+        var connection = _container.DbConnection;
+
+        var configuration = new Configuration(
+            url: connection.ConnectionString,
+            installedBy: "SierraSam"
+        );
+
+        var database = DatabaseResolver.Create(
+            new NullLoggerFactory(),
+            connection,
+            new DbExecutor(connection),
+            configuration,
+            new MemoryCache(new MemoryCacheOptions())
+        );
+
+        if (!database.HasMigrationTable()) database.CreateSchemaHistory();
+
+        database.InsertSchemaHistory(
+            new AppliedMigration(
+                1,
+                null,
+                "Write into foo",
+                "SQL",
+                "R1__Write_into_foo.sql",
+                "SELECT 1".Checksum(),
+                "SierraSam",
+                DateTime.UtcNow,
+                0.0,
+                true)
+        );
+
+        var migrationSeeker = Substitute.For<IMigrationSeeker>();
+
+        var pendingMigrations = new PendingMigration[]
+        {
+            new(null, "Write into foo", Repeatable, "SELECT 2", "R1__Write_into_foo.sql"),
+        };
+
+        migrationSeeker.Find().Returns(pendingMigrations);
+
+        var migrationApplicator = new MigrationsApplicator(
+            database,
+            new MigrationApplicatorResolver(new IMigrationApplicator[]
+            {
+                new RepeatableMigrationApplicator(
+                    database,
+                    configuration,
+                    _console
+                ),
+                new VersionedMigrationApplicator(
+                    database,
+                    configuration,
+                    _console
+                )
+            })
+        );
+
+        var sut = new Migrate(
+            _logger,
+            database,
+            configuration,
+            migrationSeeker,
+            migrationApplicator,
+            _console
+        );
+
+        sut.Run(Array.Empty<string>());
+
+        database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
+            {
+                new(1,
+                    null,
+                    pendingMigrations[0].Description,
+                    "SQL",
+                    pendingMigrations[0].FileName,
+                    pendingMigrations[0].Checksum,
+                    "SierraSam",
+                    DateTime.MinValue.ToUniversalTime(),
+                    default,
+                    true)
+            },
+            options => options
+                .Excluding(migration => migration.ExecutionTime)
+                .Excluding(migration => migration.InstalledOn)
+        );
+    }
 
     [TearDown]
     public async Task ResetDatabase() => await _container.Clean();

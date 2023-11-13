@@ -201,6 +201,30 @@ internal sealed class MysqlDatabase : DefaultDatabase
         return _executor.ExecuteScalar<int>(sql, transaction);
     }
 
+    public override int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
+    {
+        const string cacheKey = "schema_history";
+
+        var sql =
+            $"""
+             UPDATE `{_configuration.DefaultSchema}`.`{_configuration.SchemaTable}`
+             SET `version` = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'" : "NULL")},
+                 `description` = N'{appliedMigration.Description}',
+                 `type` = N'{appliedMigration.Type}',
+                 `script` = N'{appliedMigration.Script}',
+                 `checksum` = N'{appliedMigration.Checksum}',
+                 `installed_by` = N'{appliedMigration.InstalledBy}',
+                 `installed_on` = N'{appliedMigration.InstalledOn:yyyy-MM-dd HH:mm:ss}',
+                 `execution_time` = {appliedMigration.ExecutionTime},
+                 `success` = {appliedMigration.Success}
+             WHERE `installed_rank` = {appliedMigration.InstalledRank}
+             """;
+
+        _cache.Remove(cacheKey);
+
+        return _executor.ExecuteNonQuery(sql, transaction);
+    }
+
     public override string ServerVersion =>
         _executor.ExecuteScalar<string>("SELECT VERSION()")!;
 

@@ -219,6 +219,25 @@ internal sealed class OracleDatabase : DefaultDatabase
 
     public override int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
-        return base.UpdateSchemaHistory(appliedMigration, transaction);
+        const string cacheKey = "schema_history";
+
+        var sql =
+            $"""
+             UPDATE "{_configuration.DefaultSchema}"."{_configuration.SchemaTable}"
+             SET "VERSION" = {(appliedMigration.Version is not null ? $"UNISTR('{appliedMigration.Version}')" : "NULL")},
+                 "DESCRIPTION" = UNISTR('{appliedMigration.Description}'),
+                 "TYPE" = UNISTR('{appliedMigration.Type}'),
+                 "SCRIPT" = UNISTR('{appliedMigration.Script}'),
+                 "CHECKSUM" = UNISTR('{appliedMigration.Checksum}'),
+                 "INSTALLED_BY" = UNISTR('{appliedMigration.InstalledBy}'),
+                 "INSTALLED_ON" = TIMESTAMP '{appliedMigration.InstalledOn:yyyy-MM-dd HH:mm:ss.fff zzz}',
+                 "EXECUTION_TIME" = {appliedMigration.ExecutionTime},
+                 "SUCCESS" = {(appliedMigration.Success ? 1 : 0)}
+             WHERE "INSTALLED_RANK" = {appliedMigration.InstalledRank}
+             """;
+
+        _cache.Remove(cacheKey);
+
+        return _executor.ExecuteNonQuery(sql, transaction);
     }
 }

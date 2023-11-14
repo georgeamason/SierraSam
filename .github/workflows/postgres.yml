@@ -1,0 +1,33 @@
+name: Postgres
+
+on: workflow_call
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Install Postgres ODBC Driver
+        if: success()
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y odbc-postgresql
+      - name: Run Tests
+        if: success()
+        run: dotnet test --filter Category=Postgres --configuration Release --verbosity normal --logger trx
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: postgres__test_results
+          path: ./**/TestResults/*.trx
+          retention-days: 30

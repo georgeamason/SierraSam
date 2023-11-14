@@ -1,0 +1,27 @@
+name: SQL Server
+
+on: workflow_call
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Run Tests
+        run: dotnet test --filter Category=SqlServer --configuration Release --verbosity normal --logger trx
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: sqlserver__test_results
+          path: ./**/TestResults/*.trx
+          retention-days: 30

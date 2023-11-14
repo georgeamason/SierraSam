@@ -1,0 +1,39 @@
+name: Oracle
+
+on: workflow_call
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: ./SierraSam/packages.lock.json
+      - name: Restore Dependencies
+        run: dotnet restore --locked-mode
+      - name: Install Oracle ODBC Driver
+        if: success()
+        run: |
+          wget https://download.oracle.com/otn_software/linux/instantclient/2111000/instantclient-basiclite-linux.x64-21.11.0.0.0dbru.zip
+          wget https://download.oracle.com/otn_software/linux/instantclient/2111000/instantclient-odbc-linux.x64-21.11.0.0.0dbru.zip
+          unzip instantclient-basiclite-linux.x64-21.11.0.0.0dbru.zip -d /opt/oracle
+          unzip instantclient-odbc-linux.x64-21.11.0.0.0dbru.zip -d /opt/oracle
+          sudo apt-get install -y glibc-source libaio1
+          sudo bash /opt/oracle/instantclient_21_11/odbc_update_ini.sh "/" "/opt/oracle/instantclient_21_11" "Oracle 21 ODBC driver" "OracleODBC-21" "/etc/odbc.ini"
+      - name: Run Tests
+        if: success()
+        env:
+          LD_LIBRARY_PATH: /opt/oracle/instantclient_21_11
+        run: dotnet test --filter Category=Oracle --configuration Release --verbosity normal --logger trx
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: oracle__test_results
+          path: ./**/TestResults/*.trx
+          retention-days: 30

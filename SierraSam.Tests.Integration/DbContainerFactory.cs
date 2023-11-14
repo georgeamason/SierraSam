@@ -11,15 +11,36 @@ internal static class DbContainerFactory
 {
     private const string Password = "yourStrong(!)Password";
 
-    public static readonly IEnumerable<IDbContainer> ContainerTestCases = new IDbContainer[]
+    public static readonly IEnumerable<TestFixtureData> ContainerTestCases = new []
     {
-        new SqlServer("2022-latest"),
-        new SqlServer("2017-latest"),
-        new Postgres("16"),
-        new Postgres("15"),
-        new MySql("8.2"),
-        new MySql("5.7"),
-        new Oracle("free", "23.3.0.0"),
+        new TestFixtureData(new SqlServer("2022-latest"))
+            .SetCategory("SqlServer")
+            .SetArgDisplayNames("SqlServer-2022"),
+
+        new TestFixtureData(new SqlServer("2017-latest"))
+            .SetCategory("SqlServer")
+            .SetArgDisplayNames("SqlServer-2017"),
+
+        new TestFixtureData(new Postgres("16"))
+            .SetCategory("Postgres")
+            .SetArgDisplayNames("Postgres-16"),
+
+        new TestFixtureData(new Postgres("15"))
+            .SetCategory("Postgres")
+            .SetArgDisplayNames("Postgres-15"),
+
+        new TestFixtureData(new MySql("8.2"))
+            .SetCategory("MySql")
+            .SetArgDisplayNames("MySql-8.2"),
+
+        new TestFixtureData(new MySql("5.7"))
+            .SetCategory("MySql")
+            .SetArgDisplayNames("MySql-5.7"),
+
+        new TestFixtureData(new Oracle("free", "23.3.0.0"))
+            .SetCategory("Oracle")
+            .SetArgDisplayNames("Oracle-23.3.0.0"),
+
         // new Oracle("express", "21.3.0-xe"),
         // new Oracle("express", "18.4.0-xe"),
     };

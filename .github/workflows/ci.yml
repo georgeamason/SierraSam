@@ -1,4 +1,4 @@
-name: SierraSam Build
+name: Build
 
 on: [push]
 
@@ -53,6 +53,22 @@ jobs:
             ./*/obj/
           key: ${{ matrix.runtime }}-build-${{ github.sha }}
 
+  sqlserver:
+    needs: build
+    uses: ./.github/workflows/sqlserver.yml
+
+  postgres:
+    needs: build
+    uses: ./.github/workflows/postgres.yml
+
+  mysql:
+    needs: build
+    uses: ./.github/workflows/mysql.yml
+
+  oracle:
+    needs: build
+    uses: ./.github/workflows/oracle.yml
+
   test:
     needs: build
     runs-on: ubuntu-22.04
@@ -67,31 +83,26 @@ jobs:
           cache-dependency-path: ./SierraSam/packages.lock.json
       - name: Restore Dependencies
         run: dotnet restore --locked-mode
-      - name: Install Postgres ODBC Driver
-        if: success()
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y odbc-postgresql
-      - name: Install MySQL ODBC Driver
-        if: success()
-        run: |
-          wget https://dev.mysql.com/get/Downloads/Connector-ODBC/8.2/mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
-          wget https://dev.mysql.com/get/Downloads/MySQL-8.2/mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb
-          sudo dpkg -i mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
       - name: Run Tests
         if: success()
-        run: dotnet test --configuration Release --verbosity normal --logger trx
+        run: |
+          dotnet test \
+          --no-restore \
+          --filter "Category!=SqlServer&Category!=Postgres&Category!=MySql&Category!=Oracle" \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx
       - name: Upload test results
         uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: test-results
+          name: test_results
           path: ./**/TestResults/*.trx
           retention-days: 30
 
   publish:
     if: ${{ github.ref_name == 'main' }}
-    needs: [setup, test]
+    needs: [test, oracle, mysql, postgres, sqlserver]
     runs-on: ubuntu-22.04
     strategy:
       matrix:

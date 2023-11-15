@@ -11,14 +11,38 @@ internal static class DbContainerFactory
 {
     private const string Password = "yourStrong(!)Password";
 
-    public static readonly IEnumerable<IDbContainer> ContainerTestCases = new IDbContainer[]
+    public static readonly IEnumerable<TestFixtureData> ContainerTestCases = new []
     {
-        new SqlServer("2022-latest"),
-        new SqlServer("2017-latest"),
-        new Postgres("16"),
-        new Postgres("15"),
-        new MySql("8.2"),
-        new MySql("5.7")
+        new TestFixtureData(new SqlServer("2022-latest"))
+            .SetCategory("SqlServer")
+            .SetArgDisplayNames("SqlServer-2022"),
+
+        new TestFixtureData(new SqlServer("2017-latest"))
+            .SetCategory("SqlServer")
+            .SetArgDisplayNames("SqlServer-2017"),
+
+        new TestFixtureData(new Postgres("16"))
+            .SetCategory("Postgres")
+            .SetArgDisplayNames("Postgres-16"),
+
+        new TestFixtureData(new Postgres("15"))
+            .SetCategory("Postgres")
+            .SetArgDisplayNames("Postgres-15"),
+
+        new TestFixtureData(new MySql("8.2"))
+            .SetCategory("MySql")
+            .SetArgDisplayNames("MySql-8.2"),
+
+        new TestFixtureData(new MySql("5.7"))
+            .SetCategory("MySql")
+            .SetArgDisplayNames("MySql-5.7"),
+
+        new TestFixtureData(new Oracle("free", "23.3.0.0"))
+            .SetCategory("Oracle")
+            .SetArgDisplayNames("Oracle-23.3.0.0"),
+
+        // new Oracle("express", "21.3.0-xe"),
+        // new Oracle("express", "18.4.0-xe"),
     };
 
     public interface IDbContainer
@@ -27,6 +51,72 @@ internal static class DbContainerFactory
         public Task StartAsync();
         public Task StopAsync();
         public Task Clean();
+    }
+
+    private sealed class Oracle : IDbContainer
+    {
+        private readonly IContainer _container;
+
+        public Oracle(string edition = "free", string tag = "latest")
+        {
+            _container = new ContainerBuilder()
+                .WithImage($"container-registry.oracle.com/database/{edition}:{tag}")
+                .WithPortBinding(1521, true)
+                .WithEnvironment("ORACLE_PWD", Password)
+                .WithEnvironment("ORACLE_SID", "FREE")
+                .WithWaitStrategy(Wait
+                    .ForUnixContainer()
+                    .UntilPortIsAvailable(1521)
+                    .UntilMessageIsLogged("DATABASE IS READY TO USE!")
+                )
+                .Build();
+        }
+
+        public DbConnection DbConnection
+        {
+            get
+            {
+                if (_container.State is not TestcontainersStates.Running)
+                {
+                    throw new Exception("Container must be running to get connection string");
+                }
+
+                var connection = new OdbcConnection(
+                    $"Driver={{Oracle 21 ODBC driver}};" +
+                    $"Dbq=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=127.0.0.1)(PORT={_container.GetMappedPublicPort(1521)}))(CONNECT_DATA=(SERVICE_NAME=FREE)));" +
+                    $"Uid=SYSTEM;Pwd={Password};"
+                );
+
+                connection.Open();
+
+                return connection;
+            }
+        }
+
+        public Task StartAsync() => _container.StartAsync();
+
+        public Task StopAsync() => _container.StopAsync();
+
+        public async Task Clean()
+        {
+            if (DbConnection.State is not ConnectionState.Open)
+            {
+                throw new Exception("Connection must be open to clean database");
+            }
+
+            var respawner = await Respawner.CreateAsync(
+                DbConnection,
+                new RespawnerOptions
+                {
+                    DbAdapter = DbAdapter.Oracle,
+                    SchemasToInclude = new []{"SYSTEM"}
+                }
+            );
+
+            Console.WriteLine(respawner.DeleteSql);
+
+            await respawner.ResetAsync(DbConnection);
+        }
     }
 
     private sealed class SqlServer : IDbContainer

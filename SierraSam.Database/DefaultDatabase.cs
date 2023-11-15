@@ -119,8 +119,8 @@ public abstract class DefaultDatabase : IDatabase
              "installed_on",
              "execution_time",
              "success"
-              FROM "{schema}"."{table}"
-              ORDER BY "installed_rank"
+             FROM "{schema}"."{table}"
+             ORDER BY "installed_rank"
              """;
 
         if (HasMigrationTable(transaction) is false)
@@ -176,7 +176,7 @@ public abstract class DefaultDatabase : IDatabase
                 "success"
              ) VALUES (
                 {appliedMigration.InstalledRank},
-                {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+                {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'" : "NULL")},
                 N'{appliedMigration.Description}',
                 N'{appliedMigration.Type}',
                 N'{appliedMigration.Script}',
@@ -195,10 +195,12 @@ public abstract class DefaultDatabase : IDatabase
 
     public virtual int UpdateSchemaHistory(AppliedMigration appliedMigration, IDbTransaction? transaction = null)
     {
+        const string cacheKey = "schema_history";
+
         var sql =
             $"""
              UPDATE "{_configuration.DefaultSchema}"."{_configuration.SchemaTable}"
-             SET "version" = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'," : "NULL,")}
+             SET "version" = {(appliedMigration.Version is not null ? $"N'{appliedMigration.Version}'" : "NULL")},
                  "description" = N'{appliedMigration.Description}',
                  "type" = N'{appliedMigration.Type}',
                  "script" = N'{appliedMigration.Script}',
@@ -209,6 +211,8 @@ public abstract class DefaultDatabase : IDatabase
                  "success"        = N'{appliedMigration.Success}'
              WHERE "installed_rank" = {appliedMigration.InstalledRank}
              """;
+
+        _cache.Remove(cacheKey);
 
         return _dbExecutor.ExecuteNonQuery(sql, transaction);
     }

@@ -21,6 +21,31 @@ public sealed class AppliedMigration
             throw new ArgumentException("Cannot be empty", nameof(version));
         }
 
+        if (description == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(description));
+        }
+
+        if (type == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(type));
+        }
+
+        if (script == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(script));
+        }
+
+        if (checksum == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(checksum));
+        }
+
+        if (installedBy == string.Empty)
+        {
+            throw new ArgumentException("Cannot be empty", nameof(installedBy));
+        }
+
         if (installedOn.Kind is not DateTimeKind.Utc)
         {
             throw new ArgumentException("Must be UTC", nameof(installedOn));

@@ -99,7 +99,7 @@ internal sealed class RepeatableMigrationApplicatorTests
                 "SQL",
                 "someFilename",
                 checksum: string.Empty.Checksum(),
-                string.Empty,
+                "someUser",
                 DateTime.UtcNow,
                 double.MinValue,
                 true)
@@ -144,7 +144,7 @@ internal sealed class RepeatableMigrationApplicatorTests
                 "SQL",
                 filename,
                 checksum: string.Empty.Checksum(),
-                string.Empty,
+                "someUser",
                 DateTime.UtcNow,
                 double.MinValue,
                 true)
@@ -183,7 +183,7 @@ internal sealed class RepeatableMigrationApplicatorTests
             "someDescription",
             MigrationType.Repeatable,
             sql: string.Empty,
-            string.Empty
+            "filename.sql"
         );
 
         var transaction = Substitute.For<IDbTransaction>();
@@ -206,7 +206,7 @@ internal sealed class RepeatableMigrationApplicatorTests
                                  migration.Version == "someVersion" &&
                                  migration.Description == "someDescription" &&
                                  migration.Type == "SQL" &&
-                                 migration.Script == string.Empty &&
+                                 migration.Script == "filename.sql" &&
                                  migration.Checksum == string.Empty.Checksum() &&
                                  migration.InstalledBy == "someUser" &&
                                  migration.InstalledOn.Kind == DateTimeKind.Utc &&
@@ -224,6 +224,7 @@ internal sealed class RepeatableMigrationApplicatorTests
     {
         var database = Substitute.For<IDatabase>();
         var configuration = Substitute.For<IConfiguration>();
+        configuration.InstalledBy.Returns("someUser");
         var console = Substitute.For<IAnsiConsole>();
 
         database.GetSchemaHistory().Returns(Array.Empty<AppliedMigration>());
@@ -235,7 +236,7 @@ internal sealed class RepeatableMigrationApplicatorTests
             "someDescription",
             MigrationType.Repeatable,
             sql: string.Empty,
-            string.Empty
+            "filename.sql"
         );
 
         var transaction = Substitute.For<IDbTransaction>();

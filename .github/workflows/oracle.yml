@@ -25,15 +25,28 @@ jobs:
           unzip instantclient-odbc-linux.x64-21.11.0.0.0dbru.zip -d /opt/oracle
           sudo apt-get install -y glibc-source libaio1
           sudo bash /opt/oracle/instantclient_21_11/odbc_update_ini.sh "/" "/opt/oracle/instantclient_21_11" "Oracle 21 ODBC driver" "OracleODBC-21" "/etc/odbc.ini"
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ./*/obj/
+          key: linux-x64-build-${{ github.sha }}
       - name: Run Tests
         if: success()
         env:
           LD_LIBRARY_PATH: /opt/oracle/instantclient_21_11
-        run: dotnet test --filter Category=Oracle --configuration Release --verbosity normal --logger trx
+        run: |
+          dotnet test \
+          --no-build
+          --filter Category=Oracle \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx
       - name: Upload test results
         uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: oracle__test_results
+          name: test_results
           path: ./**/TestResults/*.trx
           retention-days: 30

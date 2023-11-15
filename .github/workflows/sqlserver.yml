@@ -16,12 +16,25 @@ jobs:
           cache-dependency-path: ./SierraSam/packages.lock.json
       - name: Restore Dependencies
         run: dotnet restore --locked-mode
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ./*/obj/
+          key: linux-x64-build-${{ github.sha }}
       - name: Run Tests
-        run: dotnet test --filter Category=SqlServer --configuration Release --verbosity normal --logger trx
+        run: |
+          dotnet test \
+          --no-build \
+          --filter Category=SqlServer \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx
       - name: Upload test results
         uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: sqlserver__test_results
+          name: test_results
           path: ./**/TestResults/*.trx
           retention-days: 30

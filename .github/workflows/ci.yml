@@ -53,13 +53,13 @@ jobs:
             ./*/obj/
           key: ${{ matrix.runtime }}-build-${{ github.sha }}
 
-  postgres:
-    needs: build
-    uses: ./.github/workflows/postgres.yml
-
   sqlserver:
     needs: build
     uses: ./.github/workflows/sqlserver.yml
+
+  postgres:
+    needs: build
+    uses: ./.github/workflows/postgres.yml
 
   mysql:
     needs: build
@@ -95,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: ci__test_results
+          name: test_results
           path: ./**/TestResults/*.trx
           retention-days: 30
 

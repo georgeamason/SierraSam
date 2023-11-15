@@ -21,13 +21,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y odbc-postgresql
+      - name: Restore Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./*/bin/
+            ./*/obj/
+          key: linux-x64-build-${{ github.sha }}
       - name: Run Tests
         if: success()
-        run: dotnet test --filter Category=Postgres --configuration Release --verbosity normal --logger trx
+        run: |
+          dotnet test \
+          --no-build \
+          --filter Category=Postgres \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx
       - name: Upload test results
         uses: actions/upload-artifact@v3
         if: success() || failure()
         with:
-          name: postgres__test_results
+          name: test_results
           path: ./**/TestResults/*.trx
           retention-days: 30

@@ -87,6 +87,7 @@ jobs:
         if: success()
         run: |
           dotnet test \
+          --no-restore \
           --filter "Category!=SqlServer&Category!=Postgres&Category!=MySql&Category!=Oracle" \
           --configuration Release \
           --verbosity normal \
@@ -101,7 +102,7 @@ jobs:
 
   publish:
     if: ${{ github.ref_name == 'main' }}
-    needs: [setup, test, oracle, mysql, postgres, sqlserver]
+    needs: [test, oracle, mysql, postgres, sqlserver]
     runs-on: ubuntu-22.04
     strategy:
       matrix:

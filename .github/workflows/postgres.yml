@@ -21,18 +21,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y odbc-postgresql
-      - name: Restore Build Artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./*/bin/
-            ./*/obj/
-          key: linux-x64-build-${{ github.sha }}
       - name: Run Tests
         if: success()
         run: |
           dotnet test \
-          --no-build \
+          --no-restore \
           --filter Category=Postgres \
           --configuration Release \
           --verbosity normal \

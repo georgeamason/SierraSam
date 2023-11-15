@@ -22,18 +22,11 @@ jobs:
           wget https://dev.mysql.com/get/Downloads/Connector-ODBC/8.2/mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
           wget https://dev.mysql.com/get/Downloads/MySQL-8.2/mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb
           sudo dpkg -i mysql-community-client-plugins_8.2.0-1ubuntu22.04_amd64.deb mysql-connector-odbc_8.2.0-1ubuntu22.04_amd64.deb
-      - name: Restore Build Artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./*/bin/
-            ./*/obj/
-          key: linux-x64-build-${{ github.sha }}
       - name: Run Tests
         if: success()
         run: |
           dotnet test \
-          --no-build \
+          --no-restore \
           --filter Category=MySql \
           --configuration Release \
           --verbosity normal \

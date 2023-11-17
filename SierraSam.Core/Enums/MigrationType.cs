@@ -1,5 +1,6 @@
 ﻿namespace SierraSam.Core.Enums;
 
+
 public enum MigrationType
 {
     None = -1,

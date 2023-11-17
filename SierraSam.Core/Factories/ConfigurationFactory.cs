@@ -6,20 +6,26 @@ namespace SierraSam.Core.Factories;
 
 public static class ConfigurationFactory
 {
-
-    public static IConfiguration Create(ILoggerFactory loggerFactory,
-                                       IFileSystem fileSystem,
-                                       string[] args)
+    public static IConfiguration Create(
+        ILoggerFactory loggerFactory,
+        IFileSystem fileSystem,
+        string[] args
+    )
     {
+        // TODO: Probably not a good use of decorator pattern
         // Ordering is important here
-        var reader = new InstalledByConfigurationReader
-            (new DefaultSchemaConfigurationReader
-                (new ArgsConfigurationReader
-                    (loggerFactory, args, new JsonConfigurationReader
-                        (fileSystem, ConfigPaths())
+        var reader = new InstalledByConfigurationReader(
+            new DefaultSchemaConfigurationReader(
+                new ArgsConfigurationReader(
+                    loggerFactory,
+                    args,
+                    new JsonConfigurationReader(
+                        fileSystem,
+                        ConfigPaths()
                     )
                 )
-            );
+            )
+        );
 
         return reader.Read();
     }

@@ -2,30 +2,41 @@
 using System.Data;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-using NSubstitute.ReceivedExtensions;
 using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationApplicators;
 
 namespace SierraSam.Core.Tests.Unit;
 
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 internal sealed class MigrationsApplicatorTests
 {
+    private readonly IDatabase _database = Substitute.For<IDatabase>();
+    private readonly IMigrationApplicatorResolver _resolver = Substitute.For<IMigrationApplicatorResolver>();
+    private readonly MigrationsApplicator _sut;
+
+    public MigrationsApplicatorTests() => _sut = new(_database, _resolver);
+
     private static IEnumerable Constructors_with_null_args()
     {
         // ReSharper disable ObjectCreationAsStatement
-        yield return new TestCaseData
-            (new TestDelegate
-            (() => new MigrationsApplicator
-            (null!,
-                Substitute.For<IMigrationApplicatorResolver>())))
+        yield return new TestCaseData(
+                new TestDelegate(
+                    () => new MigrationsApplicator(
+                        null!,
+                        Substitute.For<IMigrationApplicatorResolver>()
+                    )
+                )
+            )
             .SetName("null database");
 
-        yield return new TestCaseData
-            (new TestDelegate
-            (() => new MigrationsApplicator
-            (Substitute.For<IDatabase>(),
-                null!)))
+        yield return new TestCaseData(
+                new TestDelegate(
+                    () => new MigrationsApplicator(
+                        Substitute.For<IDatabase>(),
+                        null!
+                    )
+                )
+            )
             .SetName("null resolver");
         // ReSharper enable ObjectCreationAsStatement
     }
@@ -39,21 +50,16 @@ internal sealed class MigrationsApplicatorTests
     [Test]
     public void Correct_migration_applicator_is_called()
     {
-        var database = Substitute.For<IDatabase>();
         var dbConnection = Substitute.For<IDbConnection>();
         var dbTransaction = Substitute.For<IDbTransaction>();
 
-        database
+        _database
             .Connection
             .Returns(dbConnection);
 
         dbConnection
             .BeginTransaction()
             .Returns(dbTransaction);
-
-        var migrationApplicatorResolver = Substitute.For<IMigrationApplicatorResolver>();
-
-        var sut = new MigrationsApplicator(database, migrationApplicatorResolver);
 
         var pendingMigrations = new[]
         {
@@ -79,7 +85,7 @@ internal sealed class MigrationsApplicatorTests
             .Apply(pendingMigrations[0], dbTransaction)
             .Returns(1);
 
-        migrationApplicatorResolver
+        _resolver
             .Resolve(typeof(VersionedMigrationApplicator))
             .Returns(versionMigrationApplicator);
 
@@ -89,11 +95,11 @@ internal sealed class MigrationsApplicatorTests
             .Apply(pendingMigrations[1], dbTransaction)
             .Returns(1);
 
-        migrationApplicatorResolver
+        _resolver
             .Resolve(typeof(RepeatableMigrationApplicator))
             .Returns(repeatableMigrationApplicator);
 
-        var appliedCount = sut.Apply(pendingMigrations);
+        var appliedCount = _sut.Apply(pendingMigrations);
 
         versionMigrationApplicator
             .Received(1)
@@ -111,11 +117,10 @@ internal sealed class MigrationsApplicatorTests
     [Test]
     public void Argument_exception_thrown_for_unknown_migration_type()
     {
-        var database = Substitute.For<IDatabase>();
         var dbConnection = Substitute.For<IDbConnection>();
         var dbTransaction = Substitute.For<IDbTransaction>();
 
-        database
+        _database
             .Connection
             .Returns(dbConnection);
 
@@ -123,16 +128,12 @@ internal sealed class MigrationsApplicatorTests
             .BeginTransaction()
             .Returns(dbTransaction);
 
-        var migrationApplicatorResolver = Substitute.For<IMigrationApplicatorResolver>();
-
-        var sut = new MigrationsApplicator(database, migrationApplicatorResolver);
-
         var pendingMigrations = new[]
         {
             new PendingMigration(
                 "someVersion",
                 "someDescription",
-                MigrationType.None,
+                MigrationType.Any,
                 string.Empty,
                 string.Empty
             )
@@ -140,11 +141,11 @@ internal sealed class MigrationsApplicatorTests
 
         var versionMigrationApplicator = Substitute.For<IMigrationApplicator>();
 
-        migrationApplicatorResolver
+        _resolver
             .Resolve(typeof(VersionedMigrationApplicator))
             .Returns(versionMigrationApplicator);
 
-        sut.Invoking(applicator => applicator.Apply(pendingMigrations))
+        _sut.Invoking(applicator => applicator.Apply(pendingMigrations))
             .Should()
             .Throw<ArgumentOutOfRangeException>();
     }

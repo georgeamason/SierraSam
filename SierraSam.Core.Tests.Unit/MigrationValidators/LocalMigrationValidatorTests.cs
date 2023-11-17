@@ -188,7 +188,7 @@ internal sealed class LocalMigrationValidatorTests
 
         _ignoredMigrationsFactory
             .Create()
-            .Returns(new[] { (MigrationType.None, MigrationState.None) });
+            .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
             .Find()
@@ -235,7 +235,7 @@ internal sealed class LocalMigrationValidatorTests
 
         _ignoredMigrationsFactory
             .Create()
-            .Returns(new[] { (MigrationType.None, MigrationState.None) });
+            .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
             .Find()

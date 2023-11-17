@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
-using SierraSam.Core.Enums;
+﻿using SierraSam.Core.Exceptions;
 using SierraSam.Core.MigrationSeekers;
+using static SierraSam.Core.Enums.MigrationType;
 
 namespace SierraSam.Core.MigrationValidators;
 
@@ -12,7 +12,10 @@ internal sealed class DistinctVersionMigrationValidator : IMigrationValidator
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IMigrationValidator _validator;
 
-    public DistinctVersionMigrationValidator(IMigrationSeeker migrationSeeker, IMigrationValidator validator)
+    public DistinctVersionMigrationValidator(
+        IMigrationSeeker migrationSeeker,
+        IMigrationValidator validator
+    )
     {
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
@@ -22,19 +25,19 @@ internal sealed class DistinctVersionMigrationValidator : IMigrationValidator
     {
         var validated = _validator.Validate();
 
-        var discoveredVersionedMigrations = _migrationSeeker
-            .Find()
-            .Where(m => m.MigrationType is MigrationType.Versioned)
+        var versionedMigrations = _migrationSeeker.Find()
+            .Where(m => m.MigrationType is Versioned)
             .ToArray();
 
-        var distinctMigrations = discoveredVersionedMigrations
+        var distinctMigrations = versionedMigrations
             .DistinctBy(m => m.Version)
             .ToArray();
 
-        if (distinctMigrations.Length != discoveredVersionedMigrations.Length)
+        if (distinctMigrations.Length != versionedMigrations.Length)
         {
-            throw new Exception
-                ($"Discovered multiple migrations with version {distinctMigrations[0].Version}");
+            throw new MigrationValidatorException(
+                $"Discovered multiple migrations with version {distinctMigrations[0].Version}"
+            );
         }
 
         return validated;

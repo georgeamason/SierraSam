@@ -2,6 +2,8 @@
 using SierraSam.Core.Exceptions;
 using SierraSam.Core.Factories;
 using SierraSam.Core.MigrationSeekers;
+using static SierraSam.Core.Enums.MigrationState;
+using static SierraSam.Core.Enums.MigrationType;
 
 namespace SierraSam.Core.MigrationValidators;
 
@@ -20,7 +22,8 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
         IMigrationSeeker migrationSeeker,
         IDatabase database,
         IIgnoredMigrationsFactory ignoredMigrationsFactory,
-        IMigrationValidator validator)
+        IMigrationValidator validator
+    )
     {
         _validator = validator
             ?? throw new ArgumentNullException(nameof(validator));
@@ -45,13 +48,13 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
         var shortCircuit = ignoredMigrations.Any(i => i is
         {
             Type: MigrationType.Any,
-            State: MigrationState.Any or MigrationState.Pending
+            State: MigrationState.Any or Pending
         });
 
         if (shortCircuit) return validated;
 
         var ignoredMigrationTypes = ignoredMigrations
-            .Where(i => i.State is MigrationState.Any or MigrationState.Pending)
+            .Where(i => i.State is MigrationState.Any or Pending)
             .Select(p => p.Type)
             .ToArray();
 
@@ -59,10 +62,10 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
             .Find()
             .Where(m => ignoredMigrationTypes switch
             {
-                [MigrationType.Repeatable] => m.MigrationType is not MigrationType.Repeatable,
-                [MigrationType.Versioned] => m.MigrationType is not MigrationType.Versioned,
-                [MigrationType.Repeatable, MigrationType.Versioned] => false,
-                [MigrationType.Versioned, MigrationType.Repeatable] => false,
+                [Repeatable] => m.MigrationType is not Repeatable,
+                [Versioned] => m.MigrationType is not Versioned,
+                [Repeatable, Versioned] => false,
+                [Versioned, Repeatable] => false,
                 _ => true
             });
 

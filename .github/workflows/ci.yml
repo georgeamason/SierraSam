@@ -102,7 +102,7 @@ jobs:
 
   publish:
     if: ${{ github.ref_name == 'main' }}
-    needs: [test, oracle, mysql, postgres, sqlserver]
+    needs: [setup, test, oracle, mysql, postgres, sqlserver]
     runs-on: ubuntu-22.04
     strategy:
       matrix:

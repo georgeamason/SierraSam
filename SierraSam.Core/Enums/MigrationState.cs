@@ -2,8 +2,7 @@
 
 public enum MigrationState
 {
-    None = -1,
-    Any = 0,
+    Any,
     Pending,
     Applied,
     Missing,

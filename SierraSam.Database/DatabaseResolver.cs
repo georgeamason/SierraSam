@@ -9,7 +9,6 @@ namespace SierraSam.Database;
 
 public static class DatabaseResolver
 {
-    // TODO: Make use of a proper connection string parser
     // TODO: I'm checking explicit ODBC drivers here? Is that a good idea?
     public static IDatabase Create(
         ILoggerFactory loggerFactory,

@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using SierraSam.Core.Exceptions;
 using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Core.MigrationValidators;
@@ -17,14 +17,13 @@ internal sealed class DistinctChecksumMigrationValidator : IMigrationValidator
     {
         var discoveredMigrations = _migrationSeeker.Find();
 
-        var distinctMigrations = discoveredMigrations
-            .DistinctBy(m => m.Checksum)
-            .ToArray();
+        var distinctMigrations = discoveredMigrations.DistinctBy(m => m.Checksum);
 
-        if (distinctMigrations.Length != discoveredMigrations.Count)
+        if (distinctMigrations.Count() != discoveredMigrations.Count)
         {
-            throw new Exception
-                ($"Discovered multiple migrations with equal contents");
+            throw new MigrationValidatorException(
+                "Discovered multiple migrations with equal contents"
+            );
         }
 
         return discoveredMigrations.Count;

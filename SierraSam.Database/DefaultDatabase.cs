@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -226,13 +225,14 @@ public abstract class DefaultDatabase : IDatabase
         return stopwatch.Elapsed;
     }
 
-    public virtual IReadOnlyCollection<DatabaseObject> GetSchemaObjects(
+    public virtual void Clean(
         string? schema = null,
         IDbTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema!;
 
-        //  TODO: How about Triggers - they are not in sys.objects
+        // https://learn.microsoft.com/en-us/sql/t-sql/statements/drop-trigger-transact-sql?view=sql-server-ver16#b-dropping-a-ddl-trigger
+        // Will not find DDL triggers, they are not schema scoped
         var sql = $"""
                    SELECT 
                        o.name, 
@@ -245,7 +245,7 @@ public abstract class DefaultDatabase : IDatabase
                    ORDER BY o.parent_object_id DESC, o.[object_id] DESC
                    """;
 
-        return _dbExecutor.ExecuteReader<DatabaseObject>(
+        var objects = _dbExecutor.ExecuteReader<DatabaseObject>(
             sql,
             reader => new DatabaseObject(
                 schema,
@@ -253,29 +253,8 @@ public abstract class DefaultDatabase : IDatabase
                 !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
                 !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
             transaction);
-    }
 
-    public virtual void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null)
-    {
-        var objectType = obj.Type switch
-        {
-            "AF" => "AGGREGATE",
-            "C" or "D" or "F" or "PK" or "UQ" => "CONSTRAINT",
-            "FN" or "IF" or "TF" => "FUNCTION",
-            "P" => "PROCEDURE",
-            "U" => "TABLE",
-            "V" => "VIEW",
-            _   => throw new ArgumentOutOfRangeException(nameof(obj), $"Unknown database object type '{obj.Type}'")
-        };
-
-        var sb = new StringBuilder();
-
-        if (obj.Parent is not null)
-            sb.Append($"ALTER TABLE \"{obj.Schema}\".\"{obj.Parent}\"");
-
-        sb.Append($"DROP {objectType} \"{obj.Name}\"");
-
-        _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
+        foreach (var obj in objects) DropObject(obj, transaction);
     }
 
     public virtual int GetInstalledRank(
@@ -290,5 +269,34 @@ public abstract class DefaultDatabase : IDatabase
         var sql = $"SELECT MAX(\"installed_rank\") FROM \"{schema}\".\"{table}\"";
 
         return _dbExecutor.ExecuteScalar<int>(sql, transaction);
+    }
+
+    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    {
+        _logger.LogInformation("Dropping object '{objectName}...'", obj.Name);
+
+        // https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-objects-transact-sql?view=sql-server-ver16
+        var sql = obj switch
+        {
+            { Type: "AF" } => $"DROP AGGREGATE {obj.Name};",
+            { Type: "C" or "D" or "F" or "PK" or "UQ" or "EC" } => $"ALTER TABLE {obj.Parent} DROP CONSTRAINT {obj.Name};",
+            { Type: "FN" or "IF" or "TF" } => $"DROP FUNCTION {obj.Name};",
+            { Type: "P" } => $"DROP PROCEDURE {obj.Name};",
+            { Type: "U" } => $"DROP TABLE {obj.Name};",
+            { Type: "V" } => $"DROP VIEW {obj.Name};",
+            { Type: "TR" } => $"DROP TRIGGER {obj.Name};",
+            { Type: "SN" } => $"DROP SYNONYM {obj.Name};",
+            { Type: "SO" } => $"DROP SEQUENCE {obj.Name};",
+            { Type: "SQ" } => $"DROP QUEUE {obj.Name};",
+            { Type: "TT" } => $"DROP TYPE {obj.Name};",
+            _   => throw new ArgumentOutOfRangeException(
+                nameof(obj),
+                $"Unknown database object type '{obj.Type}'"
+            )
+        };
+
+        _logger.LogInformation("{sql}", sql);
+
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 }

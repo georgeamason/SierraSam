@@ -38,13 +38,7 @@ internal sealed class Clean : ICapability
         {
             foreach (var schema in schemas)
             {
-                var i = 1;
-                foreach (var obj in _database.GetSchemaObjects(schema, transaction))
-                {
-                    _logger.LogInformation("{index}: {objectName}", i, obj.Name);
-                    _database.DropSchemaObject(obj, transaction);
-                    i++;
-                }
+                _database.Clean(schema, transaction);
             }
 
             transaction.Commit();
@@ -53,11 +47,14 @@ internal sealed class Clean : ICapability
                 $"[green]Cleaned schema(s) \"{string.Join(", ", schemas)}\"[/]"
             );
         }
-        catch (Exception exception)
-        when (exception is OdbcException or ArgumentOutOfRangeException)
+        catch (OdbcExecutorException exception)
         {
             transaction.Rollback();
-            throw new CleanException($"Failed to clean schema(s)", exception);
+
+            throw new CleanException(
+                $"Failed to clean schema(s)",
+                exception
+            );
         }
     }
 }

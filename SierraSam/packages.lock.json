@@ -73,9 +73,9 @@
       },
       "Spectre.Console": {
         "type": "Direct",
-        "requested": "[0.47.0, )",
-        "resolved": "0.47.0",
-        "contentHash": "wz8mszcZr0cSOo8GyoG9e2DFW0SkMT8/n78Q/lIXX7EbCtHNXOoOKWpJ9Str+rCYtmQOGGyDutZzubrUHK/XkA==",
+        "requested": "[0.48.0, )",
+        "resolved": "0.48.0",
+        "contentHash": "4Mc1UT7Azgtyb8FyNwK5FZmoZbKuT5PmY7ZwaKUytjD5kGFMNBACpOZTwYtkuY377YkYtZYBeDDTJUwTW86QXw==",
         "dependencies": {
           "System.Memory": "4.5.5"
         }
@@ -314,10 +314,10 @@
       },
       "Spectre.Console.Json": {
         "type": "Transitive",
-        "resolved": "0.47.0",
-        "contentHash": "6nq5sCmYViulDjdMsTUpc5xD++aEsAHy9s9LKc1geif8slK9zJtze1PCjRHj2sRVN/alwBbL9/IyELDK4wTkeQ==",
+        "resolved": "0.48.0",
+        "contentHash": "I6g4FkdQ3ONcPe5rmLQHU0ZesU/JGKFb9EDBDcjyUExLykLBmXn6yymej12fBd3//2T9yybqdAFTZ8+4/GVsTw==",
         "dependencies": {
-          "Spectre.Console": "0.47.0"
+          "Spectre.Console": "0.48.0"
         }
       },
       "System.Diagnostics.DiagnosticSource": {
@@ -375,7 +375,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "[7.0.1, )",
-          "Spectre.Console.Json": "[0.47.0, )",
+          "Spectre.Console.Json": "[0.48.0, )",
           "System.Data.Odbc": "[7.0.0, )",
           "System.IO.Abstractions": "[19.2.87, )",
           "YamlDotNet": "[13.7.1, )"

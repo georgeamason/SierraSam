@@ -242,7 +242,7 @@ public abstract class DefaultDatabase : IDatabase
                    INNER JOIN "sys"."schemas" s ON s.[schema_id] = o.[schema_id]
                    LEFT JOIN "sys"."tables" t ON t.[object_id] = o.parent_object_id
                    WHERE s.name = '{schema}' AND o.is_ms_shipped = 0
-                   ORDER BY o.parent_object_id DESC, o.[object_id] DESC
+                   ORDER BY o.parent_object_id DESC, o.[object_id]
                    """;
 
         var objects = _dbExecutor.ExecuteReader<DatabaseObject>(
@@ -271,10 +271,8 @@ public abstract class DefaultDatabase : IDatabase
         return _dbExecutor.ExecuteScalar<int>(sql, transaction);
     }
 
-    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    protected void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
     {
-        _logger.LogInformation("Dropping object '{objectName}...'", obj.Name);
-
         // https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-objects-transact-sql?view=sql-server-ver16
         var sql = obj switch
         {
@@ -289,6 +287,7 @@ public abstract class DefaultDatabase : IDatabase
             { Type: "SO" } => $"DROP SEQUENCE {obj.Name};",
             { Type: "SQ" } => $"DROP QUEUE {obj.Name};",
             { Type: "TT" } => $"DROP TYPE {obj.Name};",
+            { Type: "R" } => $"DROP RULE {obj.Name} ON {obj.Parent};",
             _   => throw new ArgumentOutOfRangeException(
                 nameof(obj),
                 $"Unknown database object type '{obj.Type}'"

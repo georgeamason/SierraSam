@@ -225,6 +225,11 @@ internal sealed class MysqlDatabase : DefaultDatabase
         return _executor.ExecuteNonQuery(sql, transaction);
     }
 
+    public override void Clean(string? schema = null, IDbTransaction? transaction = null)
+    {
+        throw new NotImplementedException("Clean is not supported for MySql");
+    }
+
     public override string ServerVersion =>
         _executor.ExecuteScalar<string>("SELECT VERSION()")!;
 

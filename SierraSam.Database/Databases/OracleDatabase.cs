@@ -240,4 +240,9 @@ internal sealed class OracleDatabase : DefaultDatabase
 
         return _executor.ExecuteNonQuery(sql, transaction);
     }
+
+    public override void Clean(string? schema = null, IDbTransaction? transaction = null)
+    {
+        throw new NotImplementedException("Clean is not supported for Oracle");
+    }
 }

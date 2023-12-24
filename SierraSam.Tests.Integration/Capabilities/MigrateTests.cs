@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using DotNet.Testcontainers.Containers;
+using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using SierraSam.Capabilities;
@@ -13,22 +14,34 @@ using static SierraSam.Tests.Integration.DbContainerFactory;
 
 namespace SierraSam.Tests.Integration.Capabilities;
 
-[TestFixtureSource(typeof(DbContainerFactory), nameof(ContainerTestCases))]
+[TestFixtureSource(typeof(SqlServer), nameof(SqlServer.TestCases))]
+[TestFixtureSource(typeof(Postgres), nameof(Postgres.TestCases))]
+[TestFixtureSource(typeof(MySql), nameof(MySql.TestCases))]
+[TestFixtureSource(typeof(Oracle), nameof(Oracle.TestCases))]
 internal sealed class MigrateTests
 {
-    private readonly IDbContainer _container;
+    private readonly ITestContainer _testContainer;
     private readonly ILogger<Migrate> _logger = Substitute.For<ILogger<Migrate>>();
     private readonly TestConsole _console = new ();
 
-    public MigrateTests(IDbContainer container) => _container = container;
+    public MigrateTests(ITestContainer testContainer) => _testContainer = testContainer;
 
-    [OneTimeSetUp]
-    public async Task OneTimeSetUp() => await _container.StartAsync();
+    [SetUp]
+    public Task SetUp()
+    {
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (_testContainer.State is not TestcontainersStates.Running)
+        {
+            return _testContainer.StartAsync();
+        }
+
+        return Task.CompletedTask;
+    }
 
     [Test]
     public void Migrate_creates_schema_history_when_not_initialized()
     {
-        var connection = _container.DbConnection;
+        var connection = _testContainer.DbConnection;
 
         var configuration = new Configuration(url: connection.ConnectionString);
 
@@ -61,7 +74,7 @@ internal sealed class MigrateTests
     [Test]
     public void Migrate_applies_pending_migrations()
     {
-        var connection = _container.DbConnection;
+        var connection = _testContainer.DbConnection;
 
         var configuration = new Configuration(
             url: connection.ConnectionString,
@@ -147,7 +160,7 @@ internal sealed class MigrateTests
     [Test]
     public void Migrate_updates_schema_history_for_altered_repeatable_migration()
     {
-        var connection = _container.DbConnection;
+        var connection = _testContainer.DbConnection;
 
         var configuration = new Configuration(
             url: connection.ConnectionString,
@@ -235,12 +248,13 @@ internal sealed class MigrateTests
     }
 
     [TearDown]
-    public async Task ResetDatabase() => await _container.Clean();
+    public async Task ResetDatabase() => await _testContainer.Reset();
 
-    [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
-        await _container.DbConnection.DisposeAsync();
-        await _container.StopAsync();
-    }
+    // // TODO: How can I pull this out of this class?
+    // [OneTimeTearDown]
+    // public async Task OneTimeTearDown()
+    // {
+    //     await _container.DbConnection.DisposeAsync();
+    //     await _container.StopAsync();
+    // }
 }

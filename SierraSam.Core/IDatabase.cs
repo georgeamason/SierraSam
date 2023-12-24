@@ -14,11 +14,13 @@ public interface IDatabase
 
     bool HasMigrationTable(IDbTransaction? transaction = null);
 
-    bool HasTable(
-        string? schema = null,
-        string? table = null,
-        IDbTransaction? transaction = null
-    );
+    bool HasTable(string? schema = null, string? table = null, IDbTransaction? transaction = null);
+
+    bool HasView(string view, string? schema = null, IDbTransaction? transaction = null);
+
+    bool HasRoutine(string routine, string? schema = null, IDbTransaction? transaction = null);
+
+    bool HasDomain(string domain, string? schema = null, IDbTransaction? transaction = null);
 
     void CreateSchemaHistory(string? schema = null, string? table = null, IDbTransaction? transaction = null);
 

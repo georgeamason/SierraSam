@@ -8,7 +8,6 @@ namespace SierraSam.Database.Databases;
 internal sealed class OracleDatabase : DefaultDatabase
 {
     private readonly ILogger<DefaultDatabase> _logger;
-    private readonly IDbConnection _connection;
     private readonly IDbExecutor _executor;
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _cache;
@@ -22,7 +21,6 @@ internal sealed class OracleDatabase : DefaultDatabase
         : base(logger, connection, executor, configuration, cache)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -243,6 +241,113 @@ internal sealed class OracleDatabase : DefaultDatabase
 
     public override void Clean(string? schema = null, IDbTransaction? transaction = null)
     {
-        throw new NotImplementedException("Clean is not supported for Oracle");
+        schema ??= _configuration.DefaultSchema!;
+
+        if (schema == "SYSTEM") throw new InvalidOperationException("Cannot clean SYSTEM schema");
+
+        var sql = $"""
+                   SELECT "TABLE_NAME",
+                          "type",
+                          "PARENT"
+                   FROM (
+                       SELECT OWNER,
+                              TABLE_NAME,
+                              'U'  AS "type",
+                              NULL AS PARENT
+                       FROM "PUBLIC".ALL_TABLES
+                       WHERE OWNER = '{schema}'
+                       UNION ALL
+                       SELECT OWNER,
+                              CONSTRAINT_NAME,
+                              CASE CONSTRAINT_TYPE
+                                  WHEN 'C' THEN
+                                      'C' -- Auto drop
+                                  WHEN 'P' THEN
+                                      'PK' -- Auto drop
+                                  WHEN 'R' THEN
+                                      'F'
+                              END,
+                              TABLE_NAME AS PARENT
+                       FROM "PUBLIC".ALL_CONSTRAINTS
+                       WHERE OWNER = '{schema}'
+                         AND CONSTRAINT_TYPE = 'R'
+                       UNION ALL
+                       SELECT OWNER,
+                              VIEW_NAME,
+                              'V',
+                              NULL AS PARENT
+                       FROM "PUBLIC".ALL_VIEWS
+                       WHERE OWNER = '{schema}'
+                       
+                       UNION ALL
+                       SELECT OWNER,
+                              OBJECT_NAME,
+                              CASE OBJECT_TYPE
+                                  WHEN 'PROCEDURE' THEN
+                                      'P'
+                                  WHEN 'FUNCTION' THEN
+                                      'FN'
+                              END,
+                              NULL AS PARENT
+                       FROM "PUBLIC".ALL_PROCEDURES
+                       WHERE OWNER = '{schema}'
+                       UNION ALL
+                      SELECT OWNER,
+                             TYPE_NAME,
+                             'T',
+                             NULL AS PARENT
+                        FROM "PUBLIC".ALL_TYPES
+                        WHERE OWNER = '{schema}'
+                       )
+                   ORDER BY CASE
+                       WHEN "type" IN ('F', 'UQ', 'C') THEN
+                           1 -- Constraints
+                       WHEN "type" IN ('PK') THEN
+                           2 -- Primary Key
+                       WHEN "type" = 'V' THEN
+                           3 -- View
+                       WHEN "type" = 'U' THEN
+                           4 -- Table
+                       WHEN "type" = 'P' THEN
+                           5 -- Procedure
+                       WHEN "type" = 'FN' THEN
+                           6 -- Function
+                       WHEN "type" = 'T' THEN
+                           7 -- Types
+                   END;
+                   """;
+
+        var objects = _executor.ExecuteReader<DatabaseObject>(
+            sql,
+            reader => new DatabaseObject(
+                schema,
+                reader.GetString(0).Trim(),
+                !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
+                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
+            transaction);
+
+        // TODO: Transactions ?
+        foreach (var obj in objects) DropObject(obj, transaction);
+    }
+
+    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    {
+        var sql = obj switch
+        {
+            { Type: "C" or "F" or "PK" or "UQ" } => $"ALTER TABLE \"{obj.Parent}\" DROP CONSTRAINT \"{obj.Name}\";",
+            { Type: "FN" } => $"DROP FUNCTION \"{obj.Name}\";",
+            { Type: "P" } => $"DROP PROCEDURE \"{obj.Name}\";",
+            { Type: "U" } => $"DROP TABLE \"{obj.Name}\";",
+            { Type: "V" } => $"DROP VIEW \"{obj.Name}\";",
+            { Type: "T" } => $"DROP TYPE \"{obj.Name}\";",
+            _   => throw new ArgumentOutOfRangeException(
+                nameof(obj),
+                $"Unknown database object type '{obj.Type}' for {obj.Name}"
+            )
+        };
+
+        _logger.LogInformation("{sql}", sql);
+
+        _executor.ExecuteNonQuery(sql, transaction);
     }
 }

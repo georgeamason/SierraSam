@@ -23,101 +23,104 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        using var host = Host
-            .CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration(builder =>
-            {
-                // Switch mappings can go here if required
-                builder.AddCommandLine(args);
-            })
-            .ConfigureLogging((ctx, builder) =>
-            {
-                builder.ClearProviders();
-
-                builder.SetMinimumLevel(
-                    ctx.HostingEnvironment.IsDevelopment() ? LogLevel.Trace : LogLevel.Information
-                );
-
-                builder.AddSimpleConsole(options =>
+        try
+        {
+            using var host = Host
+                .CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(builder =>
                 {
-                    options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] => ";
-                    options.UseUtcTimestamp = true;
-                    options.SingleLine      = true;
-                });
-            })
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton<App>();
+                    // Switch mappings can go here if required
+                    builder.AddCommandLine(args);
+                })
+                .ConfigureLogging((ctx, builder) =>
+                {
+                    builder.ClearProviders();
 
-                services.AddSingleton<IDbConnection>(
-                    s => OdbcConnectionFactory.Create(
-                        s.GetRequiredService<ILogger<App>>(),
-                        s.GetRequiredService<IConfiguration>())
-                );
+                    builder.SetMinimumLevel(
+                        ctx.HostingEnvironment.IsDevelopment() ? LogLevel.Trace : LogLevel.Information
+                    );
 
-                services.AddSingleton<IConfiguration>(
-                    s => ConfigurationFactory.Create(
-                        s.GetRequiredService<ILoggerFactory>(),
-                        s.GetRequiredService<IFileSystem>(),
-                        args)
-                );
+                    builder.AddSimpleConsole(options =>
+                    {
+                        options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] => ";
+                        options.UseUtcTimestamp = true;
+                        options.SingleLine = true;
+                    });
+                })
+                // TODO: Extract into a separate class
+                .ConfigureServices((_, services) =>
+                {
+                    services.AddSingleton<App>();
 
-                services.AddSingleton<IDbExecutor, DbExecutor>();
+                    services.AddSingleton<IDbConnection>(
+                        s => OdbcConnectionFactory.Create(
+                            s.GetRequiredService<ILogger<App>>(),
+                            s.GetRequiredService<IConfiguration>())
+                    );
 
-                services.AddMemoryCache();
+                    services.AddSingleton<IConfiguration>(
+                        s => ConfigurationFactory.Create(
+                            s.GetRequiredService<ILoggerFactory>(),
+                            s.GetRequiredService<IFileSystem>(),
+                            args)
+                    );
 
-                services.AddSingleton<IDatabase>(
-                    s => DatabaseResolver.Create(
-                        s.GetRequiredService<ILoggerFactory>(),
-                        s.GetRequiredService<IDbConnection>(),
-                        s.GetRequiredService<IDbExecutor>(),
-                        s.GetRequiredService<IConfiguration>(),
-                        s.GetRequiredService<IMemoryCache>())
-                );
+                    services.AddSingleton<IDbExecutor, DbExecutor>();
 
-                services.AddSingleton<IFileSystem, FileSystem>();
+                    services.AddMemoryCache();
 
-                services.AddSingleton<IMigrationSeeker>(
-                    s => MigrationSeekerFactory.Create(
-                        s.GetRequiredService<IConfiguration>(),
-                        s.GetRequiredService<IFileSystem>())
-                );
+                    services.AddSingleton<IDatabase>(
+                        s => DatabaseResolver.Create(
+                            s.GetRequiredService<ILoggerFactory>(),
+                            s.GetRequiredService<IDbConnection>(),
+                            s.GetRequiredService<IDbExecutor>(),
+                            s.GetRequiredService<IConfiguration>(),
+                            s.GetRequiredService<IMemoryCache>())
+                    );
 
-                services.AddSingleton<IMigrationsApplicator, MigrationsApplicator>();
+                    services.AddSingleton<IFileSystem, FileSystem>();
 
-                services.AddSingleton<IMigrationApplicatorResolver, MigrationApplicatorResolver>();
-                services.AddSingleton<IMigrationApplicator, VersionedMigrationApplicator>();
-                services.AddSingleton<IMigrationApplicator, RepeatableMigrationApplicator>();
+                    services.AddSingleton<IMigrationSeeker>(
+                        s => MigrationSeekerFactory.Create(
+                            s.GetRequiredService<IConfiguration>(),
+                            s.GetRequiredService<IFileSystem>())
+                    );
 
-                services.AddSingleton<IMigrationValidator>(
-                    s => MigrationValidatorFactory.Create(
-                        s.GetRequiredService<IMigrationSeeker>(),
-                        s.GetRequiredService<IDatabase>(),
-                        s.GetRequiredService<IIgnoredMigrationsFactory>())
-                );
+                    services.AddSingleton<IMigrationsApplicator, MigrationsApplicator>();
 
-                services.AddSingleton<IMigrationMerger, MigrationMerger>();
-                services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();
+                    services.AddSingleton<IMigrationApplicatorResolver, MigrationApplicatorResolver>();
+                    services.AddSingleton<IMigrationApplicator, VersionedMigrationApplicator>();
+                    services.AddSingleton<IMigrationApplicator, RepeatableMigrationApplicator>();
 
-                services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
-                services.AddSingleton<ICapability, Auth>();
-                services.AddSingleton<ICapability, Rollup>();
-                services.AddSingleton<ICapability, Clean>();
-                services.AddSingleton<ICapability, Help>();
-                services.AddSingleton<ICapability, Information>();
-                services.AddSingleton<ICapability, Initialise>();
-                services.AddSingleton<ICapability, Migrate>();
-                services.AddSingleton<ICapability, Validate>();
-                services.AddSingleton<ICapability, Version>();
+                    services.AddSingleton<IMigrationValidator>(
+                        s => MigrationValidatorFactory.Create(
+                            s.GetRequiredService<IMigrationSeeker>(),
+                            s.GetRequiredService<IDatabase>(),
+                            s.GetRequiredService<IIgnoredMigrationsFactory>())
+                    );
 
-                services.AddSingleton<ISerializer>(
-                    s => SerializerFactory.Create(
-                        s.GetRequiredService<IConfiguration>())
-                );
+                    services.AddSingleton<IMigrationMerger, MigrationMerger>();
+                    services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();
 
-                services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
-            })
-            .Build();
+                    services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
+                    services.AddSingleton<ICapability, Auth>();
+                    services.AddSingleton<ICapability, Rollup>();
+                    services.AddSingleton<ICapability, Clean>();
+                    services.AddSingleton<ICapability, Help>();
+                    services.AddSingleton<ICapability, Information>();
+                    services.AddSingleton<ICapability, Initialise>();
+                    services.AddSingleton<ICapability, Migrate>();
+                    services.AddSingleton<ICapability, Validate>();
+                    services.AddSingleton<ICapability, Version>();
+
+                    services.AddSingleton<ISerializer>(
+                        s => SerializerFactory.Create(
+                            s.GetRequiredService<IConfiguration>())
+                    );
+
+                    services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
+                })
+                .Build();
 
             var logger = host.Services.GetRequiredService<ILogger<App>>();
             var app = host.Services.GetRequiredService<App>();
@@ -131,8 +134,13 @@ public static class Program
             }
             catch (Exception exception)
             {
-                // logger.LogError(exception, exception.Message);
+                logger.LogError(exception, "{exception}", exception.Message);
                 console.MarkupLineInterpolated($"[red]{exception.Message}[/]");
             }
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception.Message);
+        }
     }
 }

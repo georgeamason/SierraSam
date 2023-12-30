@@ -3,7 +3,7 @@ name: Build
 on: [push]
 
 env:
-  DOTNET_VERSION: 7.x.x
+  DOTNET_VERSION: 8.x.x
 
 jobs:
   setup:

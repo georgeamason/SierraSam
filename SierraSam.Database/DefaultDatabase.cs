@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SierraSam.Core;
@@ -48,10 +47,82 @@ public abstract class DefaultDatabase : IDatabase
         table ??= _configuration.SchemaTable;
 
         var sql = $"""
-                   SELECT "TABLE_NAME"
-                   FROM "INFORMATION_SCHEMA"."TABLES"
-                   WHERE "TABLE_SCHEMA" = '{schema}' AND
-                         "TABLE_NAME" = '{table}'
+                   SELECT "table_name"
+                   FROM "information_schema"."tables"
+                   WHERE "table_schema" = '{schema}' AND
+                         "table_name" = '{table}'
+                   """;
+
+        var result = _dbExecutor.ExecuteReader<string>(
+            sql,
+            reader => reader.GetString(0),
+            transaction
+        );
+
+        return result.Any();
+    }
+
+    public virtual bool HasView(
+        string view,
+        string? schema = null,
+        IDbTransaction? transaction = null
+    )
+    {
+        schema ??= _configuration.DefaultSchema;
+
+        var sql = $"""
+                   SELECT "table_name"
+                   FROM "information_schema"."views"
+                   WHERE "table_schema" = '{schema}' AND
+                         "table_name" = '{view}'
+                   """;
+
+        var result = _dbExecutor.ExecuteReader<string>(
+            sql,
+            reader => reader.GetString(0),
+            transaction
+        );
+
+        return result.Any();
+    }
+
+    public virtual bool HasRoutine(
+        string routine,
+        string? schema = null,
+        IDbTransaction? transaction = null
+    )
+    {
+        schema ??= _configuration.DefaultSchema;
+
+        var sql = $"""
+                   SELECT "routine_name"
+                   FROM "information_schema"."routines"
+                   WHERE "routine_schema" = '{schema}' AND
+                         "routine_name" = '{routine}'
+                   """;
+
+        var result = _dbExecutor.ExecuteReader<string>(
+            sql,
+            reader => reader.GetString(0),
+            transaction
+        );
+
+        return result.Any();
+    }
+
+    public virtual bool HasDomain(
+        string domain,
+        string? schema = null,
+        IDbTransaction? transaction = null
+    )
+    {
+        schema ??= _configuration.DefaultSchema;
+
+        var sql = $"""
+                   SELECT "domain_name"
+                   FROM "information_schema"."domains"
+                   WHERE "domain_schema" = '{schema}' AND
+                         "domain_name" = '{domain}'
                    """;
 
         var result = _dbExecutor.ExecuteReader<string>(
@@ -226,26 +297,95 @@ public abstract class DefaultDatabase : IDatabase
         return stopwatch.Elapsed;
     }
 
-    public virtual IReadOnlyCollection<DatabaseObject> GetSchemaObjects(
+    public virtual void Clean(
         string? schema = null,
         IDbTransaction? transaction = null)
     {
         schema ??= _configuration.DefaultSchema!;
 
-        //  TODO: How about Triggers - they are not in sys.objects
+        // https://learn.microsoft.com/en-us/sql/t-sql/statements/drop-trigger-transact-sql?view=sql-server-ver16#b-dropping-a-ddl-trigger
+        // Will not find DDL triggers, they are not schema scoped
         var sql = $"""
-                   SELECT 
-                       o.name, 
-                       o.type, 
-                       t.name AS parent
-                   FROM "sys"."objects" o
-                   INNER JOIN "sys"."schemas" s ON s.[schema_id] = o.[schema_id]
-                   LEFT JOIN "sys"."tables" t ON t.[object_id] = o.parent_object_id
-                   WHERE s.name = '{schema}' AND o.is_ms_shipped = 0
-                   ORDER BY o.parent_object_id DESC, o.[object_id] DESC
+                   SELECT "objects"."table_name",
+                          "objects"."type",
+                          "objects"."parent"
+                   FROM (
+                       SELECT TABLE_CATALOG,
+                              TABLE_SCHEMA,
+                              TABLE_NAME,
+                              'U'  AS "type",
+                              NULL AS PARENT
+                       FROM information_schema.tables
+                       WHERE TABLE_SCHEMA = '{schema}'
+                         AND TABLE_TYPE = 'BASE TABLE'
+                       UNION ALL
+                       SELECT table_constraints.CONSTRAINT_CATALOG,
+                              table_constraints.CONSTRAINT_SCHEMA,
+                              table_constraints.CONSTRAINT_NAME,
+                              CASE CONSTRAINT_TYPE
+                                  WHEN 'CHECK' THEN
+                                      'C' -- Auto drop
+                                  WHEN 'UNIQUE' THEN
+                                      'UQ' -- Auto drop
+                                  WHEN 'PRIMARY KEY' THEN
+                                      'PK' -- Auto drop
+                                  WHEN 'FOREIGN KEY' THEN
+                                      'F'
+                              END,
+                              TABLE_NAME AS PARENT
+                       FROM information_schema.table_constraints table_constraints
+                       INNER JOIN information_schema.referential_constraints r
+                                  ON r.constraint_name = table_constraints.constraint_name
+                       WHERE table_constraints.CONSTRAINT_SCHEMA = '{schema}'
+                       UNION ALL
+                       SELECT TABLE_CATALOG,
+                              TABLE_SCHEMA,
+                              TABLE_NAME,
+                              'V',
+                              NULL AS PARENT
+                       FROM information_schema.views
+                       WHERE TABLE_SCHEMA = '{schema}'
+                       UNION ALL
+                       SELECT ROUTINE_CATALOG,
+                              ROUTINE_SCHEMA,
+                              ROUTINE_NAME,
+                              CASE ROUTINE_TYPE
+                                  WHEN 'PROCEDURE' THEN
+                                      'P'
+                                  WHEN 'FUNCTION' THEN
+                                      'FN'
+                              END,
+                              NULL AS PARENT
+                       FROM information_schema.routines
+                       WHERE ROUTINE_SCHEMA = '{schema}'
+                       UNION ALL
+                       SELECT DOMAIN_CATALOG,
+                              DOMAIN_SCHEMA,
+                              DOMAIN_NAME,
+                              'T',
+                              NULL AS PARENT
+                        FROM information_schema.domains
+                        WHERE DOMAIN_SCHEMA = '{schema}'
+                       ) AS "objects"
+                   ORDER BY CASE
+                        WHEN "objects"."type" IN ('F', 'UQ', 'C') THEN
+                            1 -- Constraints
+                        WHEN "objects"."type" IN ('PK') THEN
+                            2 -- Primary Key
+                        WHEN "objects"."type" = 'V' THEN
+                            3 -- View
+                        WHEN "objects"."type" = 'U' THEN
+                            4 -- Table
+                        WHEN "objects"."type" = 'P' THEN
+                            5 -- Procedure
+                        WHEN "objects"."type" = 'FN' THEN
+                            6 -- Function
+                       WHEN "objects"."type" = 'T' THEN
+                            7 -- Domains
+                    END;
                    """;
 
-        return _dbExecutor.ExecuteReader<DatabaseObject>(
+        var objects = _dbExecutor.ExecuteReader<DatabaseObject>(
             sql,
             reader => new DatabaseObject(
                 schema,
@@ -253,29 +393,8 @@ public abstract class DefaultDatabase : IDatabase
                 !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
                 !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
             transaction);
-    }
 
-    public virtual void DropSchemaObject(DatabaseObject obj, IDbTransaction? transaction = null)
-    {
-        var objectType = obj.Type switch
-        {
-            "AF" => "AGGREGATE",
-            "C" or "D" or "F" or "PK" or "UQ" => "CONSTRAINT",
-            "FN" or "IF" or "TF" => "FUNCTION",
-            "P" => "PROCEDURE",
-            "U" => "TABLE",
-            "V" => "VIEW",
-            _   => throw new ArgumentOutOfRangeException(nameof(obj), $"Unknown database object type '{obj.Type}'")
-        };
-
-        var sb = new StringBuilder();
-
-        if (obj.Parent is not null)
-            sb.Append($"ALTER TABLE \"{obj.Schema}\".\"{obj.Parent}\"");
-
-        sb.Append($"DROP {objectType} \"{obj.Name}\"");
-
-        _dbExecutor.ExecuteNonQuery(sb.ToString(), transaction);
+        foreach (var obj in objects) DropObject(obj, transaction);
     }
 
     public virtual int GetInstalledRank(
@@ -290,5 +409,27 @@ public abstract class DefaultDatabase : IDatabase
         var sql = $"SELECT MAX(\"installed_rank\") FROM \"{schema}\".\"{table}\"";
 
         return _dbExecutor.ExecuteScalar<int>(sql, transaction);
+    }
+
+    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    {
+        // https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-objects-transact-sql?view=sql-server-ver16
+        var sql = obj switch
+        {
+            { Type: "C" or "F" or "PK" or "UQ" } => $"ALTER TABLE \"{obj.Parent}\" DROP CONSTRAINT \"{obj.Name}\";",
+            { Type: "FN" } => $"DROP FUNCTION \"{obj.Name}\";",
+            { Type: "P" } => $"DROP PROCEDURE \"{obj.Name}\";",
+            { Type: "U" } => $"DROP TABLE \"{obj.Name}\";",
+            { Type: "V" } => $"DROP VIEW \"{obj.Name}\";",
+            { Type: "T" } => $"DROP TYPE \"{obj.Name}\";",
+            _   => throw new ArgumentOutOfRangeException(
+                nameof(obj),
+                $"Unknown database object type '{obj.Type}' for {obj.Name}"
+            )
+        };
+
+        _logger.LogInformation("{sql}", sql);
+
+        _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 }

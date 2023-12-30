@@ -20,47 +20,15 @@ public sealed class PostgresDatabase : DefaultDatabase
         IMemoryCache cache)
         : base(logger, connection, executor, configuration, cache)
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
-        _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
-
-        _cache = cache
-            ?? throw new ArgumentNullException(nameof(cache));
-
-        _dbExecutor = executor
-            ?? throw new ArgumentNullException(nameof(executor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _dbExecutor = executor ?? throw new ArgumentNullException(nameof(executor));
 
         _configuration.DefaultSchema ??= this.DefaultSchema;
     }
 
     public override string Provider => "PostgreSQL";
-
-    public override bool HasTable(
-        string? schema = null,
-        string? table = null,
-        IDbTransaction? transaction = null
-    )
-    {
-        schema ??= _configuration.DefaultSchema;
-        table ??= _configuration.SchemaTable;
-
-        var sql = $"""
-                   SELECT "table_name"
-                   FROM "information_schema"."tables"
-                   WHERE "table_schema" = '{schema}' AND 
-                         "table_name" = '{table}'
-                   """;
-
-        var result = _dbExecutor.ExecuteReader<string>(
-            sql,
-            reader => reader.GetString(0),
-            transaction
-        );
-
-        return result.Any();
-    }
 
     public override void CreateSchemaHistory(
         string? schema = null,

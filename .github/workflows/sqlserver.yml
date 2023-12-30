@@ -25,7 +25,7 @@ jobs:
           --verbosity normal \
           --logger trx
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: test_results

@@ -90,12 +90,12 @@
       },
       "System.IO.Abstractions": {
         "type": "Direct",
-        "requested": "[19.2.91, )",
-        "resolved": "19.2.91",
-        "contentHash": "1fuPSkJPWKYxS6CwplekMAIevQ4DnfMfZh74E4lEpHkPe7vPA0JEuA6KBjQgwvmr5ylyCYhLwypE5b1PS3B0Gg==",
+        "requested": "[20.0.4, )",
+        "resolved": "20.0.4",
+        "contentHash": "Vv3DffYCM/DEQ7+9Dn7ydq852WSVtdeoLNlztIqaMAl4o6aALyAJQRTQ30d/3D7BVf5pALsGm22HYb4Y6h8xvw==",
         "dependencies": {
-          "TestableIO.System.IO.Abstractions": "19.2.91",
-          "TestableIO.System.IO.Abstractions.Wrappers": "19.2.91"
+          "TestableIO.System.IO.Abstractions": "20.0.4",
+          "TestableIO.System.IO.Abstractions.Wrappers": "20.0.4"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
@@ -379,15 +379,15 @@
       },
       "TestableIO.System.IO.Abstractions": {
         "type": "Transitive",
-        "resolved": "19.2.91",
-        "contentHash": "RaP55nWjYeGPuV8wMxNsqk/0rU423pN5JlW7HdIAyFFXvCb/LcN/6rR4v62vOQoNcw9rdsfoXYoG4NKhIFzUkQ=="
+        "resolved": "20.0.4",
+        "contentHash": "zvuE3an8qmEjlz72ZKyW/gBZprR0TMTDxuw77i1OXi5wEagXRhHwP4lOaLvHIXNlwyCAmdmei6iLHsfsZcuUAA=="
       },
       "TestableIO.System.IO.Abstractions.Wrappers": {
         "type": "Transitive",
-        "resolved": "19.2.91",
-        "contentHash": "ApFNZP5a6k5ALnzCNwPPn9GEQjRySWn2g7gLBkTDc1gslKJQQHBTG9x4Wx/9kPfJlewEyvJ+Eisu7GQLJP3Frw==",
+        "resolved": "20.0.4",
+        "contentHash": "LbVaZauZfCkcGmHyPhQ2yiKv5GQqTvMViPYd3NjU1tGxp0N2p7Oc6Q/2trN6ZNIZCr42ujJdYUB63hE4mtsHRQ==",
         "dependencies": {
-          "TestableIO.System.IO.Abstractions": "19.2.91"
+          "TestableIO.System.IO.Abstractions": "20.0.4"
         }
       },
       "YamlDotNet": {
@@ -401,7 +401,7 @@
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.0, )",
           "Spectre.Console.Json": "[0.48.0, )",
           "System.Data.Odbc": "[8.0.0, )",
-          "System.IO.Abstractions": "[19.2.91, )",
+          "System.IO.Abstractions": "[20.0.4, )",
           "YamlDotNet": "[13.7.1, )"
         }
       },

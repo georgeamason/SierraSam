@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SierraSam.Core;
 using SierraSam.Core.MigrationSeekers;
+using SierraSam.Core.MigrationValidators;
 using Spectre.Console;
 using static SierraSam.Core.Enums.MigrationType;
 
@@ -12,34 +12,29 @@ internal sealed class Migrate : ICapability
     private readonly ILogger _logger;
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
+    private readonly IMigrationValidator _validator;
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IMigrationsApplicator _migrationsApplicator;
     private readonly IAnsiConsole _console;
 
-    public Migrate(ILogger<Migrate> logger,
-                   IDatabase database,
-                   IConfiguration configuration,
-                   IMigrationSeeker migrationSeeker,
-                   IMigrationsApplicator migrationsApplicator,
-                   IAnsiConsole console)
+    // ReSharper disable once ConvertToPrimaryConstructor
+    public Migrate(
+        ILogger<Migrate> logger,
+        IDatabase database,
+        IConfiguration configuration,
+        IMigrationValidator validator,
+        IMigrationSeeker migrationSeeker,
+        IMigrationsApplicator migrationsApplicator,
+        IAnsiConsole console
+    )
     {
-        _logger = logger
-            ?? throw new ArgumentNullException(nameof(logger));
-
-        _database = database
-            ?? throw new ArgumentNullException(nameof(database));
-
-        _configuration = configuration
-            ?? throw new ArgumentNullException(nameof(configuration));
-
-        _migrationSeeker = migrationSeeker
-            ?? throw new ArgumentNullException(nameof(migrationSeeker));
-
-        _migrationsApplicator = migrationsApplicator
-            ?? throw new ArgumentNullException(nameof(migrationsApplicator));
-
-        _console = console
-            ?? throw new ArgumentNullException(nameof(console));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
+        _migrationsApplicator = migrationsApplicator ?? throw new ArgumentNullException(nameof(migrationsApplicator));
+        _console = console ?? throw new ArgumentNullException(nameof(console));
     }
 
     public void Run(string[] args)
@@ -63,6 +58,12 @@ internal sealed class Migrate : ICapability
             _database.CreateSchemaHistory();
         }
 
+        var validated = _validator.Validate();
+
+        _console.MarkupLine(
+            $"Successfully validated {validated} migrations"
+        );
+
         var discoveredMigrations = _migrationSeeker.Find();
 
         var appliedMigrations = _database.GetSchemaHistory();
@@ -84,9 +85,8 @@ internal sealed class Migrate : ICapability
             .ThenBy(pendingMigration => pendingMigration.Version)
             .ThenBy(pendingMigration => pendingMigration.Description);
 
-        var executionTime = Stopwatch.StartNew();
-        var appliedCount = _migrationsApplicator.Apply(pendingMigrations);
-        executionTime.Stop();
+        // TODO: Conditional based on validateOnMigrate arg
+        var appliedCount = _migrationsApplicator.Apply(pendingMigrations, out var elapsedTime);
 
         if (appliedCount == 0)
         {
@@ -100,7 +100,7 @@ internal sealed class Migrate : ICapability
         _console.MarkupLine(
             $"[green]Successfully applied {appliedCount} migration(s) " +
             $"to schema \"{_configuration.DefaultSchema}\" " +
-            $@"(execution time {executionTime.Elapsed:mm\:ss\.fff}s)[/]"
+            $@"(execution time {elapsedTime:mm\:ss\.fff}s)[/]"
         );
     }
 }

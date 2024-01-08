@@ -8,5 +8,5 @@ public interface IMigrationsApplicator
     /// Apply migrations to the database
     /// </summary>
     /// <exception cref="MigrationApplicatorException"></exception>
-    int Apply(IEnumerable<PendingMigration> pendingMigrations);
+    int Apply(IEnumerable<PendingMigration> pendingMigrations, out TimeSpan executionTime);
 }

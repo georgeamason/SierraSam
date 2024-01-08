@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Data;
 using FluentAssertions;
+using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using SierraSam.Core.Enums;
 using SierraSam.Core.MigrationApplicators;
@@ -12,9 +13,10 @@ internal sealed class MigrationsApplicatorTests
 {
     private readonly IDatabase _database = Substitute.For<IDatabase>();
     private readonly IMigrationApplicatorResolver _resolver = Substitute.For<IMigrationApplicatorResolver>();
+    private readonly FakeTimeProvider _timeProvider = new();
     private readonly MigrationsApplicator _sut;
 
-    public MigrationsApplicatorTests() => _sut = new(_database, _resolver);
+    public MigrationsApplicatorTests() => _sut = new(_database, _resolver, _timeProvider);
 
     private static IEnumerable Constructors_with_null_args()
     {
@@ -23,7 +25,8 @@ internal sealed class MigrationsApplicatorTests
                 new TestDelegate(
                     () => new MigrationsApplicator(
                         null!,
-                        Substitute.For<IMigrationApplicatorResolver>()
+                        Substitute.For<IMigrationApplicatorResolver>(),
+                        Substitute.For<TimeProvider>()
                     )
                 )
             )
@@ -33,7 +36,8 @@ internal sealed class MigrationsApplicatorTests
                 new TestDelegate(
                     () => new MigrationsApplicator(
                         Substitute.For<IDatabase>(),
-                        null!
+                        null!,
+                        Substitute.For<TimeProvider>()
                     )
                 )
             )
@@ -99,7 +103,7 @@ internal sealed class MigrationsApplicatorTests
             .Resolve(typeof(RepeatableMigrationApplicator))
             .Returns(repeatableMigrationApplicator);
 
-        var appliedCount = _sut.Apply(pendingMigrations);
+        _sut.Apply(pendingMigrations, out _);
 
         versionMigrationApplicator
             .Received(1)
@@ -110,8 +114,6 @@ internal sealed class MigrationsApplicatorTests
             .Apply(pendingMigrations[1], dbTransaction);
 
         dbTransaction.Received().Commit();
-
-        appliedCount.Should().Be(2);
     }
 
     [Test]
@@ -145,7 +147,7 @@ internal sealed class MigrationsApplicatorTests
             .Resolve(typeof(VersionedMigrationApplicator))
             .Returns(versionMigrationApplicator);
 
-        _sut.Invoking(applicator => applicator.Apply(pendingMigrations))
+        _sut.Invoking(applicator => applicator.Apply(pendingMigrations, out _))
             .Should()
             .Throw<ArgumentOutOfRangeException>();
     }

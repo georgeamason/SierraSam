@@ -20,7 +20,8 @@ internal sealed class VersionedMigrationApplicatorTests
             new TestDelegate(() => new VersionedMigrationApplicator(
                     null!,
                 Substitute.For<IConfiguration>(),
-                Substitute.For<IAnsiConsole>()
+                Substitute.For<IAnsiConsole>(),
+                Substitute.For<TimeProvider>()
             )
         )).SetName("Database is null");
 
@@ -28,7 +29,8 @@ internal sealed class VersionedMigrationApplicatorTests
             new TestDelegate(() => new VersionedMigrationApplicator(
                     Substitute.For<IDatabase>(),
                     null!,
-                    Substitute.For<IAnsiConsole>()
+                    Substitute.For<IAnsiConsole>(),
+                    Substitute.For<TimeProvider>()
                 )
             )).SetName("configuration is null");
 
@@ -36,7 +38,8 @@ internal sealed class VersionedMigrationApplicatorTests
             new TestDelegate(() => new VersionedMigrationApplicator(
                     Substitute.For<IDatabase>(),
                     Substitute.For<IConfiguration>(),
-                    null!
+                    null!,
+                    Substitute.For<TimeProvider>()
                 )
             )).SetName("console is null");
         // ReSharper restore ObjectCreationAsStatement
@@ -55,7 +58,7 @@ internal sealed class VersionedMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         var console = new TestConsole();
 
-        var sut = new VersionedMigrationApplicator(database, configuration, console);
+        var sut = new VersionedMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var pendingMigration = new PendingMigration(
             "1",
@@ -80,7 +83,7 @@ internal sealed class VersionedMigrationApplicatorTests
         configuration.InstalledBy.Returns("someUser");
         var console = new TestConsole();
 
-        var sut = new VersionedMigrationApplicator(database, configuration, console);
+        var sut = new VersionedMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var pendingMigration = new PendingMigration(
             "1",
@@ -107,8 +110,10 @@ internal sealed class VersionedMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         configuration.InstalledBy.Returns("someUser");
         var console = Substitute.For<IAnsiConsole>();
+        var timeProvider = Substitute.For<TimeProvider>();
+        timeProvider.GetUtcNow().Returns(new DateTimeOffset(2024, 1, 1, 12, 1, 1, new TimeSpan(0)));
 
-        var sut = new VersionedMigrationApplicator(database, configuration, console);
+        var sut = new VersionedMigrationApplicator(database, configuration, console,timeProvider);
 
         var pendingMigration = new PendingMigration(
             "1",
@@ -140,7 +145,7 @@ internal sealed class VersionedMigrationApplicatorTests
                     appliedMigration.Script == "filename.sql" &&
                     appliedMigration.Checksum == string.Empty.Checksum() &&
                     appliedMigration.InstalledBy == configuration.InstalledBy &&
-                    appliedMigration.InstalledOn.Kind == DateTimeKind.Utc &&
+                    appliedMigration.InstalledOn == new DateTime(2024, 1, 1, 12, 1, 1, DateTimeKind.Utc) &&
                     appliedMigration.ExecutionTime == 2000 &&
                     appliedMigration.Success == true
                 ),
@@ -155,7 +160,7 @@ internal sealed class VersionedMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         var console = Substitute.For<IAnsiConsole>();
 
-        var sut = new VersionedMigrationApplicator(database, configuration, console);
+        var sut = new VersionedMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var pendingMigration = new PendingMigration(
             "1",

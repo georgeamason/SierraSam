@@ -11,16 +11,20 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
     private readonly IAnsiConsole _console;
+    private readonly TimeProvider _timeProvider;
 
+    // ReSharper disable once ConvertToPrimaryConstructor
     public RepeatableMigrationApplicator(
         IDatabase database,
         IConfiguration configuration,
-        IAnsiConsole console
+        IAnsiConsole console,
+        TimeProvider timeProvider
     )
     {
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _console = console ?? throw new ArgumentNullException(nameof(console));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public int Apply(PendingMigration pendingMigration, IDbTransaction transaction)
@@ -49,7 +53,7 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
             {
                 var updatedMigration = appliedMigration
                     .WithChecksum(pendingMigration.Checksum)
-                    .WithInstalledOn(DateTime.UtcNow);
+                    .WithInstalledOn(_timeProvider.GetUtcNow().UtcDateTime);
 
                 // https://stackoverflow.com/questions/63091283/flyway-always-execute-repeatable-migrations
                 // https://stackoverflow.com/questions/42930738/flyway-and-initialization-of-repeatable-migrations
@@ -70,7 +74,7 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
                 pendingMigration.FileName,
                 pendingMigration.Checksum,
                 _configuration.InstalledBy,
-                DateTime.UtcNow,
+                _timeProvider.GetUtcNow().UtcDateTime,
                 executionTime.TotalMilliseconds,
                 true);
 

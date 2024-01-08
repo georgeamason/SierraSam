@@ -2,11 +2,13 @@
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using SierraSam.Capabilities;
 using SierraSam.Core;
 using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationApplicators;
 using SierraSam.Core.MigrationSeekers;
+using SierraSam.Core.MigrationValidators;
 using SierraSam.Database;
 using Spectre.Console.Testing;
 using static SierraSam.Core.Enums.MigrationType;
@@ -23,6 +25,7 @@ internal sealed class MigrateTests
     private readonly ITestContainer _testContainer;
     private readonly ILogger<Migrate> _logger = Substitute.For<ILogger<Migrate>>();
     private readonly TestConsole _console = new ();
+    private readonly FakeTimeProvider _timeProvider = new();
 
     public MigrateTests(ITestContainer testContainer) => _testContainer = testContainer;
 
@@ -60,6 +63,7 @@ internal sealed class MigrateTests
             _logger,
             database,
             configuration,
+            Substitute.For<IMigrationValidator>(),
             migrationSeeker,
             migrationApplicator,
             _console
@@ -106,20 +110,24 @@ internal sealed class MigrateTests
                 new RepeatableMigrationApplicator(
                     database,
                     configuration,
-                    _console
+                    _console,
+                    _timeProvider
                 ),
                 new VersionedMigrationApplicator(
                     database,
                     configuration,
-                    _console
+                    _console,
+                    _timeProvider
                 )
-            })
+            }),
+            _timeProvider
         );
 
         var sut = new Migrate(
             _logger,
             database,
             configuration,
+            Substitute.For<IMigrationValidator>(),
             migrationSeeker,
             migrationApplicator,
             _console
@@ -207,20 +215,24 @@ internal sealed class MigrateTests
                 new RepeatableMigrationApplicator(
                     database,
                     configuration,
-                    _console
+                    _console,
+                    _timeProvider
                 ),
                 new VersionedMigrationApplicator(
                     database,
                     configuration,
-                    _console
+                    _console,
+                    _timeProvider
                 )
-            })
+            }),
+            _timeProvider
         );
 
         var sut = new Migrate(
             _logger,
             database,
             configuration,
+            Substitute.For<IMigrationValidator>(),
             migrationSeeker,
             migrationApplicator,
             _console

@@ -122,7 +122,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database
@@ -163,7 +163,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database
@@ -201,7 +201,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -248,7 +248,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database

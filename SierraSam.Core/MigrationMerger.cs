@@ -22,7 +22,7 @@ public class MigrationMerger : IMigrationMerger
     public IReadOnlyCollection<TerseMigration> Merge()
     {
         var discoveredMigrations = _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Select(m =>
             {
                 // ReSharper disable once ConvertToLambdaExpression

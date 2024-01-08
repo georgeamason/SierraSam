@@ -22,7 +22,7 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_applied_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 CreatePendingMigration(MigrationType.Versioned)
@@ -56,7 +56,7 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_missing_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         var installedOn = DateTime.UtcNow;
@@ -85,7 +85,7 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_pending_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new []
             {
                 CreatePendingMigration(MigrationType.Versioned)

@@ -59,7 +59,7 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
             .ToArray();
 
         var filteredDiscoveredMigrations = _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Where(m => ignoredMigrationTypes switch
             {
                 [Repeatable] => m.MigrationType is not Repeatable,

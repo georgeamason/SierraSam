@@ -144,7 +144,7 @@ internal sealed class MigrateTests
     {
         _database.HasMigrationTable().Returns(true);
 
-        _migrationSeeker.Find().Returns(new PendingMigration[]
+        _migrationSeeker.GetPendingMigrations().Returns(new PendingMigration[]
         {
             new("1", "description", MigrationType.Versioned, string.Empty, string.Empty),
             new(null, "someDescriptionB", MigrationType.Repeatable, string.Empty, string.Empty),

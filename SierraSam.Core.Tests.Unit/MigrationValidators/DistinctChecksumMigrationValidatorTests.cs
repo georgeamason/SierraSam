@@ -28,7 +28,7 @@ internal sealed class DistinctChecksumMigrationValidatorTests
     {
         const string sql = "SELECT 1";
 
-        _migrationSeeker.Find().Returns(new[]
+        _migrationSeeker.GetPendingMigrations().Returns(new[]
         {
             new PendingMigration("1", "someDescription", Versioned, sql, "someFilename"),
             new PendingMigration("2", "anotherDescription", Versioned, sql, "anotherFilename")
@@ -43,7 +43,7 @@ internal sealed class DistinctChecksumMigrationValidatorTests
     [Test]
     public void Validate_returns_count_of_distinct_migrations()
     {
-        _migrationSeeker.Find().Returns(new[]
+        _migrationSeeker.GetPendingMigrations().Returns(new[]
         {
             new PendingMigration("1", "someDescription", Versioned, "SELECT 1", "someFilename"),
             new PendingMigration("2", "anotherDescription", Versioned, "SELECT 2", "anotherFilename")

@@ -101,7 +101,7 @@ internal sealed class MigrateTests
             new(null, "Write into foo", Repeatable, "INSERT INTO foo VALUES (1);", "R1__Write_into_foo.sql"),
         };
 
-        migrationSeeker.Find().Returns(pendingMigrations);
+        migrationSeeker.GetPendingMigrations().Returns(pendingMigrations);
 
         var migrationApplicator = new MigrationsApplicator(
             database,
@@ -206,7 +206,7 @@ internal sealed class MigrateTests
             new(null, "Write into foo", Repeatable, "SELECT 2", "R1__Write_into_foo.sql"),
         };
 
-        migrationSeeker.Find().Returns(pendingMigrations);
+        migrationSeeker.GetPendingMigrations().Returns(pendingMigrations);
 
         var migrationApplicator = new MigrationsApplicator(
             database,

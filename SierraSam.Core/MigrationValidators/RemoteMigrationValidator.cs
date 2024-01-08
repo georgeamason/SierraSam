@@ -71,7 +71,7 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
         foreach (var appliedMigration in filteredAppliedMigrations)
         {
             var discoveredMigration = _migrationSeeker
-                .Find()
+                .GetPendingMigrations()
                 .SingleOrDefault(m => m.Version == appliedMigration.Version &&
                                       m.FileName == appliedMigration.Script &&
                                       "SQL" == appliedMigration.Type &&

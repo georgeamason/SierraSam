@@ -64,7 +64,7 @@ internal sealed class Migrate : ICapability
             $"Successfully validated {validated} migrations"
         );
 
-        var discoveredMigrations = _migrationSeeker.Find();
+        var discoveredMigrations = _migrationSeeker.GetPendingMigrations();
 
         var appliedMigrations = _database.GetAppliedMigrations();
 

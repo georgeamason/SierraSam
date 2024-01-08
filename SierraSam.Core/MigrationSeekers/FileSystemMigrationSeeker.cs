@@ -19,7 +19,7 @@ internal sealed class FileSystemMigrationSeeker : IMigrationSeeker
             ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public IReadOnlyCollection<PendingMigration> Find()
+    public IReadOnlyCollection<PendingMigration> GetPendingMigrations()
     {
         return _configuration.Locations
             .Where(location => location.StartsWith("filesystem:"))

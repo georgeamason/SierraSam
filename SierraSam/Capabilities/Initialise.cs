@@ -15,19 +15,24 @@ internal sealed class Initialise : ICapability
     private readonly IConfiguration _configuration;
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IAnsiConsole _console;
+    private readonly TimeProvider _timeProvider;
 
+    // ReSharper disable once ConvertToPrimaryConstructor
     public Initialise(
         ILogger<Initialise> logger,
         IDatabase database,
         IConfiguration configuration,
         IMigrationSeeker migrationSeeker,
-        IAnsiConsole console)
+        IAnsiConsole console,
+        TimeProvider timeProvider
+    )
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
         _console = console ?? throw new ArgumentNullException(nameof(console));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public void Run(string[] args)
@@ -76,7 +81,7 @@ internal sealed class Initialise : ICapability
                         filteredMigration.FileName,
                         filteredMigration.Checksum,
                         _configuration.InstalledBy,
-                        DateTime.UtcNow,
+                        _timeProvider.GetUtcNow().UtcDateTime,
                         TimeSpan.Zero.TotalMilliseconds,
                         true);
 

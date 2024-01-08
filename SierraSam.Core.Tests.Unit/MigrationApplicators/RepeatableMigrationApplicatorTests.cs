@@ -19,7 +19,8 @@ internal sealed class RepeatableMigrationApplicatorTests
             new TestDelegate(() => new RepeatableMigrationApplicator(
                     null!,
                     Substitute.For<IConfiguration>(),
-                    Substitute.For<IAnsiConsole>()
+                    Substitute.For<IAnsiConsole>(),
+                    Substitute.For<TimeProvider>()
                 )
             )).SetName("Database is null");
 
@@ -27,7 +28,8 @@ internal sealed class RepeatableMigrationApplicatorTests
             new TestDelegate(() => new RepeatableMigrationApplicator(
                     Substitute.For<IDatabase>(),
                     null!,
-                    Substitute.For<IAnsiConsole>()
+                    Substitute.For<IAnsiConsole>(),
+                    Substitute.For<TimeProvider>()
                 )
             )).SetName("configuration is null");
 
@@ -35,7 +37,8 @@ internal sealed class RepeatableMigrationApplicatorTests
             new TestDelegate(() => new RepeatableMigrationApplicator(
                     Substitute.For<IDatabase>(),
                     Substitute.For<IConfiguration>(),
-                    null!
+                    null!,
+                    Substitute.For<TimeProvider>()
                 )
             )).SetName("console is null");
         // ReSharper restore ObjectCreationAsStatement
@@ -53,7 +56,8 @@ internal sealed class RepeatableMigrationApplicatorTests
         var sut = new RepeatableMigrationApplicator(
             Substitute.For<IDatabase>(),
             Substitute.For<IConfiguration>(),
-            Substitute.For<IAnsiConsole>()
+            Substitute.For<IAnsiConsole>(),
+            Substitute.For<TimeProvider>()
         );
 
         var pendingMigration = new PendingMigration(
@@ -78,7 +82,7 @@ internal sealed class RepeatableMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         var console = Substitute.For<IAnsiConsole>();
 
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+        var sut = new RepeatableMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var pendingMigration = new PendingMigration(
             "someVersion",
@@ -131,7 +135,7 @@ internal sealed class RepeatableMigrationApplicatorTests
             filename
         );
 
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+        var sut = new RepeatableMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var transaction = Substitute.For<IDbTransaction>();
 
@@ -173,10 +177,12 @@ internal sealed class RepeatableMigrationApplicatorTests
         var configuration = Substitute.For<IConfiguration>();
         configuration.InstalledBy.Returns("someUser");
         var console = Substitute.For<IAnsiConsole>();
+        var timeProvider = Substitute.For<TimeProvider>();
+        timeProvider.GetUtcNow().Returns(new DateTimeOffset(2024, 1, 1, 12, 1, 1, new TimeSpan(0)));
 
         database.GetSchemaHistory().Returns(Array.Empty<AppliedMigration>());
 
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+        var sut = new RepeatableMigrationApplicator(database, configuration, console, timeProvider);
 
         var pendingMigration = new PendingMigration(
             "someVersion",
@@ -209,7 +215,7 @@ internal sealed class RepeatableMigrationApplicatorTests
                                  migration.Script == "filename.sql" &&
                                  migration.Checksum == string.Empty.Checksum() &&
                                  migration.InstalledBy == "someUser" &&
-                                 migration.InstalledOn.Kind == DateTimeKind.Utc &&
+                                 migration.InstalledOn == new DateTime(2024, 1, 1, 12, 1, 1, DateTimeKind.Utc) &&
                                  migration.ExecutionTime == 1000 &&
                                  migration.Success == true
                 ),
@@ -229,7 +235,7 @@ internal sealed class RepeatableMigrationApplicatorTests
 
         database.GetSchemaHistory().Returns(Array.Empty<AppliedMigration>());
 
-        var sut = new RepeatableMigrationApplicator(database, configuration, console);
+        var sut = new RepeatableMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 
         var pendingMigration = new PendingMigration(
             "someVersion",

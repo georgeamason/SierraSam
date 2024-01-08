@@ -8,6 +8,7 @@ using SierraSam.Core;
 using SierraSam.Core.Enums;
 using SierraSam.Core.Extensions;
 using SierraSam.Core.MigrationSeekers;
+using SierraSam.Core.MigrationValidators;
 using Spectre.Console;
 using Spectre.Console.Testing;
 
@@ -19,10 +20,11 @@ internal sealed class MigrateTests
     private readonly ILogger<Migrate> _logger = Substitute.For<ILogger<Migrate>>();
     private readonly IDatabase _database = Substitute.For<IDatabase>();
     private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
+    private readonly IMigrationValidator _validator = Substitute.For<IMigrationValidator>();
     private readonly IMigrationSeeker _migrationSeeker = Substitute.For<IMigrationSeeker>();
     private readonly IMigrationsApplicator _migrationsApplicator = Substitute.For<IMigrationsApplicator>();
     private readonly TestConsole _console = new();
-    private readonly ICapability _sut;
+    private readonly Migrate _sut;
 
     public MigrateTests()
     {
@@ -30,6 +32,7 @@ internal sealed class MigrateTests
             _logger,
             _database,
             _configuration,
+            _validator,
             _migrationSeeker,
             _migrationsApplicator,
             _console
@@ -44,6 +47,7 @@ internal sealed class MigrateTests
                 (null!,
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
+                 Substitute.For<IMigrationValidator>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
@@ -54,6 +58,7 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  null!, 
                  Substitute.For<IConfiguration>(),
+                 Substitute.For<IMigrationValidator>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
@@ -64,16 +69,31 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  Substitute.For<IDatabase>(),
                  null!,
+                 Substitute.For<IMigrationValidator>(),
                  Substitute.For<IMigrationSeeker>(),
                  Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
             .SetName("Null configuration");
+
+        yield return new TestCaseData(
+                new TestDelegate(() => new Migrate(
+                    Substitute.For<ILogger<Migrate>>(),
+                    Substitute.For<IDatabase>(),
+                    Substitute.For<IConfiguration>(),
+                    null!,
+                    Substitute.For<IMigrationSeeker>(),
+                    Substitute.For<IMigrationsApplicator>(),
+                    Substitute.For<IAnsiConsole>()
+                ))
+            )
+            .SetName("Null validator");
 
         yield return new TestCaseData
             (new TestDelegate(() => new Migrate
                 (Substitute.For<ILogger<Migrate>>(),
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
+                 Substitute.For<IMigrationValidator>(),
                  null!,
                  Substitute.For<IMigrationsApplicator>(),
                  Substitute.For<IAnsiConsole>())))
@@ -84,6 +104,7 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                  Substitute.For<IDatabase>(),
                  Substitute.For<IConfiguration>(),
+                 Substitute.For<IMigrationValidator>(),
                  Substitute.For<IMigrationSeeker>(),
                  null!,
                  Substitute.For<IAnsiConsole>())))
@@ -94,6 +115,7 @@ internal sealed class MigrateTests
                 (Substitute.For<ILogger<Migrate>>(),
                 Substitute.For<IDatabase>(),
                 Substitute.For<IConfiguration>(),
+                Substitute.For<IMigrationValidator>(),
                 Substitute.For<IMigrationSeeker>(),
                 Substitute.For<IMigrationsApplicator>(),
                 null!)))
@@ -145,13 +167,13 @@ internal sealed class MigrateTests
         });
 
         _migrationsApplicator
-            .Apply(Arg.Any<IEnumerable<PendingMigration>>())
+            .Apply(Arg.Any<IEnumerable<PendingMigration>>(), out _)
             .Returns(1);
 
         IEnumerable<PendingMigration> migrationsToApply = null!;
 
         _migrationsApplicator
-            .When(applicator => applicator.Apply(Arg.Any<IEnumerable<PendingMigration>>()))
+            .When(applicator => applicator.Apply(Arg.Any<IEnumerable<PendingMigration>>(), out _))
             .Do(info => migrationsToApply = info.Arg<IEnumerable<PendingMigration>>());
 
         _sut.Run(Array.Empty<string>());

@@ -119,6 +119,8 @@ public static class Program
                     );
 
                     services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
+
+                    services.AddSingleton(TimeProvider.System);
                 })
                 .Build();
 

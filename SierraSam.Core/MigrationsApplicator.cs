@@ -7,16 +7,23 @@ public sealed class MigrationsApplicator : IMigrationsApplicator
 {
     private readonly IDatabase _database;
     private readonly IMigrationApplicatorResolver _applicatorResolver;
+    private readonly TimeProvider _timeProvider;
 
-
-    public MigrationsApplicator(IDatabase database, IMigrationApplicatorResolver applicatorResolver)
+    // ReSharper disable once ConvertToPrimaryConstructor
+    public MigrationsApplicator(
+        IDatabase database,
+        IMigrationApplicatorResolver applicatorResolver,
+        TimeProvider timeProvider
+    )
     {
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _applicatorResolver = applicatorResolver ?? throw new ArgumentNullException(nameof(applicatorResolver));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
-    public int Apply(IEnumerable<PendingMigration> pendingMigrations)
+    public int Apply(IEnumerable<PendingMigration> pendingMigrations, out TimeSpan executionTime)
     {
+        var start = _timeProvider.GetTimestamp();
         using var transaction = _database.Connection.BeginTransaction();
         var appliedCount = 0;
         // ReSharper disable once LoopCanBeConvertedToQuery
@@ -35,6 +42,7 @@ public sealed class MigrationsApplicator : IMigrationsApplicator
 
         transaction.Commit();
 
+        executionTime = _timeProvider.GetElapsedTime(start);
         return appliedCount;
     }
 }

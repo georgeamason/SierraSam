@@ -3,13 +3,13 @@ using SierraSam.Core.MigrationSeekers;
 
 namespace SierraSam.Core;
 
-public class MigrationMerger : IMigrationMerger
+public class MigrationAggregator : IMigrationAggregator
 {
     private readonly IMigrationSeeker _migrationSeeker;
     private readonly IDatabase _database;
     private readonly IConfiguration _configuration;
 
-    public MigrationMerger(
+    public MigrationAggregator(
         IMigrationSeeker migrationSeeker,
         IDatabase database,
         IConfiguration configuration)
@@ -19,7 +19,7 @@ public class MigrationMerger : IMigrationMerger
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    public IReadOnlyCollection<TerseMigration> Merge()
+    public IReadOnlyCollection<TerseMigration> GetAllMigrations()
     {
         var discoveredMigrations = _migrationSeeker
             .GetPendingMigrations()

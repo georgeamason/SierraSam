@@ -7,21 +7,21 @@ namespace SierraSam.Capabilities;
 internal sealed class Information : ICapability
 {
     private readonly ILogger<Information> _logger;
-    private readonly IMigrationMerger _migrationMerger;
+    private readonly IMigrationAggregator _migrationAggregator;
     private readonly ISerializer _serializer;
     private readonly IAnsiConsole _console;
 
     public Information(
         ILogger<Information> logger,
-        IMigrationMerger migrationMerger,
+        IMigrationAggregator migrationAggregator,
         ISerializer serializer,
         IAnsiConsole console)
     {
         _logger = logger
             ?? throw new ArgumentNullException(nameof(logger));
 
-        _migrationMerger = migrationMerger
-            ?? throw new ArgumentNullException(nameof(migrationMerger));
+        _migrationAggregator = migrationAggregator
+            ?? throw new ArgumentNullException(nameof(migrationAggregator));
 
         _serializer = serializer
             ?? throw new ArgumentNullException(nameof(serializer));
@@ -34,7 +34,7 @@ internal sealed class Information : ICapability
     {
         _logger.LogTrace($"{nameof(Information)} running");
 
-        var migrations = _migrationMerger.Merge();
+        var migrations = _migrationAggregator.GetAllMigrations();
 
         if (!migrations.Any())
         {

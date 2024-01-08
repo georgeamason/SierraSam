@@ -6,13 +6,13 @@ using SierraSam.Core.MigrationSeekers;
 namespace SierraSam.Core.Tests.Unit;
 
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-internal sealed class MigrationMergerTests
+internal sealed class MigrationAggregatorTests
 {
     private static readonly IMigrationSeeker MigrationSeeker = Substitute.For<IMigrationSeeker>();
     private static readonly IDatabase Database = Substitute.For<IDatabase>();
     private static readonly IConfiguration Configuration = Substitute.For<IConfiguration>();
 
-    private readonly IMigrationMerger _sut = new MigrationMerger(
+    private readonly IMigrationAggregator _sut = new MigrationAggregator(
         MigrationSeeker,
         Database,
         Configuration
@@ -38,7 +38,7 @@ internal sealed class MigrationMergerTests
             });
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                     MigrationType.Versioned,
@@ -69,7 +69,7 @@ internal sealed class MigrationMergerTests
             });
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                 MigrationType.Versioned,
@@ -96,7 +96,7 @@ internal sealed class MigrationMergerTests
             .Returns(Array.Empty<AppliedMigration>());
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                 MigrationType.Versioned,

@@ -134,7 +134,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator
@@ -170,7 +170,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator
@@ -203,7 +203,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -250,7 +250,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator

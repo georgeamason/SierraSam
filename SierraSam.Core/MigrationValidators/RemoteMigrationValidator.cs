@@ -58,7 +58,7 @@ internal sealed class RemoteMigrationValidator : IMigrationValidator
             .ToImmutableArray();
 
         var filteredAppliedMigrations = _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Where(m => migrationTypesToIgnore switch
             {
                 [Repeatable] => m.MigrationType is not Repeatable,

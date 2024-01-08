@@ -91,7 +91,7 @@ internal sealed class OracleDatabase : DefaultDatabase
         _executor.ExecuteNonQuery(sql, transaction);
     }
 
-    public override IReadOnlyCollection<AppliedMigration> GetSchemaHistory(
+    public override IReadOnlyCollection<AppliedMigration> GetAppliedMigrations(
         string? schema = null,
         string? table = null,
         IDbTransaction? transaction = null

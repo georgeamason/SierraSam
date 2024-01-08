@@ -37,7 +37,7 @@ public class MigrationMerger : IMigrationMerger
             });
 
         return _database
-            .GetSchemaHistory(_configuration.DefaultSchema, _configuration.SchemaTable)
+            .GetAppliedMigrations(_configuration.DefaultSchema, _configuration.SchemaTable)
             .Select(m =>
             {
                 var isDiscovered = discoveredMigrations

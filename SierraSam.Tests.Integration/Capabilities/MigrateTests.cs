@@ -72,7 +72,7 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         database.HasMigrationTable().Should().BeTrue();
-        database.GetSchemaHistory().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
+        database.GetAppliedMigrations().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
     }
 
     [Test]
@@ -136,7 +136,7 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         database.HasMigrationTable().Should().BeTrue();
-        database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
+        database.GetAppliedMigrations().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
                     pendingMigrations[0].Version,
@@ -240,7 +240,7 @@ internal sealed class MigrateTests
 
         sut.Run(Array.Empty<string>());
 
-        database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
+        database.GetAppliedMigrations().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
                     null,

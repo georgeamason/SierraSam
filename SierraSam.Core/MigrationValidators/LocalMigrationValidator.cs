@@ -72,7 +72,7 @@ internal sealed class LocalMigrationValidator : IMigrationValidator
         foreach (var discoveredMigration in filteredDiscoveredMigrations)
         {
             var appliedMigration = _database
-                .GetSchemaHistory()
+                .GetAppliedMigrations()
                 .SingleOrDefault(m => m.Version == discoveredMigration.Version &&
                                       m.Script == discoveredMigration.FileName &&
                                       m.Type == "SQL" &&

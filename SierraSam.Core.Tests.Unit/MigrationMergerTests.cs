@@ -31,7 +31,7 @@ internal sealed class MigrationMergerTests
         var installedOn = DateTime.UtcNow;
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new[]
             {
                 CreateAppliedMigration(installedOn, "d41d8cd98f00b204e9800998ecf8427e")
@@ -62,7 +62,7 @@ internal sealed class MigrationMergerTests
         var installedOn = DateTime.UtcNow;
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new[]
             {
                 CreateAppliedMigration(installedOn, "abcd")
@@ -92,7 +92,7 @@ internal sealed class MigrationMergerTests
             });
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(Array.Empty<AppliedMigration>());
 
         _sut

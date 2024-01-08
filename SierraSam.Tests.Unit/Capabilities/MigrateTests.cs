@@ -152,7 +152,7 @@ internal sealed class MigrateTests
             new(null, "someDescriptionA", MigrationType.Repeatable, string.Empty, string.Empty),
         });
 
-        _database.GetSchemaHistory().Returns(new AppliedMigration[]
+        _database.GetAppliedMigrations().Returns(new AppliedMigration[]
         {
             new(1,
                 "1",

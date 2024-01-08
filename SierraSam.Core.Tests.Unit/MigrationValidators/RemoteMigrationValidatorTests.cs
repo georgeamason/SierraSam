@@ -104,7 +104,7 @@ internal sealed class RemoteMigrationValidatorTests
 
         _database
             .DidNotReceive()
-            .GetSchemaHistory();
+            .GetAppliedMigrations();
     }
 
     [TestCase(MigrationType.Versioned, MigrationState.Missing)]
@@ -126,7 +126,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -167,7 +167,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -213,7 +213,7 @@ internal sealed class RemoteMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -252,7 +252,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(

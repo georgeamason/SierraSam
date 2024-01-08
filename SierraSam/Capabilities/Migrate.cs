@@ -66,7 +66,7 @@ internal sealed class Migrate : ICapability
 
         var discoveredMigrations = _migrationSeeker.Find();
 
-        var appliedMigrations = _database.GetSchemaHistory();
+        var appliedMigrations = _database.GetAppliedMigrations();
 
         _console.WriteLine(
             $"Current version of schema \"{_configuration.DefaultSchema}\":" +

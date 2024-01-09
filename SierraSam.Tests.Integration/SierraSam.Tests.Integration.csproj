@@ -24,7 +24,7 @@
         <PackageReference Include="Respawn" Version="6.2.0" />
         <PackageReference Include="Spectre.Console.Testing" Version="0.48.0" />
         <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="19.2.91" />
-        <PackageReference Include="Testcontainers" Version="3.6.0" />
+        <PackageReference Include="Testcontainers" Version="3.7.0" />
     </ItemGroup>
 
     <ItemGroup>

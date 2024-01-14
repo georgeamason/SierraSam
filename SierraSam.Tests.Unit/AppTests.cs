@@ -33,6 +33,12 @@ internal sealed class AppTests
 
         _capabilityResolver.Received(1).Resolve(type);
 
-        _logger.Received(1).LogTrace($"App running");
+        _logger.Received().Log(
+            LogLevel.Trace,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(obj => obj.ToString() == "App running"),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>()
+        );
     }
 }

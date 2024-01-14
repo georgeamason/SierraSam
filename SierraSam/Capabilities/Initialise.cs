@@ -98,11 +98,11 @@ internal sealed class Initialise : ICapability
 
             _console.MarkupLine($"[green]{sb}[/]");
         }
-        catch (OdbcException exception)
+        catch (OdbcException)
         {
             transaction.Rollback();
 
-            throw exception;
+            throw;
         }
     }
 }

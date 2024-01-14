@@ -9,4 +9,5 @@ public record TerseMigration(
     string Type,
     string Checksum,
     DateTime? InstalledOn,
-    MigrationState State);
+    MigrationState State
+);

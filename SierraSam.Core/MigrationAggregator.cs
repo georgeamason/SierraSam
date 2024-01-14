@@ -33,7 +33,8 @@ public class MigrationAggregator : IMigrationAggregator
                     "SQL",
                     m.Checksum,
                     null,
-                    MigrationState.Pending);
+                    MigrationState.Pending
+                );
             });
 
         return _database
@@ -51,7 +52,8 @@ public class MigrationAggregator : IMigrationAggregator
                     m.Type,
                     m.Checksum,
                     m.InstalledOn,
-                    isDiscovered ? MigrationState.Applied : MigrationState.Missing);
+                    isDiscovered ? MigrationState.Applied : MigrationState.Missing
+                );
             })
             .UnionBy(discoveredMigrations, migration => migration.Checksum)
             .OrderBy(m => m.InstalledOn ?? DateTime.MaxValue)

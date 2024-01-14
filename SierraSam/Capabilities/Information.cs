@@ -36,7 +36,7 @@ internal sealed class Information : ICapability
 
         var migrations = _migrationAggregator.GetAllMigrations();
 
-        if (!migrations.Any())
+        if (migrations.Count == 0)
         {
             _console.WriteLine("No migrations found");
 

@@ -317,20 +317,21 @@ internal sealed class OracleDatabase : DefaultDatabase
                    END;
                    """;
 
-        var objects = _executor.ExecuteReader<DatabaseObject>(
+        var objects = _executor.ExecuteReader<DatabaseObj>(
             sql,
-            reader => new DatabaseObject(
+            reader => new DatabaseObj(
                 schema,
                 reader.GetString(0).Trim(),
                 !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
-                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
+                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null
+            ),
             transaction);
 
         // TODO: Transactions ?
         foreach (var obj in objects) DropObject(obj, transaction);
     }
 
-    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    private void DropObject(DatabaseObj obj, IDbTransaction? transaction = null)
     {
         var sql = obj switch
         {

@@ -350,13 +350,14 @@ internal sealed class MysqlDatabase : DefaultDatabase
                    END;
                    """;
 
-        var objects = _executor.ExecuteReader<DatabaseObject>(
+        var objects = _executor.ExecuteReader<DatabaseObj>(
             sql,
-            reader => new DatabaseObject(
+            reader => new DatabaseObj(
                 schema,
                 reader.GetString(0).Trim(),
                 !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
-                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
+                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null
+            ),
             transaction);
 
         foreach (var obj in objects) DropObject(obj, transaction);
@@ -368,7 +369,7 @@ internal sealed class MysqlDatabase : DefaultDatabase
     public override string DefaultSchema =>
         _executor.ExecuteScalar<string>("SELECT SCHEMA()")!;
     
-    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    private void DropObject(DatabaseObj obj, IDbTransaction? transaction = null)
     {
         var sql = obj switch
         {

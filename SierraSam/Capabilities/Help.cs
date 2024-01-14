@@ -18,7 +18,7 @@ public sealed class Help : ICapability
     {
         _logger.LogTrace($"{nameof(Help)} running");
 
-        if (!args.Any())
+        if (args.Length == 0)
         {
             _console.WriteLine("usage: ss [-v | --version] [--help] [--auth]");
 

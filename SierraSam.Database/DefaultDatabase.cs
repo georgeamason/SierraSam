@@ -385,13 +385,14 @@ public abstract class DefaultDatabase : IDatabase
                     END;
                    """;
 
-        var objects = _dbExecutor.ExecuteReader<DatabaseObject>(
+        var objects = _dbExecutor.ExecuteReader<DatabaseObj>(
             sql,
-            reader => new DatabaseObject(
+            reader => new DatabaseObj(
                 schema,
                 reader.GetString(0).Trim(),
                 !reader.IsDBNull(1) ? reader.GetString(1).Trim() : null,
-                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null),
+                !reader.IsDBNull(2) ? reader.GetString(2).Trim() : null
+            ),
             transaction);
 
         foreach (var obj in objects) DropObject(obj, transaction);
@@ -411,7 +412,7 @@ public abstract class DefaultDatabase : IDatabase
         return _dbExecutor.ExecuteScalar<int>(sql, transaction);
     }
 
-    private void DropObject(DatabaseObject obj, IDbTransaction? transaction = null)
+    private void DropObject(DatabaseObj obj, IDbTransaction? transaction = null)
     {
         // https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-objects-transact-sql?view=sql-server-ver16
         var sql = obj switch

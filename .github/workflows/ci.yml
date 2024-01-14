@@ -137,4 +137,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: SierraSam-${{ matrix.runtime }}
-          path: ./SierraSam/bin/Release/net7.0/${{ matrix.runtime }}/publish
+          path: ./SierraSam/bin/Release/net8.0/${{ matrix.runtime }}/publish

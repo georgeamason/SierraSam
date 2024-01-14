@@ -19,7 +19,7 @@ internal sealed class DistinctVersionMigrationValidatorTests
     [Test]
     public void Validate_throws_when_for_migrations_with_the_same_version()
     {
-        _migrationSeeker.Find().Returns(new[]
+        _migrationSeeker.GetPendingMigrations().Returns(new[]
         {
             new PendingMigration("1", "someDescription", Versioned, string.Empty, "someFilename"),
             new PendingMigration("1", "anotherDescription", Versioned, string.Empty, "anotherFilename")
@@ -36,7 +36,7 @@ internal sealed class DistinctVersionMigrationValidatorTests
     {
         _migrationValidator.Validate().Returns(2);
 
-        _migrationSeeker.Find().Returns(new[]
+        _migrationSeeker.GetPendingMigrations().Returns(new[]
         {
             new PendingMigration("1", "someDescription", Versioned, string.Empty, "someFilename"),
             new PendingMigration("2", "anotherDescription", Versioned, string.Empty, "anotherFilename"),

@@ -94,7 +94,7 @@ internal sealed class RepeatableMigrationApplicatorTests
 
         var transaction = Substitute.For<IDbTransaction>();
 
-        database.GetSchemaHistory(transaction: transaction).Returns(new[]
+        database.GetAppliedMigrations(transaction: transaction).Returns(new[]
         {
             new AppliedMigration(
                 1,
@@ -139,7 +139,7 @@ internal sealed class RepeatableMigrationApplicatorTests
 
         var transaction = Substitute.For<IDbTransaction>();
 
-        database.GetSchemaHistory(transaction: transaction).Returns(new[]
+        database.GetAppliedMigrations(transaction: transaction).Returns(new[]
         {
             new AppliedMigration(
                 1,
@@ -180,7 +180,7 @@ internal sealed class RepeatableMigrationApplicatorTests
         var timeProvider = Substitute.For<TimeProvider>();
         timeProvider.GetUtcNow().Returns(new DateTimeOffset(2024, 1, 1, 12, 1, 1, new TimeSpan(0)));
 
-        database.GetSchemaHistory().Returns(Array.Empty<AppliedMigration>());
+        database.GetAppliedMigrations().Returns(Array.Empty<AppliedMigration>());
 
         var sut = new RepeatableMigrationApplicator(database, configuration, console, timeProvider);
 
@@ -233,7 +233,7 @@ internal sealed class RepeatableMigrationApplicatorTests
         configuration.InstalledBy.Returns("someUser");
         var console = Substitute.For<IAnsiConsole>();
 
-        database.GetSchemaHistory().Returns(Array.Empty<AppliedMigration>());
+        database.GetAppliedMigrations().Returns(Array.Empty<AppliedMigration>());
 
         var sut = new RepeatableMigrationApplicator(database, configuration, console, Substitute.For<TimeProvider>());
 

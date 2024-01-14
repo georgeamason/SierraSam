@@ -99,7 +99,7 @@ public static class Program
                             s.GetRequiredService<IIgnoredMigrationsFactory>())
                     );
 
-                    services.AddSingleton<IMigrationMerger, MigrationMerger>();
+                    services.AddSingleton<IMigrationAggregator, MigrationAggregator>();
                     services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();
 
                     services.AddSingleton<ICapabilityResolver, CapabilityResolver>();

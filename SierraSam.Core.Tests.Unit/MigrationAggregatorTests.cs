@@ -6,13 +6,13 @@ using SierraSam.Core.MigrationSeekers;
 namespace SierraSam.Core.Tests.Unit;
 
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-internal sealed class MigrationMergerTests
+internal sealed class MigrationAggregatorTests
 {
     private static readonly IMigrationSeeker MigrationSeeker = Substitute.For<IMigrationSeeker>();
     private static readonly IDatabase Database = Substitute.For<IDatabase>();
     private static readonly IConfiguration Configuration = Substitute.For<IConfiguration>();
 
-    private readonly IMigrationMerger _sut = new MigrationMerger(
+    private readonly IMigrationAggregator _sut = new MigrationAggregator(
         MigrationSeeker,
         Database,
         Configuration
@@ -22,7 +22,7 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_applied_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 CreatePendingMigration(MigrationType.Versioned)
@@ -31,14 +31,14 @@ internal sealed class MigrationMergerTests
         var installedOn = DateTime.UtcNow;
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new[]
             {
                 CreateAppliedMigration(installedOn, "d41d8cd98f00b204e9800998ecf8427e")
             });
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                     MigrationType.Versioned,
@@ -56,20 +56,20 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_missing_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         var installedOn = DateTime.UtcNow;
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new[]
             {
                 CreateAppliedMigration(installedOn, "abcd")
             });
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                 MigrationType.Versioned,
@@ -85,18 +85,18 @@ internal sealed class MigrationMergerTests
     public void Merge_returns_expected_pending_migrations()
     {
         MigrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new []
             {
                 CreatePendingMigration(MigrationType.Versioned)
             });
 
         Database
-            .GetSchemaHistory(Arg.Any<string>(), Arg.Any<string>())
+            .GetAppliedMigrations(Arg.Any<string>(), Arg.Any<string>())
             .Returns(Array.Empty<AppliedMigration>());
 
         _sut
-            .Merge()
+            .GetAllMigrations()
             .Should()
             .Equal(new TerseMigration(
                 MigrationType.Versioned,

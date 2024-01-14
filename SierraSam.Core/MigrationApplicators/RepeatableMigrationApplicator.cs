@@ -39,7 +39,7 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
 
         try
         {
-            var appliedMigrations = _database.GetSchemaHistory(transaction: transaction);
+            var appliedMigrations = _database.GetAppliedMigrations(transaction: transaction);
 
             if (appliedMigrations.Any(m => m.Checksum == pendingMigration.Checksum)) return 0;
 

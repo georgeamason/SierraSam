@@ -161,7 +161,7 @@ public abstract class DefaultDatabase : IDatabase
         _dbExecutor.ExecuteNonQuery(sql, transaction);
     }
 
-    public virtual IReadOnlyCollection<AppliedMigration> GetSchemaHistory(
+    public virtual IReadOnlyCollection<AppliedMigration> GetAppliedMigrations(
         string? schema = null,
         string? table = null,
         IDbTransaction? transaction = null)

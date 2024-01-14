@@ -6,7 +6,7 @@ namespace SierraSam.Core.MigrationSeekers;
 public interface IMigrationSeeker
 {
     /// <summary>
-    /// Finds all migrations in the configured locations.
+    /// Find pending migrations from the configured locations.
     /// </summary>
     /// <returns></returns>
     /// <exception cref="MigrationSeekerException">
@@ -16,5 +16,5 @@ public interface IMigrationSeeker
     /// <see cref="PathTooLongException"/>
     /// <see cref="RegexMatchTimeoutException"/>
     /// </exception>
-    IReadOnlyCollection<PendingMigration> Find();
+    IReadOnlyCollection<PendingMigration> GetPendingMigrations();
 }

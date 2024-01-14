@@ -9,9 +9,9 @@ internal sealed class AwsStorageMigrationSeeker : IMigrationSeeker
         _migrationSeeker = migrationSeeker ?? throw new ArgumentNullException(nameof(migrationSeeker));
     }
 
-    public IReadOnlyCollection<PendingMigration> Find()
+    public IReadOnlyCollection<PendingMigration> GetPendingMigrations()
     {
-        var migrations = _migrationSeeker.Find();
+        var migrations = _migrationSeeker.GetPendingMigrations();
 
         // TODO: Search s3 buckets for migrations
 

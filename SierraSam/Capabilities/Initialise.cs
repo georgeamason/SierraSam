@@ -65,7 +65,7 @@ internal sealed class Initialise : ICapability
             if (!string.IsNullOrEmpty(_configuration.InitialiseVersion))
             {
                 var filteredMigrations = _migrationSeeker
-                    .Find()
+                    .GetPendingMigrations()
                     .Where(m => m.MigrationType is MigrationType.Versioned)
                     .Where(m =>
                         new VersionComparator(m.Version!).IsLessThanOrEqualTo(_configuration.InitialiseVersion));

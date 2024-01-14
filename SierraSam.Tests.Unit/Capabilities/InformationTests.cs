@@ -14,7 +14,7 @@ internal sealed class InformationTests
     public void Run()
     {
         var logger = Substitute.For<ILogger<Information>>();
-        var migrationMerger = Substitute.For<IMigrationMerger>();
+        var migrationMerger = Substitute.For<IMigrationAggregator>();
         var serializer = Substitute.For<ISerializer>();
         var console = Substitute.For<IAnsiConsole>();
 

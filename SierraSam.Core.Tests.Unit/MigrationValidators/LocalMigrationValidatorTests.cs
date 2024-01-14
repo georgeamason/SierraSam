@@ -104,7 +104,7 @@ internal sealed class LocalMigrationValidatorTests
 
         _migrationSeeker
             .DidNotReceive()
-            .Find();
+            .GetPendingMigrations();
     }
 
     [TestCase(MigrationType.Versioned, MigrationState.Pending)]
@@ -122,7 +122,7 @@ internal sealed class LocalMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -134,7 +134,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator
@@ -158,7 +158,7 @@ internal sealed class LocalMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -170,7 +170,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator
@@ -191,7 +191,7 @@ internal sealed class LocalMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -203,7 +203,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -238,7 +238,7 @@ internal sealed class LocalMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -250,7 +250,7 @@ internal sealed class LocalMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(Array.Empty<AppliedMigration>());
 
         _localMigrationValidator

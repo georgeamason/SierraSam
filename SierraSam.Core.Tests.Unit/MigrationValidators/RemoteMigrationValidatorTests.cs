@@ -104,7 +104,7 @@ internal sealed class RemoteMigrationValidatorTests
 
         _database
             .DidNotReceive()
-            .GetSchemaHistory();
+            .GetAppliedMigrations();
     }
 
     [TestCase(MigrationType.Versioned, MigrationState.Missing)]
@@ -122,11 +122,11 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -163,11 +163,11 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(new[] { (type, state) });
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -201,7 +201,7 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(new[]
             {
                 new PendingMigration(
@@ -213,7 +213,7 @@ internal sealed class RemoteMigrationValidatorTests
             });
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(
@@ -248,11 +248,11 @@ internal sealed class RemoteMigrationValidatorTests
             .Returns(Array.Empty<(MigrationType Type, MigrationState State)>());
 
         _migrationSeeker
-            .Find()
+            .GetPendingMigrations()
             .Returns(Array.Empty<PendingMigration>());
 
         _database
-            .GetSchemaHistory()
+            .GetAppliedMigrations()
             .Returns(new []
             {
                 new AppliedMigration(

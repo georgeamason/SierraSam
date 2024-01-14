@@ -25,7 +25,7 @@ internal sealed class DistinctVersionMigrationValidator : IMigrationValidator
     {
         var validated = _validator.Validate();
 
-        var versionedMigrations = _migrationSeeker.Find()
+        var versionedMigrations = _migrationSeeker.GetPendingMigrations()
             .Where(m => m.MigrationType is Versioned)
             .ToArray();
 

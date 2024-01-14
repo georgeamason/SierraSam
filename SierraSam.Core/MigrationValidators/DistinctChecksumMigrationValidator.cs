@@ -15,7 +15,7 @@ internal sealed class DistinctChecksumMigrationValidator : IMigrationValidator
 
     public int Validate()
     {
-        var discoveredMigrations = _migrationSeeker.Find();
+        var discoveredMigrations = _migrationSeeker.GetPendingMigrations();
 
         var distinctMigrations = discoveredMigrations.DistinctBy(m => m.Checksum);
 

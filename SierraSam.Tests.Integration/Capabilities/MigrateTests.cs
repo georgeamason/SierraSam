@@ -72,7 +72,7 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         database.HasMigrationTable().Should().BeTrue();
-        database.GetSchemaHistory().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
+        database.GetAppliedMigrations().Should().BeEquivalentTo(Array.Empty<AppliedMigration>());
     }
 
     [Test]
@@ -101,7 +101,7 @@ internal sealed class MigrateTests
             new(null, "Write into foo", Repeatable, "INSERT INTO foo VALUES (1);", "R1__Write_into_foo.sql"),
         };
 
-        migrationSeeker.Find().Returns(pendingMigrations);
+        migrationSeeker.GetPendingMigrations().Returns(pendingMigrations);
 
         var migrationApplicator = new MigrationsApplicator(
             database,
@@ -136,7 +136,7 @@ internal sealed class MigrateTests
         sut.Run(Array.Empty<string>());
 
         database.HasMigrationTable().Should().BeTrue();
-        database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
+        database.GetAppliedMigrations().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
                     pendingMigrations[0].Version,
@@ -206,7 +206,7 @@ internal sealed class MigrateTests
             new(null, "Write into foo", Repeatable, "SELECT 2", "R1__Write_into_foo.sql"),
         };
 
-        migrationSeeker.Find().Returns(pendingMigrations);
+        migrationSeeker.GetPendingMigrations().Returns(pendingMigrations);
 
         var migrationApplicator = new MigrationsApplicator(
             database,
@@ -240,7 +240,7 @@ internal sealed class MigrateTests
 
         sut.Run(Array.Empty<string>());
 
-        database.GetSchemaHistory().Should().BeEquivalentTo(new AppliedMigration[]
+        database.GetAppliedMigrations().Should().BeEquivalentTo(new AppliedMigration[]
             {
                 new(1,
                     null,

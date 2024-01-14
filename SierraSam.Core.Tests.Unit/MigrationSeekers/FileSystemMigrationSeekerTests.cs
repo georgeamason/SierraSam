@@ -73,7 +73,7 @@ internal sealed class FileSystemMigrationSeekerTests
             configuration,
             fileSystem);
 
-        var migrations = migrationSeeker.Find();
+        var migrations = migrationSeeker.GetPendingMigrations();
 
         migrations
             .Should()
@@ -115,7 +115,7 @@ internal sealed class FileSystemMigrationSeekerTests
         var migrationSeeker = new FileSystemMigrationSeeker
             (configuration, fileSystem);
 
-        var migrations = migrationSeeker.Find();
+        var migrations = migrationSeeker.GetPendingMigrations();
 
         migrations
             .Should()
@@ -144,7 +144,7 @@ internal sealed class FileSystemMigrationSeekerTests
         var migrationSeeker = new FileSystemMigrationSeeker
             (configuration, fileSystem);
 
-        var migrations = migrationSeeker.Find();
+        var migrations = migrationSeeker.GetPendingMigrations();
 
         migrations
             .Should()
@@ -175,7 +175,7 @@ internal sealed class FileSystemMigrationSeekerTests
             (configuration, fileSystem);
 
         migrationSeeker
-            .Invoking(s => s.Find())
+            .Invoking(s => s.GetPendingMigrations())
             .Should()
             .Throw<MigrationSeekerException>()
             .WithMessage($"The application does not have permission to access location '{searchPath}'");
@@ -204,7 +204,7 @@ internal sealed class FileSystemMigrationSeekerTests
         var migrationSeeker = new FileSystemMigrationSeeker(configuration, fileSystem);
 
         migrationSeeker
-            .Invoking(s => s.Find())
+            .Invoking(s => s.GetPendingMigrations())
             .Should()
             .Throw<MigrationSeekerException>()
             .WithMessage($"The location path '{searchPath}' is too long");
@@ -222,7 +222,7 @@ internal sealed class FileSystemMigrationSeekerTests
         fileSystem.Directory.Exists(searchPath).Returns(false);
 
         var sut = new FileSystemMigrationSeeker(configuration, fileSystem);
-        var migrations = sut.Find();
+        var migrations = sut.GetPendingMigrations();
 
         fileSystem.Directory.Received().Exists(searchPath);
 

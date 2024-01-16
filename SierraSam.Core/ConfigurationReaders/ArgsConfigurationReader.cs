@@ -109,6 +109,9 @@ internal sealed class ArgsConfigurationReader : IConfigurationReader
                 case "--output":
                     configuration.Output = kvp.Value;
                     break;
+                case "--exportDirectory":
+                    configuration.ExportDirectory = kvp.Value;
+                    break;
                 default:
                     throw new Exception($"Invalid argument '{kvp.Key}'");
             }

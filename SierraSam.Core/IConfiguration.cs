@@ -20,4 +20,5 @@ public interface IConfiguration
     IEnumerable<string> IgnoredMigrations { get; set; }
     string InitialiseVersion { get; set; }
     public string Output { get; set; }
+    public string ExportDirectory { get; set; }
 }

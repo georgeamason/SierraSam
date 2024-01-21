@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace SierraSam.Core;
@@ -27,6 +26,7 @@ public class Configuration : IConfiguration
         IgnoredMigrations = new[] { "*:pending" };
         InitialiseVersion = string.Empty;
         Output = "json";
+        ExportDirectory = Environment.CurrentDirectory;
     }
 
     public Configuration(
@@ -47,7 +47,9 @@ public class Configuration : IConfiguration
         string? undoMigrationPrefix = null,
         IEnumerable<string>? ignoredMigrations = null,
         string? initialiseVersion = null,
-        string? output = null)
+        string? output = null,
+        string? exportDirectory = null
+    )
     {
         Url = url ?? string.Empty;
         User = user ?? string.Empty;
@@ -67,6 +69,7 @@ public class Configuration : IConfiguration
         IgnoredMigrations = ignoredMigrations ?? new[] { "*:pending" };
         InitialiseVersion = initialiseVersion ?? string.Empty;
         Output = output ?? "json";
+        ExportDirectory = exportDirectory ?? Environment.CurrentDirectory;
     }
 
     [JsonPropertyName("url"), JsonInclude]
@@ -128,4 +131,7 @@ public class Configuration : IConfiguration
 
     [JsonPropertyName("output"), JsonInclude]
     public string Output { get; set; }
+
+    [JsonPropertyName("exportDirectory"), JsonInclude]
+    public string ExportDirectory { get; set; }
 }

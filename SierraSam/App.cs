@@ -56,6 +56,9 @@ public sealed class App
             case "migrate":
                 _capabilityResolver.Resolve(typeof(Migrate)).Run(args[1..]);
                 break;
+            case "repair":
+                _capabilityResolver.Resolve(typeof(Repair)).Run(args[1..]);
+                break;
             case "rollup":
                 _capabilityResolver.Resolve(typeof(Rollup)).Run(args[1..]);
                 break;

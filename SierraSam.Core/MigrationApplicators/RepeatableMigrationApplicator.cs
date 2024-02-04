@@ -1,7 +1,6 @@
 ﻿using System.Data;
 using SierraSam.Core.Enums;
 using SierraSam.Core.Exceptions;
-using SierraSam.Core.Extensions;
 using Spectre.Console;
 
 namespace SierraSam.Core.MigrationApplicators;
@@ -51,9 +50,11 @@ public sealed class RepeatableMigrationApplicator : IMigrationApplicator
 
             if (appliedMigration is not null)
             {
-                var updatedMigration = appliedMigration
-                    .WithChecksum(pendingMigration.Checksum)
-                    .WithInstalledOn(_timeProvider.GetUtcNow().UtcDateTime);
+                var updatedMigration = appliedMigration with
+                {
+                    Checksum = pendingMigration.Checksum,
+                    InstalledOn = _timeProvider.GetUtcNow().UtcDateTime
+                };
 
                 // https://stackoverflow.com/questions/63091283/flyway-always-execute-repeatable-migrations
                 // https://stackoverflow.com/questions/42930738/flyway-and-initialization-of-repeatable-migrations

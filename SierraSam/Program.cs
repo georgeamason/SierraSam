@@ -105,6 +105,7 @@ public static class Program
                     services.AddSingleton<ICapabilityResolver, CapabilityResolver>();
                     services.AddSingleton<ICapability, Auth>();
                     services.AddSingleton<ICapability, Rollup>();
+                    services.AddSingleton<ICapability, Repair>();
                     services.AddSingleton<ICapability, Clean>();
                     services.AddSingleton<ICapability, Help>();
                     services.AddSingleton<ICapability, Information>();

@@ -99,6 +99,7 @@ public static class Program
                             s.GetRequiredService<IIgnoredMigrationsFactory>())
                     );
 
+                    services.AddSingleton<IMigrationRepairer, MigrationRepairer>();
                     services.AddSingleton<IMigrationAggregator, MigrationAggregator>();
                     services.AddSingleton<IIgnoredMigrationsFactory, IgnoredMigrationsFactory>();
 

@@ -21,7 +21,7 @@
         <PackageReference Include="NUnit.Analyzers" Version="4.1.0" />
         <PackageReference Include="coverlet.collector" Version="6.0.2" />
         <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="20.0.34" />
-        <PackageReference Include="Testcontainers" Version="3.7.0" />
+        <PackageReference Include="Testcontainers" Version="3.8.0" />
     </ItemGroup>
 
     <ItemGroup>

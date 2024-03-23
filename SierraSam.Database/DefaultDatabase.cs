@@ -194,12 +194,7 @@ public abstract class DefaultDatabase : IDatabase
              ORDER BY "installed_rank"
              """;
 
-        if (HasMigrationTable(transaction) is false)
-        {
-            throw new InvalidOperationException($"Schema history table " +
-                                                $"\"{_configuration.DefaultSchema}\".\"{_configuration.SchemaTable}\" " +
-                                                $"does not exist");
-        }
+        if (HasMigrationTable(transaction) is false) return Array.Empty<AppliedMigration>();
 
         _logger.LogDebug("Fetching schema history from database");
 

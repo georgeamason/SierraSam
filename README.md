@@ -20,6 +20,17 @@ The `info` command is used to display the current state of the database, as well
 ]
 ```
 
+### Validate
+The `validate` command is used to validate the checksums of applied migrations against the checksums of discovered migrations. If any checksums do not match, the command will fail and display the offending migrations.
+
+The 'ignoredMigrations' configuration parameter can be used to alter the behaviour of this command. By default, `pending` state migrations are ignored. Any discovered migrations  that have not been applied to the database passed validation.
+
+| State     | Description                                                       |
+|-----------|-------------------------------------------------------------------|
+| `pending` | Discovered migrations that have not been applied to the database. |
+| `applied` | Applied migrations that have been discovered.                     |
+| `missing` | Applied migrations that have not been discovered.                 |
+
 ### Rollup
 The `rollup` command is used to rollup all the migrations into a single file. This is useful for creating a single file that can be used to create a database from scratch. The `rollup` command will create a file called `rollup.sql` in the current directory.
 

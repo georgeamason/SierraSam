@@ -72,9 +72,9 @@
       },
       "Spectre.Console": {
         "type": "Direct",
-        "requested": "[0.49.0, )",
-        "resolved": "0.49.0",
-        "contentHash": "1s+hhYq5fcrqCvZhrNOPehAmCZJM6cjro85g1Qirvmm1tys+/sfFJgePCGcxr+S/nONZ/lCDTflPda3C+WlBdg=="
+        "requested": "[0.49.1, )",
+        "resolved": "0.49.1",
+        "contentHash": "USV+pdu49OJ3nCjxNuw1K9Zw/c1HCBbwbjXZp0EOn6wM99tFdAtN34KEBZUMyRuJuXlUMDqhd8Yq9obW2MslYA=="
       },
       "System.Data.Odbc": {
         "type": "Direct",
@@ -335,10 +335,10 @@
       },
       "Spectre.Console.Json": {
         "type": "Transitive",
-        "resolved": "0.49.0",
-        "contentHash": "e31wSF3BP7Xa8MKBDV9UCFnHNwowFvi6OVohjiUUd5+j4uA16K+MOjhfKf7MPmN1hXkMh1jAq5LwDCC72mvazQ==",
+        "resolved": "0.49.1",
+        "contentHash": "2/Eq8kS8mraATz6onP8nAaoydeqYqFY+RpcdL73VHlgKTtAX1daHoeeshSdKHDKkdSNXstC6MrW/hdgrQlk3uQ==",
         "dependencies": {
-          "Spectre.Console": "0.49.0"
+          "Spectre.Console": "0.49.1"
         }
       },
       "System.Diagnostics.DiagnosticSource": {
@@ -391,7 +391,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.1, )",
-          "Spectre.Console.Json": "[0.49.0, )",
+          "Spectre.Console.Json": "[0.49.1, )",
           "System.Data.Odbc": "[8.0.0, )",
           "System.IO.Abstractions": "[20.0.34, )",
           "YamlDotNet": "[13.7.1, )"

@@ -1,5 +1,5 @@
 # Always convert line endings to LF on checkout
-* text eol=lf
+* text=auto
 
 # Declare files that will always have CRLF line endings on checkout.
 *.sln text eol=crlf

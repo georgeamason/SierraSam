@@ -87,12 +87,12 @@
       },
       "System.IO.Abstractions": {
         "type": "Direct",
-        "requested": "[21.0.26, )",
-        "resolved": "21.0.26",
-        "contentHash": "2SM5DrZ0N4Ggzi7cbCJ0czR60Z0K/NfNwbu/0NNBLSY5Io9eBxdnoDh+54O+k+381PGx7gXTlb9SoyEQmKoLug==",
+        "requested": "[21.0.29, )",
+        "resolved": "21.0.29",
+        "contentHash": "EqqngPcNhqjGHKYVjhfU8D/l3rj/m00VaXxuRrWjal38Kw8kqN3f63sj69b/8Q6OAeJkA/nbWsn/iwPMqCQvfg==",
         "dependencies": {
-          "TestableIO.System.IO.Abstractions": "21.0.26",
-          "TestableIO.System.IO.Abstractions.Wrappers": "21.0.26"
+          "TestableIO.System.IO.Abstractions": "21.0.29",
+          "TestableIO.System.IO.Abstractions.Wrappers": "21.0.29"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
@@ -371,15 +371,15 @@
       },
       "TestableIO.System.IO.Abstractions": {
         "type": "Transitive",
-        "resolved": "21.0.26",
-        "contentHash": "6XwIymB/HIHdu4UAWcW+kP1Q4untd4T01leOfPYObKzwoqKOfXTw6GneBpQZ5TLAq9TUc2yS4j6asK2e2NNXog=="
+        "resolved": "21.0.29",
+        "contentHash": "3TtSs2i0m0QqpAI4EzR1vZXQuHNw5grBy0rDKqMkWi6ySEZ+yhN9HACgIyEq7gDXPLrtQI18ud/OtI0qVhP8Mg=="
       },
       "TestableIO.System.IO.Abstractions.Wrappers": {
         "type": "Transitive",
-        "resolved": "21.0.26",
-        "contentHash": "lvrJF2Oz/4vp5rVIndW9RC/cxGfErnE+Bt/jVNFu7/po+7n8UNZDjgUGrbRGtQfW6zkaUPx/WTONT1Tf9iacdQ==",
+        "resolved": "21.0.29",
+        "contentHash": "bm1stQx3rGV2qBW2xAAvl8ODVGNVkiAkqNsE+LsKfhMamBUa07IgsgMc9X/zBHc5yfAJOqJIUArQ56DDgwGyYA==",
         "dependencies": {
-          "TestableIO.System.IO.Abstractions": "21.0.26"
+          "TestableIO.System.IO.Abstractions": "21.0.29"
         }
       },
       "YamlDotNet": {
@@ -393,7 +393,7 @@
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.1, )",
           "Spectre.Console.Json": "[0.49.1, )",
           "System.Data.Odbc": "[8.0.0, )",
-          "System.IO.Abstractions": "[21.0.26, )",
+          "System.IO.Abstractions": "[21.0.29, )",
           "YamlDotNet": "[15.3.0, )"
         }
       },
